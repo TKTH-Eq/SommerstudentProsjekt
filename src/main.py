@@ -1,3 +1,5 @@
+# src/main.py
+
 # Data
 import pandas as pd
 import numpy as np
@@ -20,9 +22,21 @@ from pathlib import Path
 # Logging
 import logging
 
+# PDF-tolkning
+import fitz  # PyMuPDF
+
+
+from extraction.pdf_parser import extract_text
+
+
 def main():
-    print("Hello from myproject!")
+    text = extract_text("data/raw/sample.pdf")
+
+    print(text[:1000])
 
 
 if __name__ == "__main__":
     main()
+    
+    
+
