@@ -41,6 +41,20 @@ python src/main.py                        # defaults to system 27
 python src/check_pdf.py data/raw/SCD/C025-V-HO00-J-_E-021-02.PDF   # diagnose a PDF
 ```
 
+### Interactive app (pick a system, run live)
+
+```bash
+pip install streamlit
+streamlit run src/app.py
+```
+
+Lists every system that has BOTH a P&ID and an SCD in `data/raw/`, lets you
+pick one, and runs the whole pipeline live — KPIs, consistency, safety
+register, the interactive graph and the failure explorer with an operator
+brief. A thin shell over the same modules as `main.py`. For a fixed, portable
+handout instead (double-click, no server), use `python src/dashboard.py 27`
+which writes a self-contained `reports/index.html`.
+
 ## How extraction works (and its limits)
 
 Tags appear two ways: inline (`27-PT4805`) and stacked inside instrument
