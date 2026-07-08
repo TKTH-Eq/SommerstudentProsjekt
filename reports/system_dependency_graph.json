@@ -1,0 +1,632 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "category": "output",
+      "type_code": "PV",
+      "loop": "20-2201",
+      "source": "SCD",
+      "id": "20-PV2201"
+    },
+    {
+      "category": "input",
+      "type_code": "FI",
+      "loop": "27-4801",
+      "source": "P&ID",
+      "id": "27-FI4801"
+    },
+    {
+      "category": "output",
+      "type_code": "FO",
+      "loop": "27-4827",
+      "source": "P&ID",
+      "id": "27-FO4827"
+    },
+    {
+      "category": "output",
+      "type_code": "FO",
+      "loop": "27-4829",
+      "source": "P&ID",
+      "id": "27-FO4829"
+    },
+    {
+      "category": "input",
+      "type_code": "FT",
+      "loop": "27-0848",
+      "source": "SCD",
+      "id": "27-FT0848"
+    },
+    {
+      "category": "input",
+      "type_code": "FT",
+      "loop": "27-4801",
+      "source": "P&ID",
+      "id": "27-FT4801"
+    },
+    {
+      "category": "output",
+      "type_code": "FV",
+      "loop": "27-4811",
+      "source": "P&ID",
+      "id": "27-FV4811"
+    },
+    {
+      "category": "logic",
+      "type_code": "FY",
+      "loop": "27-4811",
+      "source": "P&ID",
+      "id": "27-FY4811A"
+    },
+    {
+      "category": "logic",
+      "type_code": "FY",
+      "loop": "27-4811",
+      "source": "P&ID",
+      "id": "27-FY4811B"
+    },
+    {
+      "category": "logic",
+      "type_code": "FY",
+      "loop": "27-4811",
+      "source": "P&ID",
+      "id": "27-FY4811C"
+    },
+    {
+      "category": "logic",
+      "type_code": "HS",
+      "loop": "27-4811",
+      "source": "P&ID",
+      "id": "27-HS4811"
+    },
+    {
+      "category": "logic",
+      "type_code": "HS",
+      "loop": "27-4813",
+      "source": "P&ID",
+      "id": "27-HS4813"
+    },
+    {
+      "category": "logic",
+      "type_code": "HS",
+      "loop": "27-4814",
+      "source": "P&ID",
+      "id": "27-HS4814"
+    },
+    {
+      "category": "logic",
+      "type_code": "HS",
+      "loop": "27-4825",
+      "source": "SCD",
+      "id": "27-HS4825"
+    },
+    {
+      "category": "logic",
+      "type_code": "HS",
+      "loop": "27-4826",
+      "source": "P&ID",
+      "id": "27-HS4826"
+    },
+    {
+      "category": "logic",
+      "type_code": "HS",
+      "loop": "27-4828",
+      "source": "P&ID",
+      "id": "27-HS4828"
+    },
+    {
+      "category": "input",
+      "type_code": "LSL",
+      "loop": "27-0548",
+      "source": "SCD",
+      "id": "27-LSL0548"
+    },
+    {
+      "category": "input",
+      "type_code": "LSL",
+      "loop": "27-548",
+      "source": "SCD",
+      "id": "27-LSL548"
+    },
+    {
+      "category": "input",
+      "type_code": "PDI",
+      "loop": "27-4812",
+      "source": "P&ID",
+      "id": "27-PDI4812"
+    },
+    {
+      "category": "input",
+      "type_code": "PDT",
+      "loop": "27-4812",
+      "source": "SCD",
+      "id": "27-PDT4812"
+    },
+    {
+      "category": "input",
+      "type_code": "PI",
+      "loop": "27-4804",
+      "source": "P&ID",
+      "id": "27-PI4804"
+    },
+    {
+      "category": "input",
+      "type_code": "PI",
+      "loop": "27-4805",
+      "source": "P&ID",
+      "id": "27-PI4805"
+    },
+    {
+      "category": "input",
+      "type_code": "PI",
+      "loop": "27-4807",
+      "source": "P&ID",
+      "id": "27-PI4807"
+    },
+    {
+      "category": "input",
+      "type_code": "PI",
+      "loop": "27-4823",
+      "source": "P&ID",
+      "id": "27-PI4823"
+    },
+    {
+      "category": "logic",
+      "type_code": "PIC",
+      "loop": "27-4111",
+      "source": "SCD",
+      "id": "27-PIC4111"
+    },
+    {
+      "category": "logic",
+      "type_code": "PIC",
+      "loop": "27-4803",
+      "source": "P&ID",
+      "id": "27-PIC4803"
+    },
+    {
+      "category": "logic",
+      "type_code": "PIC",
+      "loop": "27-4825",
+      "source": "SCD",
+      "id": "27-PIC4825A"
+    },
+    {
+      "category": "logic",
+      "type_code": "PIC",
+      "loop": "27-4825",
+      "source": "P&ID",
+      "id": "27-PIC4825B"
+    },
+    {
+      "category": "logic",
+      "type_code": "PIC",
+      "loop": "27-4825",
+      "source": "SCD",
+      "id": "27-PIC4825C"
+    },
+    {
+      "category": "input",
+      "type_code": "PSE",
+      "loop": "27-4254",
+      "source": "P&ID",
+      "id": "27-PSE4254"
+    },
+    {
+      "category": "input",
+      "type_code": "PSE",
+      "loop": "27-4255",
+      "source": "P&ID",
+      "id": "27-PSE4255"
+    },
+    {
+      "category": "output",
+      "type_code": "PSV",
+      "loop": "27-4809",
+      "source": "P&ID",
+      "id": "27-PSV4809"
+    },
+    {
+      "category": "output",
+      "type_code": "PSV",
+      "loop": "27-4810",
+      "source": "P&ID",
+      "id": "27-PSV4810"
+    },
+    {
+      "category": "input",
+      "type_code": "PT",
+      "loop": "27-4250",
+      "source": "P&ID",
+      "id": "27-PT4250A"
+    },
+    {
+      "category": "input",
+      "type_code": "PT",
+      "loop": "27-4250",
+      "source": "SCD",
+      "id": "27-PT4250B"
+    },
+    {
+      "category": "input",
+      "type_code": "PT",
+      "loop": "27-4252",
+      "source": "P&ID",
+      "id": "27-PT4252A"
+    },
+    {
+      "category": "input",
+      "type_code": "PT",
+      "loop": "27-4552",
+      "source": "SCD",
+      "id": "27-PT4552B"
+    },
+    {
+      "category": "input",
+      "type_code": "PT",
+      "loop": "27-4803",
+      "source": "SCD",
+      "id": "27-PT4803"
+    },
+    {
+      "category": "input",
+      "type_code": "PT",
+      "loop": "27-4804",
+      "source": "SCD",
+      "id": "27-PT4804"
+    },
+    {
+      "category": "input",
+      "type_code": "PT",
+      "loop": "27-4805",
+      "source": "SCD",
+      "id": "27-PT4805"
+    },
+    {
+      "category": "input",
+      "type_code": "PT",
+      "loop": "27-4807",
+      "source": "P&ID",
+      "id": "27-PT4807"
+    },
+    {
+      "category": "input",
+      "type_code": "PT",
+      "loop": "27-4823",
+      "source": "P&ID",
+      "id": "27-PT4823"
+    },
+    {
+      "category": "input",
+      "type_code": "PT",
+      "loop": "27-4825",
+      "source": "SCD",
+      "id": "27-PT4825"
+    },
+    {
+      "category": "output",
+      "type_code": "PV",
+      "loop": "27-4803",
+      "source": "P&ID",
+      "id": "27-PV4803"
+    },
+    {
+      "category": "logic",
+      "type_code": "PY",
+      "loop": "27-4803",
+      "source": "P&ID",
+      "id": "27-PY4803"
+    },
+    {
+      "category": "input",
+      "type_code": "TI",
+      "loop": "27-4806",
+      "source": "P&ID",
+      "id": "27-TI4806"
+    },
+    {
+      "category": "input",
+      "type_code": "TT",
+      "loop": "27-4806",
+      "source": "SCD",
+      "id": "27-TT4806"
+    },
+    {
+      "category": "output",
+      "type_code": "XV",
+      "loop": "27-4813",
+      "source": "SCD",
+      "id": "27-XV4813"
+    },
+    {
+      "category": "output",
+      "type_code": "XV",
+      "loop": "27-4814",
+      "source": "SCD",
+      "id": "27-XV4814"
+    },
+    {
+      "category": "output",
+      "type_code": "XV",
+      "loop": "27-4826",
+      "source": "SCD",
+      "id": "27-XV4826"
+    },
+    {
+      "category": "output",
+      "type_code": "XV",
+      "loop": "27-4828",
+      "source": "SCD",
+      "id": "27-XV4828"
+    },
+    {
+      "category": "logic",
+      "type_code": "XY",
+      "loop": "27-4813",
+      "source": "P&ID",
+      "id": "27-XY4813"
+    },
+    {
+      "category": "logic",
+      "type_code": "XY",
+      "loop": "27-4814",
+      "source": "P&ID",
+      "id": "27-XY4814"
+    },
+    {
+      "category": "logic",
+      "type_code": "XY",
+      "loop": "27-4826",
+      "source": "P&ID",
+      "id": "27-XY4826"
+    },
+    {
+      "category": "logic",
+      "type_code": "XY",
+      "loop": "27-4828",
+      "source": "P&ID",
+      "id": "27-XY4828"
+    },
+    {
+      "category": "input",
+      "type_code": "ZL",
+      "loop": "27-4813",
+      "source": "P&ID",
+      "id": "27-ZL4813"
+    },
+    {
+      "category": "input",
+      "type_code": "ZL",
+      "loop": "27-4814",
+      "source": "P&ID",
+      "id": "27-ZL4814"
+    },
+    {
+      "category": "input",
+      "type_code": "ZL",
+      "loop": "27-4826",
+      "source": "P&ID",
+      "id": "27-ZL4826"
+    },
+    {
+      "category": "input",
+      "type_code": "ZL",
+      "loop": "27-4828",
+      "source": "P&ID",
+      "id": "27-ZL4828"
+    },
+    {
+      "category": "input",
+      "type_code": "ZS",
+      "loop": "27-4813",
+      "source": "P&ID",
+      "id": "27-ZS4813"
+    },
+    {
+      "category": "input",
+      "type_code": "ZS",
+      "loop": "27-4814",
+      "source": "P&ID",
+      "id": "27-ZS4814"
+    },
+    {
+      "category": "input",
+      "type_code": "ZS",
+      "loop": "27-4826",
+      "source": "P&ID",
+      "id": "27-ZS4826"
+    },
+    {
+      "category": "input",
+      "type_code": "ZS",
+      "loop": "27-4828",
+      "source": "P&ID",
+      "id": "27-ZS4828"
+    },
+    {
+      "category": "output",
+      "type_code": "XV",
+      "loop": "63-4800",
+      "source": "SCD",
+      "id": "63-XV4800"
+    }
+  ],
+  "edges": [
+    {
+      "kind": "loop",
+      "source": "27-FI4801",
+      "target": "27-FT4801"
+    },
+    {
+      "kind": "loop",
+      "source": "27-FY4811A",
+      "target": "27-FY4811B"
+    },
+    {
+      "kind": "loop",
+      "source": "27-FY4811B",
+      "target": "27-FY4811C"
+    },
+    {
+      "kind": "loop",
+      "source": "27-FY4811C",
+      "target": "27-HS4811"
+    },
+    {
+      "kind": "loop",
+      "source": "27-HS4811",
+      "target": "27-FV4811"
+    },
+    {
+      "kind": "loop",
+      "source": "27-HS4813",
+      "target": "27-XY4813"
+    },
+    {
+      "kind": "loop",
+      "source": "27-HS4814",
+      "target": "27-XY4814"
+    },
+    {
+      "kind": "loop",
+      "source": "27-HS4825",
+      "target": "27-PIC4825A"
+    },
+    {
+      "kind": "loop",
+      "source": "27-HS4826",
+      "target": "27-XY4826"
+    },
+    {
+      "kind": "loop",
+      "source": "27-HS4828",
+      "target": "27-XY4828"
+    },
+    {
+      "kind": "loop",
+      "source": "27-PDI4812",
+      "target": "27-PDT4812"
+    },
+    {
+      "kind": "loop",
+      "source": "27-PI4804",
+      "target": "27-PT4804"
+    },
+    {
+      "kind": "loop",
+      "source": "27-PI4805",
+      "target": "27-PT4805"
+    },
+    {
+      "kind": "loop",
+      "source": "27-PI4807",
+      "target": "27-PT4807"
+    },
+    {
+      "kind": "loop",
+      "source": "27-PI4823",
+      "target": "27-PT4823"
+    },
+    {
+      "kind": "loop",
+      "source": "27-PIC4803",
+      "target": "27-PY4803"
+    },
+    {
+      "kind": "loop",
+      "source": "27-PIC4825A",
+      "target": "27-PIC4825B"
+    },
+    {
+      "kind": "loop",
+      "source": "27-PIC4825B",
+      "target": "27-PIC4825C"
+    },
+    {
+      "kind": "loop",
+      "source": "27-PT4250A",
+      "target": "27-PT4250B"
+    },
+    {
+      "kind": "loop",
+      "source": "27-PT4803",
+      "target": "27-PIC4803"
+    },
+    {
+      "kind": "loop",
+      "source": "27-PT4825",
+      "target": "27-HS4825"
+    },
+    {
+      "kind": "loop",
+      "source": "27-PY4803",
+      "target": "27-PV4803"
+    },
+    {
+      "kind": "loop",
+      "source": "27-TI4806",
+      "target": "27-TT4806"
+    },
+    {
+      "kind": "loop",
+      "source": "27-XY4813",
+      "target": "27-XV4813"
+    },
+    {
+      "kind": "loop",
+      "source": "27-XY4814",
+      "target": "27-XV4814"
+    },
+    {
+      "kind": "loop",
+      "source": "27-XY4826",
+      "target": "27-XV4826"
+    },
+    {
+      "kind": "loop",
+      "source": "27-XY4828",
+      "target": "27-XV4828"
+    },
+    {
+      "kind": "loop",
+      "source": "27-ZL4813",
+      "target": "27-ZS4813"
+    },
+    {
+      "kind": "loop",
+      "source": "27-ZL4814",
+      "target": "27-ZS4814"
+    },
+    {
+      "kind": "loop",
+      "source": "27-ZL4826",
+      "target": "27-ZS4826"
+    },
+    {
+      "kind": "loop",
+      "source": "27-ZL4828",
+      "target": "27-ZS4828"
+    },
+    {
+      "kind": "loop",
+      "source": "27-ZS4813",
+      "target": "27-HS4813"
+    },
+    {
+      "kind": "loop",
+      "source": "27-ZS4814",
+      "target": "27-HS4814"
+    },
+    {
+      "kind": "loop",
+      "source": "27-ZS4826",
+      "target": "27-HS4826"
+    },
+    {
+      "kind": "loop",
+      "source": "27-ZS4828",
+      "target": "27-HS4828"
+    }
+  ]
+}
