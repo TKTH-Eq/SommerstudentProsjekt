@@ -13,8 +13,9 @@ This is a thin shell over the same modules as main.py / dashboard.py - all the
 logic lives there, so the app can never disagree with the batch pipeline.
 """
 from __future__ import annotations
-import sys, os, re
+import sys, os, re, time
 from pathlib import Path
+import networkx as nx
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -28,6 +29,7 @@ from analysis.consistency_check import check_consistency
 from analysis.kpi_analysis import compute_kpis, quality_flags
 from analysis.analyze_scd import failure_map
 from analysis.root_cause import root_cause
+from analysis.signal_sim import simulate_series
 from ai.operator_brief import operator_brief
 
 
@@ -120,11 +122,6 @@ if R["flags"]:
 st.subheader("Safety register")
 st.markdown(chips(R["safety"], by_tag), unsafe_allow_html=True)
 
-st.subheader("Dependency graph")
-st.caption("Loop-based (input → logic → output), not traced piping.")
-components.html(f"<div style='font-family:sans-serif'>{interactive_svg(R['g'])}</div>",
-                height=620, scrolling=False)
-
 st.subheader("Failure explorer")
 st.caption("Pick a tag to see what can go wrong, what it affects, and where a symptom "
            "here could come from. Structural, from the loop model — a prompt, not a diagnosis.")
@@ -169,3 +166,74 @@ if alarms:
         st.write(f"{mark}`{a}` — {cls}")
     st.caption("Decision support on the loop-based graph — proposes a likely origin for an "
                "engineer to confirm, not a diagnosis.")
+
+st.subheader("Live sensor → threshold → alarm → root-cause")
+st.caption("Fictional sensor data fluctuates and drifts until it crosses a set point, "
+           "raising an alarm that cascades through the loop — then the tool identifies the "
+           "root cause. The full control-room chain on synthetic data: not a process model, "
+           "not live readings.")
+
+inputs_down = [n for n in R["g"].nodes
+               if by_tag[n].category == "input" and list(nx.descendants(R["g"], n))]
+inputs_down = inputs_down or [n for n in R["g"].nodes
+                              if list(nx.descendants(R["g"], n)) and not list(nx.ancestors(R["g"], n))]
+
+if not inputs_down:
+    st.info("No input tag with downstream in this system to simulate.")
+else:
+    s1, s2, s3 = st.columns(3)
+    sensor = s1.selectbox("Drifting sensor", sorted(inputs_down))
+    baseline = s2.number_input("Baseline value", value=40.0)
+    threshold = s3.number_input("HH set point", value=100.0)
+    speed = st.slider("Seconds per step", 0.1, 1.5, 0.4, 0.1)
+
+    if st.button("▶ Run simulation"):
+        vals, breach = simulate_series(baseline, threshold, steps=30)
+        breach = breach if breach is not None else len(vals) - 1
+        chart_ph, status_ph = st.empty(), st.empty()
+        # phase 1 — the signal fluctuates and drifts toward the limit
+        for i in range(1, breach + 2):
+            chart_ph.line_chart({"value": vals[:i], "HH set point": [threshold] * i})
+            cur = vals[i - 1]
+            if i - 1 >= breach:
+                status_ph.warning(f"⚠ {sensor} = {cur} crossed HH ({threshold}) — ALARM raised")
+            else:
+                status_ph.info(f"{sensor} = {cur} — normal (below {threshold})")
+            time.sleep(speed)
+        # phase 2 — the alarm cascades and the tool finds the root cause
+        order = [sensor] + [n for n in nx.bfs_tree(R["g"], sensor) if n != sensor]
+        log_ph, res_ph = st.empty(), st.empty()
+        log = []
+        for k in range(1, len(order) + 1):
+            active, newest = order[:k], order[k - 1]
+            res = root_cause(R["g"], active)
+            log.insert(0, f"🔔 **{newest}** — {res['classification'].get(newest, '')}")
+            log_ph.markdown("  \n".join(log[:8]), unsafe_allow_html=True)
+            primary = res["roots"][0] if res["roots"] else None
+            if primary:
+                res_ph.markdown(
+                    f"**Probable root cause:** "
+                    f"<span style='background:{CATEGORY_COLORS.get(by_tag[primary].category,'#9aa0a6')};"
+                    f"color:#fff;border-radius:20px;padding:2px 10px'>{primary}</span> "
+                    f"— explains {len(res['explains'][primary])} downstream alarm(s)",
+                    unsafe_allow_html=True)
+            time.sleep(speed)
+        st.success(f"Complete — {sensor} breach propagated; root cause identified as {order[0]}.")
+
+st.subheader("Dependency graph")
+st.caption("Loop-based (input → logic → output), not traced piping. Search a tag below, "
+           "or pick one in the failure explorer above, to highlight it and its loop.")
+search = st.selectbox("🔍 Search a tag to highlight on the graph",
+                      [""] + sorted(R["fmap"]), key="graph_search")
+hl_tag = search or tag                      # search wins; else the failure-explorer tag
+he = R["fmap"].get(hl_tag)
+highlight = {"sel": hl_tag, "down": he["downstream"], "up": he["upstream"]} if he else None
+if hl_tag:
+    st.markdown(
+        f"Highlighting **{hl_tag}** &nbsp; "
+        f"<span style='color:#12233b'>■ selected</span> &nbsp; "
+        f"<span style='color:#b8442c'>■ downstream (consequence)</span> &nbsp; "
+        f"<span style='color:#2d7dd2'>■ upstream (cause)</span>", unsafe_allow_html=True)
+components.html(
+    f"<div style='font-family:sans-serif'>{interactive_svg(R['g'], highlight=highlight)}</div>",
+    height=640, scrolling=False)

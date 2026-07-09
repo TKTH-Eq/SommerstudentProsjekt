@@ -53,9 +53,18 @@ def save_png(g: nx.DiGraph, path: Path, title="System dependency graph"):
     fig.tight_layout(); fig.savefig(path, dpi=150, bbox_inches="tight"); plt.close(fig)
 
 
-def interactive_svg(g: nx.DiGraph, w: int = 1000, h: int = 680) -> str:
-    """Self-contained pan/zoom SVG (no CDN, works offline). Returns markup."""
+def interactive_svg(g: nx.DiGraph, w: int = 1000, h: int = 680, highlight: dict | None = None) -> str:
+    """Self-contained pan/zoom SVG (no CDN, works offline). Returns markup.
+
+    highlight (optional): {"sel": tag, "down": [tags], "up": [tags]} — emphasises
+    the selected tag (dark ring), its downstream/consequence tags (red ring) and
+    upstream/cause tags (blue ring), dimming everything else.
+    """
     import html as _html
+    hl = highlight or {}
+    sel = hl.get("sel")
+    down, up = set(hl.get("down", [])), set(hl.get("up", []))
+    active = bool(sel)
     pos = nx.spring_layout(g, seed=7, k=0.9)
     xs = [p[0] for p in pos.values()] or [0]
     ys = [p[1] for p in pos.values()] or [0]
@@ -75,9 +84,19 @@ def interactive_svg(g: nx.DiGraph, w: int = 1000, h: int = 680) -> str:
         x, y = sx(pos[n][0]), sy(pos[n][1])
         col = CATEGORY_COLORS.get(g.nodes[n].get("category", "other"), "#9aa0a6")
         lab = _html.escape(str(n))
-        nodes += (f'<g class="nd"><title>{lab}</title>'
-                  f'<circle cx="{x:.1f}" cy="{y:.1f}" r="9" fill="{col}" '
-                  f'stroke="#fff" stroke-width="1.5"/>'
+        stroke, sw, op = "#fff", "1.5", "1"
+        if active:
+            if n == sel:
+                stroke, sw = "#12233b", "3.5"
+            elif n in down:
+                stroke, sw = "#b8442c", "2.5"
+            elif n in up:
+                stroke, sw = "#2d7dd2", "2.5"
+            else:
+                op = "0.13"
+        nodes += (f'<g class="nd" opacity="{op}"><title>{lab}</title>'
+                  f'<circle class="node" data-tag="{lab}" cx="{x:.1f}" cy="{y:.1f}" r="9" '
+                  f'fill="{col}" stroke="{stroke}" stroke-width="{sw}" style="cursor:pointer"/>'
                   f'<text x="{x:.1f}" y="{y-12:.1f}" text-anchor="middle" '
                   f'font-size="7" fill="#25313f">{lab}</text></g>')
 
