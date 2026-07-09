@@ -27,6 +27,7 @@ from analysis.build_dependency_graph import build_graph, interactive_svg
 from analysis.consistency_check import check_consistency
 from analysis.kpi_analysis import compute_kpis, quality_flags
 from analysis.analyze_scd import failure_map
+from analysis.root_cause import root_cause
 from ai.operator_brief import operator_brief
 
 
@@ -141,3 +142,30 @@ y.caption("safety functions"); y.markdown(chips(entry["safety"], by_tag), unsafe
 y.caption("all downstream"); y.markdown(chips(entry["downstream"], by_tag), unsafe_allow_html=True)
 z.markdown("**Possible cause of a symptom here**")
 z.caption("upstream candidates"); z.markdown(chips(entry["upstream"], by_tag), unsafe_allow_html=True)
+
+st.subheader("Alarm root-cause (simulated)")
+st.caption("Pick the tags that are 'in alarm' to simulate an alarm shower. The graph "
+           "separates the probable root cause from downstream consequences — the core of "
+           "root-cause analysis. Wire this to the live alarm feed to make it operational.")
+alarms = st.multiselect("Active alarms", sorted(R["fmap"]))
+if alarms:
+    res = root_cause(R["g"], alarms)
+    if res["roots"]:
+        primary = res["roots"][0]
+        st.markdown(f"**Probable root cause:** "
+                    f"<span style='background:{CATEGORY_COLORS.get(by_tag[primary].category,'#9aa0a6')};"
+                    f"color:#fff;border-radius:20px;padding:2px 10px'>{primary}</span>",
+                    unsafe_allow_html=True)
+        if res["explains"][primary]:
+            st.caption("explains these downstream alarms as consequences:")
+            st.markdown(chips(res["explains"][primary], by_tag), unsafe_allow_html=True)
+        if len(res["roots"]) > 1:
+            st.caption("other independent roots:")
+            st.markdown(chips(res["roots"][1:], by_tag), unsafe_allow_html=True)
+    st.markdown("**Classification**")
+    for a in res["active"]:
+        cls = res["classification"][a]
+        mark = "🔴 " if cls == "root cause" else "↳ "
+        st.write(f"{mark}`{a}` — {cls}")
+    st.caption("Decision support on the loop-based graph — proposes a likely origin for an "
+               "engineer to confirm, not a diagnosis.")
