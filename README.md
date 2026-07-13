@@ -1,82 +1,127 @@
-# Huldra P&ID / SCD analysis
+# SommerstudentProsjekt — automatisk tag-uttrekk fra Huldra-tegninger
 
-Turns legacy P&ID and SCD PDFs into structured, queryable data and runs two
-analyses on it: **P&ID↔SCD consistency checking** and **failure propagation**.
-Built for the Wisting / Huldra summer-student assignment.
+Prosjekt for Lisa og Torstein. Basert på åpne data fra Huldra (avviklet
+gassfelt, Equinor).
 
-## What it does
+Eldre P&ID- og SCD-tegninger finnes stort sett bare som PDF — en bunke A0-ark
+som er ugjennomtrengelig for søk og analyse. Dette prosjektet trekker ut
+utstyrs- og instrument-tags automatisk fra tegningene, kobler dem sammen på
+tvers av dokumenter, og bygger et strukturert, søkbart kunnskapslag oppå
+dokumentbunken: hvilke tags finnes, hvor de kommer fra, hvordan de henger
+sammen, og hvor P&ID og SCD er uenige.
 
-```
-P&ID + SCD PDF ──▶ extraction ──▶ EngineeringObjects ──▶ dependency graph
-                                                            │
-                        ┌───────────────────────────────────┼───────────────┐
-                consistency check              KPIs / quality        failure propagation
-                (flagged_issues.csv)           (quality_report.md)   (graph query)
-```
+Uttrekket er **validert mot en uavhengig fasit** (Semantum DEXPI XML): målt til
+presisjon 87 %, recall 55 % på de tegningene som har fasit. Se
+[`RESULTS.md`](RESULTS.md) for metode, tall og begrensninger.
 
-Reports written to `reports/`:
-- `tags.csv` — every extracted tag, typed and categorised
-- `flagged_issues.csv` — P&ID↔SCD discrepancies to verify
-- `quality_report.md` — complexity KPIs + quality flags
-- `safety_register.csv` — safety/shutdown-related tags
-- `system_dependency_graph.{png,html,json}` — the graph
-- `ai_explanations/system_<n>.md` — natural-language summary
+> Uttrekket er tilnærmet — et førsteutkast for ingeniørgjennomgang, ikke en
+> autoritativ kilde.
 
-## Setup
+## Hva prosjektet gjør
 
-```bash
-uv venv && source .venv/bin/activate     # or: python -m venv .venv
-uv pip install -r requirements.txt        # pdfplumber, networkx, matplotlib, pillow
-sudo apt-get install -y poppler-utils     # provides pdftoppm for rendering
-```
+- **Trekker ut tags** fra P&ID- og SCD-PDF-er via tekstlaget, med OCR-reserve
+  (Google Vision) for tegninger der innholdet er grafikk fremfor tekst.
+- **Avstemmer P&ID mot SCD** per system: felles tags, kun-P&ID (mekanikk),
+  kun-SCD (styringslogikk) og reelle avvik å granske.
+- **Bygger en avhengighetsgraf** (input → logikk → output) og et failure/
+  root-cause-lag for å svare på «hva påvirker en endring her» og «hvor kan et
+  symptom komme fra».
+- **Validerer uttrekket** mot DEXPI-XML og rapporterer presisjon/recall/F1 pluss
+  hver enkelt uenighet.
+- **Presenterer alt** i en Streamlit-app med en analyse-side per system og en
+  tag-oversikt på tvers av systemer.
 
-Put drawings in `data/raw/P&ID/` and `data/raw/SCD/` (filenames contain the
-system code, e.g. `…-HO27-…`).
+## Kom i gang
 
-## Run
-
-```bash
-python src/main.py 27                     # runs on the HO27 P&ID + SCD pair
-python src/main.py                        # defaults to system 27
-python src/check_pdf.py data/raw/SCD/C025-V-HO00-J-_E-021-02.PDF   # diagnose a PDF
-```
-
-### Interactive app (pick a system, run live)
+Krever Python 3.12+. Prosjektet bruker [`uv`](https://docs.astral.sh/uv/).
 
 ```bash
-pip install streamlit
+uv sync                         # installer avhengigheter fra uv.lock
+```
+
+Legg tegningene under `data/raw/` (se mappestrukturen under). Start så appen:
+
+```bash
 streamlit run src/app.py
 ```
 
-Lists every system that has BOTH a P&ID and an SCD in `data/raw/`, lets you
-pick one, and runs the whole pipeline live — KPIs, consistency, safety
-register, the interactive graph and the failure explorer with an operator
-brief. A thin shell over the same modules as `main.py`. For a fixed, portable
-handout instead (double-click, no server), use `python src/dashboard.py 27`
-which writes a self-contained `reports/index.html`.
+### Valgfritt: OCR-reserve (Google Vision)
 
-## How extraction works (and its limits)
+Bare nødvendig for skannede / bilde-baserte tegninger. Krever poppler eller
+`pypdfium2` for rasterisering, pakken `google-cloud-vision`, og Google-
+legitimasjon:
 
-Tags appear two ways: inline (`27-PT4805`) and stacked inside instrument
-bubbles (`type` over `number`), so extraction combines a regex pass with
-positional word-clustering. It is a **first pass for engineer review, not
-truth** — e.g. it currently flags `LSL548` vs `LSL0548` as a near-duplicate,
-which is exactly the kind of thing a human must resolve.
+```bash
+pip install google-cloud-vision
+set GOOGLE_APPLICATION_CREDENTIALS=C:\sti\til\service-account.json
+set HULDRA_VISION=1             # skru på reserven (av som standard)
+```
 
-Text-layer quality varies by drawing. `check_pdf.py` reports whether a PDF is
-`text-extractable`, `vector but text is outlined` (→ needs a vision model), or
-`raster` (→ needs OCR). The HO27 pair is text-extractable; the older HO00 SCD
-has outlined text and would need the vision path.
+OCR utløses automatisk kun på tag-fattige sider, så vanlige kjøringer gjør ingen
+API-kall.
 
-## Optional AI summary
+## Bruk
 
-`src/ai/explain_system.py` calls a model if `ANTHROPIC_API_KEY` is set, else it
-writes a deterministic templated summary so the pipeline always runs. For
-Equinor-internal drawings, point the client at the approved Azure deployment.
+### Validering mot fasit
 
-## Next steps
+```bash
+# mål uttrekket mot DEXPI-fasiten
+python src/validate_against_dexpi.py --raw data/raw --out reports
 
-- Add vector-geometry connectivity (`pdfplumber` lines/curves) so the graph
-  reflects real piping/signal links, not loop-number grouping.
-- Wire a vision model into extraction for outlined-text / raster drawings.
-- Add a `pyDEXPI` loader so a DEXPI file feeds the *same* graph and analyses.
+# bryt ned hvor recall tapes (per klasse, per tegning, null-tegninger)
+python src/analyze_validation_diffs.py --out reports
+```
+
+Utdata i `reports/`: `validation_report.csv` (presisjon/recall/F1 per tegning +
+TOTAL), `validation_diffs.csv` (hver MISSED/EXTRA-tag), og
+`validation_diff_summary.csv` (recall-tap per klasse og tegning).
+
+## Mappestruktur
+
+```
+data/raw/
+  P&ID/                        P&ID-tegninger (PDF)
+  SCD/                         SCD-tegninger (PDF)
+  SCD Legend/                  forklaring av SCD-logikkblokker (referanse)
+  Symbols/                     symbolbibliotek (referanse)
+  Semantum Huldra P&IDS/       DEXPI XML — fasit for validering
+  processed/                   avledede data
+
+src/
+  app.py                       Streamlit-inngang (st.navigation)
+  system_analysis.py           analyse-side per system
+  tag_oversikt.py              tag-oversikt på tvers av systemer
+  config.py                    stier, tag-typer, farger, sikkerhetstyper
+  extraction/
+    pdf_parser.py              tekst / posisjonerte ord / render + OCR-reserve
+    tag_extractor.py           tag-uttrekk (to pass) + typede objekter
+  analysis/                    graf, konsistens, KPI, failure/root-cause, sim
+  ai/                          operatør-brief
+  models/                      EngineeringObject
+  validate_against_dexpi.py    validering mot DEXPI-fasit
+  analyze_validation_diffs.py  bryter ned recall-tapet
+
+reports/                       genererte CSV-er, grafer, kvalitetsrapport
+notebooks/                     utforskende analyse
+tests/                         tester
+```
+
+> Modul-oversikten under `analysis/` og `ai/` er beskrevet ut fra hvordan de
+> brukes i appen — juster om noe har flyttet seg eller heter annerledes.
+
+## Nøkkeltall
+
+| | Presisjon | Recall | F1 |
+|---|---:|---:|---:|
+| Uttrekk målt mot DEXPI (16 tegninger) | 87 % | 55 % | 67 % |
+
+Recall er begrenset oppad av kildematerialet: der tags er tegnet som symboler
+fremfor tekst, kan tekstuttrekk aldri fange dem. Full oppdeling av det
+gjenstående gapet — reell uttreksfeil vs. metodens tekstlags-tak — står i
+[`RESULTS.md`](RESULTS.md).
+
+## Status
+
+Fungerende pipeline med validert nøyaktighet. Videre arbeid: OCR ende-til-ende
+på bilde-tegninger, mer tekst-recall på tette tegninger, og bredere
+fasit-dekning etter hvert som flere DEXPI-filer blir tilgjengelige.

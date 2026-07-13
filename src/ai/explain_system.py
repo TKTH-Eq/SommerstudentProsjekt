@@ -2,6 +2,8 @@
 from __future__ import annotations
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+load_dotenv()
 
 
 def explain_system(system: str, kpis: dict, consistency: dict, out_dir: Path) -> Path:

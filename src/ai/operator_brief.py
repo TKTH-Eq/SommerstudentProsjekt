@@ -22,6 +22,9 @@ and must be verified against the drawings and live readings before action.
 from __future__ import annotations
 import os
 
+from dotenv import load_dotenv
+load_dotenv()
+
 # operator-facing first checks, by instrument/equipment type (generic guidance)
 FIRST_CHECKS = {
     "PT": ["compare reading against a second/redundant transmitter",
