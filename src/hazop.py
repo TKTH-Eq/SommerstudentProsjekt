@@ -75,16 +75,38 @@ if rows:
                        out.read_bytes(), file_name=f"hazop_system_{system}.csv",
                        mime="text/csv")
 
-    # optional AI pass, one node at a time (same key-gating as operator_brief)
+    # optional AI passes — both gated on the Gemini key the project uses
     st.divider()
-    if os.getenv("ANTHROPIC_API_KEY"):
+    if os.getenv("GEMINI_API_KEY"):
         node_ai = st.selectbox("AI-omskriving av én node", picked or nodes)
         if st.button("Generer AI-utkast for noden"):
             node_rows = [r for r in all_rows if r["node"] == node_ai]
             with st.spinner("Spør modellen…"):
                 st.markdown(ai_enrich_node(node_rows))
+
+        st.divider()
+        st.subheader("👁️ Vision-utdrag fra selve tegningen")
+        st.caption("Gemini SER på P&ID-en og foreslår HAZOP-observasjoner. "
+                   "Hver tag den nevner verifiseres mot tag-registeret: "
+                   "✅ finnes i uttrekket · 🟠 velformet men ikke uttrukket "
+                   "(mulig symbol-only-funn — sjekk tegningen) · ❓ matcher "
+                   "ikke kjent tagformat (mulig hallusinasjon). Krever "
+                   "pypdfium2.")
+        if st.button("Generer vision-utdrag for P&ID-en"):
+            from ai.hazop_vision import vision_hazop_excerpt, to_markdown
+            try:
+                with st.spinner("Rasteriserer og spør Gemini…"):
+                    ex = vision_hazop_excerpt(Path(pid_path),
+                                              [o.tag for o in objs])
+                st.markdown(to_markdown(ex))
+            except ImportError as e:
+                st.error(f"Mangler avhengighet: {e} — "
+                         f"`uv add pypdfium2 google-genai`")
+            except Exception as e:  # noqa: BLE001
+                st.error(f"Vision-kallet feilet: {e}")
     else:
-        st.caption("Sett ANTHROPIC_API_KEY for valgfri AI-omskriving per node — "
-                   "arbeidsarket over er deterministisk og komplett uten.")
+        st.caption("Sett GEMINI_API_KEY for valgfri AI-omskriving og "
+                   "vision-utdrag — arbeidsarket over er deterministisk og "
+                   "komplett uten.")
 else:
     st.info("Velg minst én node.")

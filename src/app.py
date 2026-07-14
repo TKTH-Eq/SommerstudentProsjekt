@@ -21,6 +21,7 @@ pages = [
     st.Page("system_analysis.py", title="System-analyse", icon="🏠", default=True),
     st.Page("tag_oversikt.py", title="Tag-oversikt", icon="🏷️"),
     st.Page("dexpi_graph.py", title="DEXPI-topologi", icon="🔗"),
+    st.Page("dexpi_vs_pdf.py", title="DEXPI vs PDF (demo)", icon="🆚"),
     st.Page("hazop.py", title="HAZOP-forberedelse", icon="⚠️"),
     st.Page("hazop_compare.py", title="HAZOP: PDF vs DEXPI", icon="⚖️"),
 ]

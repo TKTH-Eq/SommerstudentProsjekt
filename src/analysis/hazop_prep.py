@@ -241,7 +241,7 @@ def write_worksheet_csv(rows: list[dict], path: Path) -> Path:
 
 
 # ---------------------------------------------------------------------------
-# Optional AI layer — same pattern as ai/operator_brief.py
+# Optional AI layer — Gemini, same key/pattern as extraction/vision_extract.py
 # ---------------------------------------------------------------------------
 
 HAZOP_PROMPT = """\
@@ -264,21 +264,23 @@ Worksheet:
 
 
 def ai_enrich_node(rows_for_node: list[dict]) -> str:
-    """Send ONE node's deterministic rows to the model for fluent rewriting.
-    Requires ANTHROPIC_API_KEY; caller decides fallback (the deterministic
-    worksheet IS the fallback and always exists)."""
-    import anthropic
+    """Send ONE node's deterministic rows to Gemini for fluent rewriting.
+    Requires GEMINI_API_KEY (same as extraction/vision_extract.py); caller
+    decides fallback (the deterministic worksheet IS the fallback and always
+    exists)."""
+    import os
+    from google import genai
     body = "\n".join(
         f"- {r['deviation']} | causes: {r['causes']} | consequences: "
         f"{r['consequences']} | safeguards: {r['safeguards']}"
         for r in rows_for_node)
     members = rows_for_node[0]["node_members"] if rows_for_node else ""
-    msg = anthropic.Anthropic().messages.create(
-        model="claude-sonnet-4-6", max_tokens=900,
-        messages=[{"role": "user", "content":
-                   f"{HAZOP_PROMPT}Node: {rows_for_node[0]['node']}\n"
-                   f"Members: {members}\n{body}"}])
-    return msg.content[0].text
+    client = genai.Client()                 # reads GEMINI_API_KEY from env
+    resp = client.models.generate_content(
+        model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
+        contents=f"{HAZOP_PROMPT}Node: {rows_for_node[0]['node']}\n"
+                 f"Members: {members}\n{body}")
+    return resp.text
 
 
 if __name__ == "__main__":
