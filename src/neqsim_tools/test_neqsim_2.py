@@ -12,6 +12,11 @@ fl.setMixingRule('classic')
 TPflash(fl)
 printFrame(fl)
 
-print(f"Gas density:    {fl.getPhase('gas').getDensity('kg/m3'):.2f} kg/m3")
-print(f"Gas viscosity:  {fl.getPhase('gas').getViscosity('kg/msec'):.6f} kg/(m*s)")
-print(f"Z-factor:       {fl.getPhase('gas').getZ():.4f}")
+#print(f"Gas density:    {fl.getPhase('gas').getDensity('kg/m3'):.2f} kg/m3")
+#print(f"Gas viscosity:  {fl.getPhase('gas').getViscosity('kg/msec'):.6f} kg/(m*s)")
+#print(f"Z-factor:       {fl.getPhase('gas').getZ():.4f}")
+
+
+f = fluid("srk")
+f.addComponent("n-decane", 1.0)
+print("n-decane fungerer")
