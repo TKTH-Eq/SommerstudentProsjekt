@@ -47,12 +47,18 @@ _BARE = re.compile(r"^[A-Z]{1,4}\s?\d{2,4}[A-Z]?$")
 
 def _type_number(tag: str) -> tuple[str, str] | None:
     """(type_code, number) for any of the known conventions, else None.
-    'HV 2264', '13-2264HV' and '13-HV2264' all give ('HV', '2264') — the
-    pair is convention-independent, which is what verification needs."""
+    'HV 2264', '13-HV-2264', '13-2264HV' and '13-HV2264' all give
+    ('HV', '2264') — the pair is convention-independent, which is what
+    verification needs. Suffix letters (PI 2262A) fold into the type check
+    via the trailing group."""
     t = re.sub(r"\s+", "", tag.strip().upper())
     t = t.split("-", 1)[1] if re.match(r"^\d{2}-", t) else t
+    t = t.replace("-", "")                                   # HV-2264 -> HV2264
     m = re.match(r"^([A-Z]{1,4})(\d{2,4})([A-Z]?)$", t)      # type-first
     if m:
+        # words that match the tag pattern but are not components
+        if m.group(1) in {"NOTE", "SHEET", "REV", "PAGE", "DWG", "DOC"}:
+            return None
         return m.group(1), m.group(2)
     m = re.match(r"^(\d{2,4})([A-Z]{1,4})$", t)              # number-first
     if m:
@@ -67,8 +73,8 @@ def _classify(tag: str, known: set[str], known_pairs: set[tuple]) -> str:
     pair = _type_number(tag)
     if pair and pair in known_pairs:
         return "verified_loose"        # same instrument, other convention
-    if _TYPE_FIRST.match(t) or _NUM_FIRST.match(t) or _BARE.match(tag.strip().upper()):
-        return "new_candidate"
+    if pair:
+        return "new_candidate"         # well-formed tag, not in extraction
     return "suspect"
 
 PROMPT = """\

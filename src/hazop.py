@@ -60,7 +60,14 @@ if not nodes:
                "parameter — nothing to propose.")
     st.stop()
 
-picked = st.multiselect("Nodes (functional loops)", nodes, default=nodes[:3])
+sel_all = st.checkbox(f"Velg alle noder i systemet ({len(nodes)})")
+if sel_all:
+    picked = nodes
+    st.multiselect("Nodes (functional loops)", nodes, default=nodes,
+                   disabled=True,
+                   help="Alle noder valgt — fjern haken over for å velge manuelt.")
+else:
+    picked = st.multiselect("Nodes (functional loops)", nodes, default=nodes[:3])
 
 # ---- editable worksheet with review status ---------------------------------
 # Master copy lives in session state (per system) so edits survive reruns and
