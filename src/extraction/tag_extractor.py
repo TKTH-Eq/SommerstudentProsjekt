@@ -20,9 +20,9 @@ from models.engineering_object import EngineeringObject
 
 INLINE = re.compile(r"\b(\d{2}-[A-Z]{2,4}\d{2,4}[A-Z]?)\b")
 # combined redundancy forms:  27-PT4250A/B  ->  base "27-PT4250", suffix "A/B"
-COMBINED = re.compile(r"(\d{2}-[A-Z]{2,4}\d{3,4})([A-Z](?:/[A-Z])+)")
-NUM = re.compile(r"^\d{3,4}[A-Z]?$")
-NUM_COMBINED = re.compile(r"^(\d{3,4})([A-Z](?:/[A-Z])+)$")
+COMBINED = re.compile(r"(\d{2}-[A-Z]{2,4}\d{2,4})([A-Z](?:/[A-Z])+)")
+NUM = re.compile(r"^\d{2,4}[A-Z]?$")
+NUM_COMBINED = re.compile(r"^(\d{2,4})([A-Z](?:/[A-Z])+)$")
 # (a3) number-first valve/line tags, e.g. "27-4510PV", "27-4454PL", "43-4505VF"
 INLINE_NUMFIRST = re.compile(r"\b(\d{2}-\d{3,4}[A-Z]{2,3})\b")
 

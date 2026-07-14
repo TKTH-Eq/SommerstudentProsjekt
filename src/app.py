@@ -20,6 +20,6 @@ st.set_page_config(page_title="Huldra P&ID/SCD analysis", layout="wide")
 pages = [
     st.Page("system_analysis.py", title="System-analyse", icon="🏠", default=True),
     st.Page("tag_oversikt.py", title="Tag-oversikt", icon="🏷️"),
+    st.Page("dexpi_graph.py", title="DEXPI-topologi", icon="🔗"),
 ]
-
 st.navigation(pages).run()
