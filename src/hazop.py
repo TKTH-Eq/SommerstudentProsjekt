@@ -23,6 +23,7 @@ import streamlit as st
 from extraction.tag_extractor import extract_tags, create_objects
 from analysis.build_dependency_graph import build_graph
 from analysis.hazop_prep import build_worksheet, hazop_nodes, write_worksheet_csv, ai_enrich_node
+from analysis.hazop_export import write_worksheet_xlsx, write_vision_xlsx
 from system_analysis import find_systems  # reuse discovery — one source of truth
 
 
@@ -60,20 +61,65 @@ if not nodes:
     st.stop()
 
 picked = st.multiselect("Nodes (functional loops)", nodes, default=nodes[:3])
-rows = [r for r in all_rows if r["node"] in set(picked)]
 
-if rows:
-    df = pd.DataFrame(rows)[["node", "parameter", "deviation", "causes",
-                             "consequences", "safeguards"]]
-    st.dataframe(df, use_container_width=True, hide_index=True)
+# ---- editable worksheet with review status ---------------------------------
+# Master copy lives in session state (per system) so edits survive reruns and
+# node-filter changes; the editor shows a filtered view and edits are merged
+# back by the stable row key (node, parameter, deviation).
+KEY = ["node", "parameter", "deviation"]
+state_key = f"hazop_master_{system}"
+if state_key not in st.session_state:
+    st.session_state[state_key] = pd.DataFrame(all_rows)
+master: pd.DataFrame = st.session_state[state_key]
 
-    # download the full worksheet (all nodes, all columns incl. recommendation)
-    out = Path("reports/hazop_worksheet.csv")
-    out.parent.mkdir(exist_ok=True)
-    write_worksheet_csv(all_rows, out)
-    st.download_button("Last ned hele arbeidsarket (CSV)",
-                       out.read_bytes(), file_name=f"hazop_system_{system}.csv",
-                       mime="text/csv")
+view = master[master["node"].isin(set(picked))] if picked else master.iloc[0:0]
+
+if not view.empty:
+    st.caption("Arbeidsarket er redigerbart: juster tekst, fyll inn "
+               "anbefaling/ansvarlig og sett status per rad "
+               "(proposed → reviewed/rejected). Endringer huskes i økten "
+               "og følger med i eksporten.")
+    edited = st.data_editor(
+        view[["node", "parameter", "deviation", "causes", "consequences",
+              "safeguards", "recommendation", "action_party", "status"]],
+        use_container_width=True, hide_index=True, num_rows="fixed",
+        disabled=["node", "parameter", "deviation"],
+        column_config={
+            "status": st.column_config.SelectboxColumn(
+                "status", options=["proposed", "reviewed", "rejected"],
+                required=True),
+            "recommendation": st.column_config.TextColumn("recommendation"),
+            "action_party": st.column_config.TextColumn("action party"),
+        },
+        key=f"editor_{system}")
+
+    # merge the edited view back into the master by row key
+    m = master.set_index(KEY)
+    m.update(edited.set_index(KEY))
+    st.session_state[state_key] = m.reset_index()[master.columns]
+    rows_out = st.session_state[state_key].to_dict("records")
+
+    c = st.session_state[state_key]["status"].value_counts().to_dict()
+    st.caption(f"Status hele systemet: {c.get('proposed', 0)} proposed · "
+               f"{c.get('reviewed', 0)} reviewed · {c.get('rejected', 0)} rejected")
+
+    # ---- exports (full worksheet incl. edits, all nodes) -------------------
+    out_dir = Path("reports"); out_dir.mkdir(exist_ok=True)
+    csv_path = out_dir / "hazop_worksheet.csv"
+    write_worksheet_csv(rows_out, csv_path)
+    xlsx_path = out_dir / f"hazop_system_{system}.xlsx"
+    write_worksheet_xlsx(rows_out, xlsx_path,
+                         title=f"HAZOP preparation — System {system}")
+    d1, d2 = st.columns(2)
+    d1.download_button("Last ned Excel-arbeidsark (per node)",
+                       xlsx_path.read_bytes(), file_name=xlsx_path.name,
+                       mime="application/vnd.openxmlformats-officedocument"
+                            ".spreadsheetml.sheet")
+    d2.download_button("Last ned CSV (rå)", csv_path.read_bytes(),
+                       file_name=f"hazop_system_{system}.csv", mime="text/csv")
+    if st.button("Tilbakestill redigeringer for systemet"):
+        del st.session_state[state_key]
+        st.rerun()
 
     # optional AI passes — both gated on the Gemini key the project uses
     st.divider()
@@ -93,20 +139,33 @@ if rows:
                    "ikke kjent tagformat (mulig hallusinasjon). Krever "
                    "pypdfium2.")
         if st.button("Generer vision-utdrag for P&ID-en"):
-            from ai.hazop_vision import vision_hazop_excerpt, to_markdown
+            from ai.hazop_vision import vision_hazop_excerpt
             try:
                 with st.spinner("Rasteriserer og spør Gemini…"):
-                    ex = vision_hazop_excerpt(Path(pid_path),
-                                              [o.tag for o in objs])
-                st.markdown(to_markdown(ex))
+                    st.session_state[f"vision_{system}"] = vision_hazop_excerpt(
+                        Path(pid_path), [o.tag for o in objs])
             except ImportError as e:
                 st.error(f"Mangler avhengighet: {e} — "
                          f"`uv add pypdfium2 google-genai`")
             except Exception as e:  # noqa: BLE001
                 st.error(f"Vision-kallet feilet: {e}")
+
+        # render + export from session state so the excerpt survives reruns
+        # (any click, incl. a download button, reruns the whole page)
+        ex = st.session_state.get(f"vision_{system}")
+        if ex:
+            from ai.hazop_vision import to_markdown
+            st.markdown(to_markdown(ex))
+            vx = Path("reports") / f"hazop_vision_system_{system}.xlsx"
+            write_vision_xlsx(ex, vx,
+                              title=f"Vision HAZOP excerpt — System {system}")
+            st.download_button("Last ned vision-utdrag (Excel)",
+                               vx.read_bytes(), file_name=vx.name,
+                               mime="application/vnd.openxmlformats-"
+                                    "officedocument.spreadsheetml.sheet")
     else:
         st.caption("Sett GEMINI_API_KEY for valgfri AI-omskriving og "
                    "vision-utdrag — arbeidsarket over er deterministisk og "
                    "komplett uten.")
-else:
+if view.empty:
     st.info("Velg minst én node.")

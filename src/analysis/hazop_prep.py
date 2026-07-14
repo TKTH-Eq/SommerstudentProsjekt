@@ -226,6 +226,7 @@ def build_worksheet(graph: nx.DiGraph, objects, loops: list[str] | None = None,
                     "consequences": conseq,
                     "safeguards": ", ".join(sg) if sg else "(none found in extraction — verify)",
                     "recommendation": "",           # for the HAZOP team to fill in
+                    "action_party": "",
                     "status": "proposed",
                 })
     return rows
