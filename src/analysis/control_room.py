@@ -1,0 +1,165 @@
+"""
+Control-room decision support: given active alarms and the dependency
+graph, propose (1) the probable root cause, (2) what to CROSS-CHECK before
+acting, and (3) which barriers/actions are relevant — every suggestion
+referencing real extracted tags only.
+
+Design position (matches the rest of the project): this is decision
+SUPPORT, not decision making. The assistant triages an alarm shower into
+"look here first, verify with these, these are your handles" — the
+operator confirms against the drawing and procedures. The graph gives
+structural reachability, not process consequence: redundancy, bypasses and
+operating mode are not in the model, and the advice says so.
+
+Pure functions over (graph, objects) so the module is unit-testable
+headless and works identically on the loop-based PDF graph and the stated
+DEXPI topology — though the advice is only as good as the connectivity,
+which is the recurring point.
+"""
+from __future__ import annotations
+
+import networkx as nx
+
+from config import SAFETY_TYPES
+from analysis.root_cause import root_cause
+
+
+def scenario_order(graph: nx.DiGraph, fault: str) -> list[str]:
+    """The alarm cascade a fault at `fault` would produce, in BFS order —
+    the 'hidden truth' the training scenario plays back step by step."""
+    return [fault] + [n for n in nx.bfs_tree(graph, fault) if n != fault]
+
+
+def cross_checks(graph: nx.DiGraph, by_tag, candidate: str) -> dict:
+    """What an operator should verify BEFORE trusting/acting on `candidate`
+    as the root: redundant loop-mates (does the B-instrument agree?),
+    upstream sensors (is the disturbance real and coming from there?), and
+    immediate downstream readings (is it propagating as expected?)."""
+    o = by_tag.get(candidate)
+    loop_mates = sorted(t for t, x in by_tag.items()
+                        if o and x.loop == o.loop and t != candidate
+                        and x.category == "input")
+    upstream = sorted(t for t in graph.predecessors(candidate)
+                      if by_tag.get(t) and by_tag[t].category == "input") \
+        if candidate in graph else []
+    downstream = sorted(list(graph.successors(candidate)))[:6] \
+        if candidate in graph else []
+    return {"loop_mates": loop_mates, "upstream_sensors": upstream,
+            "downstream_next": downstream}
+
+
+def relevant_barriers(graph: nx.DiGraph, by_tag, candidate: str) -> list[str]:
+    """Safety-typed tags in the candidate's loop or downstream — the
+    operator's structural 'handles' (which barriers guard this path)."""
+    o = by_tag.get(candidate)
+    pool = {t for t, x in by_tag.items() if o and x.loop == o.loop}
+    if candidate in graph:
+        pool |= set(nx.descendants(graph, candidate))
+    return sorted(t for t in pool
+                  if by_tag.get(t) and by_tag[t].type_code in SAFETY_TYPES)
+
+
+def assist(graph: nx.DiGraph, by_tag, active: list[str]) -> dict:
+    """One advisory snapshot for the current alarm picture."""
+    res = root_cause(graph, active)
+    primary = res["roots"][0] if res["roots"] else None
+    out = {"root_cause": res, "primary": primary,
+           "checks": None, "barriers": None, "advice": []}
+    if primary:
+        out["checks"] = cross_checks(graph, by_tag, primary)
+        out["barriers"] = relevant_barriers(graph, by_tag, primary)
+        ch = out["checks"]
+        if ch["loop_mates"]:
+            out["advice"].append(
+                f"Kryssjekk redundante målinger i samme løkke før aksjon: "
+                f"{', '.join(ch['loop_mates'])} — er avviket reelt?")
+        if ch["upstream_sensors"]:
+            out["advice"].append(
+                f"Verifiser oppstrøms: {', '.join(ch['upstream_sensors'])} — "
+                f"kommer forstyrrelsen derfra, er {primary} et symptom, "
+                f"ikke årsaken.")
+        if out["barriers"]:
+            out["advice"].append(
+                f"Relevante barrierer i kjeden: {', '.join(out['barriers'])} — "
+                f"bekreft status/tilgjengelighet.")
+        out["advice"].append(
+            "Grafen viser strukturell nåbarhet, ikke prosesskonsekvens — "
+            "bekreft mot tegning, redundans og driftsmodus før inngrep.")
+    return out
+
+
+def alarm_shower(graph: nx.DiGraph, fault: str, noise: int = 2,
+                 seed: int | None = None) -> dict:
+    """A realistic incident picture: the fault's whole cascade fires AT ONCE,
+    mixed (shuffled) with a couple of unrelated 'noise' alarms — chatter from
+    elsewhere in the plant, independent of the fault. The operator's task is
+    to separate root from symptom from noise, which is exactly what a real
+    alarm flood demands."""
+    import random as _r
+    rng = _r.Random(seed)
+    cascade = scenario_order(graph, fault)
+    related = set(cascade) | set(nx.ancestors(graph, fault))
+    pool = [n for n in graph.nodes if n not in related]
+    noise_tags = rng.sample(pool, min(noise, len(pool))) if pool else []
+    alarms = cascade + noise_tags
+    rng.shuffle(alarms)
+    return {"alarms": alarms, "cascade": cascade, "noise": noise_tags}
+
+
+def candidate_brief(graph: nx.DiGraph, by_tag, active: list[str]) -> list[dict]:
+    """Evidence per candidate root — deliberately WITHOUT declaring a winner.
+    The structural facts (how many of the active alarms each candidate would
+    explain, its failure modes, what to cross-check) are the brief; weighing
+    them is the operator's exercise. Candidates are the independent roots the
+    graph analysis finds, alphabetically ordered to avoid ranking cues."""
+    res = root_cause(graph, active)
+    out = []
+    for cand in sorted(res["roots"]):
+        out.append({
+            "tag": cand,
+            "explains": sorted(res["explains"].get(cand, [])),
+            "checks": cross_checks(graph, by_tag, cand),
+            "barriers": relevant_barriers(graph, by_tag, cand),
+        })
+    return out
+
+
+def shower_debrief(fault: str, chosen: str | None, noise: list[str],
+                   n_active: int) -> list[str]:
+    lines = [f"Faktisk feilkilde: {fault}."]
+    if chosen == fault:
+        lines.append("Riktig — du identifiserte kilden i alarmdusjen.")
+    elif chosen in noise:
+        lines.append(f"{chosen} var en STØYALARM uten kobling til hendelsen — "
+                     f"i en ekte dusj er nettopp urelatert skravling den "
+                     f"vanligste fellen.")
+    elif chosen is not None:
+        lines.append(f"{chosen} var et nedstrøms SYMPTOM av {fault} — "
+                     f"strukturbeviset å se etter: kilden forklarer flest av "
+                     f"de andre alarmene, symptomet forklarer få.")
+    if noise:
+        lines.append(f"Støyalarmer i bildet: {', '.join(noise)} — uavhengige "
+                     f"av hendelsen.")
+    lines.append(f"Totalt {n_active} samtidige alarmer. Treningsscenario på "
+                 f"syntetiske data — assistentens brief var strukturell, "
+                 f"vurderingen var din.")
+    return lines
+
+
+def debrief(fault: str, isolated: str | None, alarms_seen: int,
+            total_cascade: int) -> list[str]:
+    """Post-scenario feedback: did the operator isolate the true origin,
+    and how early?"""
+    lines = [f"Faktisk feilkilde i scenariet: {fault}."]
+    if isolated is None:
+        lines.append("Ingen isolasjon ble utført — kaskaden løp "
+                     f"{alarms_seen} av {total_cascade} mulige alarmer.")
+    elif isolated == fault:
+        lines.append(f"Riktig komponent isolert ({isolated}) etter "
+                     f"{alarms_seen} alarm(er) — kaskaden stoppet ved kilden.")
+    else:
+        lines.append(f"Isolerte {isolated}, men kilden var {fault} — "
+                     f"nedstrøms isolasjon stopper symptomer, ikke årsaken.")
+    lines.append("Treningsscenario på syntetiske data — assistentens forslag "
+                 "var strukturelle, operatørens dømmekraft avgjorde.")
+    return lines

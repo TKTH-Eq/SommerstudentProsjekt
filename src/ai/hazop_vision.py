@@ -131,16 +131,14 @@ def verify_tags(excerpt: dict, known_tags) -> dict:
 def vision_hazop_excerpt(pdf_path: Path, known_tags, dpi: int = 200) -> dict:
     """Render page 1, ask Gemini for HAZOP observations, verify every tag.
     Requires GEMINI_API_KEY and pypdfium2 (same as vision_extract)."""
-    from google import genai
     from google.genai import types
     from extraction.vision_extract import _render_png
+    from ai.gemini_client import generate
 
     png = _render_png(Path(pdf_path), dpi)
     img = Path(png).read_bytes()
-    client = genai.Client()
-    resp = client.models.generate_content(
-        model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
-        contents=[types.Part.from_bytes(data=img, mime_type="image/png"), PROMPT],
+    resp = generate(
+        [types.Part.from_bytes(data=img, mime_type="image/png"), PROMPT],
         config=types.GenerateContentConfig(response_mime_type="application/json"),
     )
     try:

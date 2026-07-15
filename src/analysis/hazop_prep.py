@@ -269,18 +269,14 @@ def ai_enrich_node(rows_for_node: list[dict]) -> str:
     Requires GEMINI_API_KEY (same as extraction/vision_extract.py); caller
     decides fallback (the deterministic worksheet IS the fallback and always
     exists)."""
-    import os
-    from google import genai
+    from ai.gemini_client import generate
     body = "\n".join(
         f"- {r['deviation']} | causes: {r['causes']} | consequences: "
         f"{r['consequences']} | safeguards: {r['safeguards']}"
         for r in rows_for_node)
     members = rows_for_node[0]["node_members"] if rows_for_node else ""
-    client = genai.Client()                 # reads GEMINI_API_KEY from env
-    resp = client.models.generate_content(
-        model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
-        contents=f"{HAZOP_PROMPT}Node: {rows_for_node[0]['node']}\n"
-                 f"Members: {members}\n{body}")
+    resp = generate(f"{HAZOP_PROMPT}Node: {rows_for_node[0]['node']}\n"
+                    f"Members: {members}\n{body}")
     return resp.text
 
 
