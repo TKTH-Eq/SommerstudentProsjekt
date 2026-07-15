@@ -42,10 +42,10 @@ from __future__ import annotations
 FLUID_PRESETS: dict[str, dict] = {
     "PV": {
         "description": "Process Vapour/gass (ANTATT — verifiser mot legend)",
-        "eos": "srk",
+        "eos": "cpa",
         "components": [
             ("nitrogen", 1.0), ("CO2", 2.0), ("methane", 85.0),
-            ("ethane", 7.0), ("propane", 3.0), ("i-butane", 1.0), ("n-butane", 1.0),
+            ("ethane", 7.0), ("propane", 3.0), ("i-butane", 1.0), ("n-butane", 1.0), ("water", 5.0),
         ],
         "phase": "gass",
     },
@@ -60,10 +60,10 @@ FLUID_PRESETS: dict[str, dict] = {
     },
     "VF": {
         "description": "Vent/Flare-gass (ANTATT — verifiser mot legend)",
-        "eos": "srk",
+        "eos": "cpa",
         "components": [
             ("nitrogen", 3.0), ("CO2", 3.0), ("methane", 80.0),
-            ("ethane", 8.0), ("propane", 4.0), ("i-butane", 1.0), ("n-butane", 1.0),
+            ("ethane", 8.0), ("propane", 4.0), ("i-butane", 1.0), ("n-butane", 1.0), ("water", 5.0),
         ],
         "phase": "gass",
     },
@@ -110,10 +110,10 @@ FLUID_PRESETS: dict[str, dict] = {
         "description": "[INTERN] Vent Atmosphere — antatt som par til VF (Vent/Flare): "
                        "vent til atmosfaere i stedet for til flare "
                        "(ANTATT — IKKE bekreftet, ingen ekstern kilde funnet)",
-        "eos": "srk",
+        "eos": "cpa",
         "components": [
             ("nitrogen", 5.0), ("CO2", 4.0), ("methane", 75.0),
-            ("ethane", 9.0), ("propane", 5.0), ("i-butane", 1.0), ("n-butane", 1.0),
+            ("ethane", 9.0), ("propane", 5.0), ("i-butane", 1.0), ("n-butane", 1.0), ("water", 5.0),
         ],
         "phase": "gass",
     },
@@ -205,10 +205,10 @@ FLUID_PRESETS: dict[str, dict] = {
                        "rimelige tolkninger, ingen klart bedre. Antar her Open "
                        "Flare (parallell til VA=Vent Atmosphere) "
                        "(ANTATT — IKKE bekreftet, SAERLIG usikker)",
-        "eos": "srk",
+        "eos": "cpa",
         "components": [
             ("nitrogen", 3.0), ("CO2", 3.0), ("methane", 80.0),
-            ("ethane", 8.0), ("propane", 4.0), ("i-butane", 1.0), ("n-butane", 1.0),
+            ("ethane", 8.0), ("propane", 4.0), ("i-butane", 1.0), ("n-butane", 1.0), ("water", 5.0),
         ],
         "phase": "gass",
     },
@@ -221,10 +221,10 @@ FLUID_PRESETS: dict[str, dict] = {
                        "kontekster (bekreftet ved at 'PT' faktisk forekommer som "
                        "FluidCodeAssignmentClass paa ekte segmenter) "
                        "(ANTATT — IKKE bekreftet, ingen ekstern kilde funnet)",
-        "eos": "srk",
+        "eos": "cpa",
         "components": [
             ("nitrogen", 1.0), ("CO2", 2.0), ("methane", 85.0),
-            ("ethane", 7.0), ("propane", 3.0), ("i-butane", 1.0), ("n-butane", 1.0),
+            ("ethane", 7.0), ("propane", 3.0), ("i-butane", 1.0), ("n-butane", 1.0), ("water", 5.0),
         ],
         "phase": "gass",
     },
@@ -236,10 +236,10 @@ FLUID_PRESETS: dict[str, dict] = {
                        "videre. IKKE relatert til instrument-typekoden 'PI' "
                        "(Trykkindikator) "
                        "(ANTATT — svaert lav tillit)",
-        "eos": "srk",
+        "eos": "cpa",
         "components": [
             ("nitrogen", 1.0), ("CO2", 2.0), ("methane", 85.0),
-            ("ethane", 7.0), ("propane", 3.0), ("i-butane", 1.0), ("n-butane", 1.0),
+            ("ethane", 7.0), ("propane", 3.0), ("i-butane", 1.0), ("n-butane", 1.0), ("water", 5.0),
         ],
         "phase": "gass",
     },
@@ -247,10 +247,10 @@ FLUID_PRESETS: dict[str, dict] = {
         "description": "[MOENSTER] Gas Injection — vanlig offshore-system "
                        "(gassloeft/trykkstoette til reservoar), 'G'=Gas-prefiks "
                        "(ANTATT — IKKE bekreftet, ingen ekstern kilde funnet)",
-        "eos": "srk",
+        "eos": "cpa",
         "components": [
             ("nitrogen", 1.0), ("CO2", 2.0), ("methane", 88.0),
-            ("ethane", 6.0), ("propane", 2.0), ("i-butane", 0.5), ("n-butane", 0.5),
+            ("ethane", 6.0), ("propane", 2.0), ("i-butane", 0.5), ("n-butane", 0.5), ("water", 5.0),
         ],
         "phase": "gass",
     },
@@ -270,10 +270,10 @@ FLUID_PRESETS: dict[str, dict] = {
         "description": "[MOENSTER] Gas Fuel (brenngass) — svaert vanlig eget "
                        "delsystem paa plattformer, 'G'=Gas-prefiks "
                        "(ANTATT — IKKE bekreftet, ingen ekstern kilde funnet)",
-        "eos": "srk",
+        "eos": "cpa",
         "components": [
             ("nitrogen", 1.0), ("CO2", 1.0), ("methane", 90.0),
-            ("ethane", 5.0), ("propane", 2.0), ("i-butane", 0.5), ("n-butane", 0.5),
+            ("ethane", 5.0), ("propane", 2.0), ("i-butane", 0.5), ("n-butane", 0.5), ("water", 5.0),
         ],
         "phase": "gass",
     },
@@ -293,10 +293,10 @@ FLUID_PRESETS: dict[str, dict] = {
                        "saa gasseksport er trolig et hovedsystem paa anlegget; "
                        "noe sterkere kontekstuell stoette enn ren bokstav-gjetning, "
                        "men FORTSATT IKKE bekreftet mot legend",
-        "eos": "srk",
+        "eos": "cpa",
         "components": [
             ("nitrogen", 0.5), ("CO2", 1.5), ("methane", 92.0),
-            ("ethane", 4.5), ("propane", 1.0), ("i-butane", 0.25), ("n-butane", 0.25),
+            ("ethane", 4.5), ("propane", 1.0), ("i-butane", 0.25), ("n-butane", 0.25), ("water", 5.0),
         ],
         "phase": "gass",
     },
