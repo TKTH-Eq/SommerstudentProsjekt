@@ -26,5 +26,6 @@ pages = [
     st.Page("hazop.py", title="HAZOP-forberedelse", icon="⚠️"),
     st.Page("hazop_compare.py", title="HAZOP: PDF vs DEXPI", icon="⚖️"),
     st.Page("kontrollrom.py", title="Kontrollrom-assistent", icon="🎛️"),
+    st.Page("neqsim_side.py", title="NeqSim-simulering", icon="🧪"),
 ]
 st.navigation(pages).run()

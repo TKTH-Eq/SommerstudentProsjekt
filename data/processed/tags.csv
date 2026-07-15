@@ -1,0 +1,640 @@
+drawing,folder,system,tag_type,tag,description
+C025-V-HO27-J-_E-101-01,Huldra SCD's,27,PT,27-PT 4804,Trykktransmitter
+C025-V-HO27-J-_E-101-01,Huldra SCD's,27,PT,27-PT 4805,Trykktransmitter
+C025-V-HO27-J-_E-101-01,Huldra SCD's,27,TT,27-TT 4806,Temperaturtransmitter
+C025-V-HO27-J-_E-101-01,Huldra SCD's,27,XV,27-XV 4813,Aktuert ventil
+C025-V-HO27-J-_E-101-01,Huldra SCD's,27,XV,27-XV 4814,Aktuert ventil
+C025-V-HO27-J-_E-101-01,Huldra SCD's,27,PT,27-PT 4803,Trykktransmitter
+C025-V-HO27-J-_E-101-01,Huldra SCD's,27,FT,27-FT 4801,Mengdetransmitter
+C025-V-HO27-J-_E-101-01,Huldra SCD's,27,PT,27-PT 4823,Trykktransmitter
+C025-V-HO27-J-_E-101-01,Huldra SCD's,27,XV,27-XV 4826,Aktuert ventil
+C025-V-HO27-J-_E-101-01,Huldra SCD's,27,XV,27-XV 4828,Aktuert ventil
+C025-V-HO27-J-_E-101-01,Huldra SCD's,27,PT,27-PT 4825,Trykktransmitter
+C025-V-HO27-J-_E-101-01,Huldra SCD's,27,PT,27-PT 4250B,Trykktransmitter
+C025-V-HO27-J-_E-101-01,Huldra SCD's,27,PT,27-PT 4252A,Trykktransmitter
+C025-V-HO27-J-_E-101-01,Huldra SCD's,27,PT,27-PT 4552B,Trykktransmitter
+C025-V-HO27-J-_E-101-01,Huldra SCD's,27,PT,27-PT 4250A,Trykktransmitter
+C025-V-HO27-J-_E-101-01,Huldra SCD's,27,PDT,27-PDT 4812,Differansetrykk-transmitter
+C025-V-HO27-J-_E-101-01,Huldra SCD's,27,PT,27-PT 4807,Trykktransmitter
+C025-V-HO27-J-_E-101-01,Huldra SCD's,63,XV,63-XV 4800,Aktuert ventil
+C025-V-HO27-J-_E-101-01,Huldra SCD's,,PI,PI 4805,Trykkindikator
+C025-V-HO27-J-_E-101-01,Huldra SCD's,,TI,TI 4806,Temperaturindikator
+C025-V-HO27-J-_E-101-01,Huldra SCD's,,PI,PI 4804,Trykkindikator
+C025-V-HO27-J-_E-101-01,Huldra SCD's,,HS,HS 4813,Handbryter
+C025-V-HO27-J-_E-101-01,Huldra SCD's,,HS,HS 4826,Handbryter
+C025-V-HO27-J-_E-101-01,Huldra SCD's,,HS,HS 4828,Handbryter
+C025-V-HO27-J-_E-102-01,Huldra SCD's,50,XV,50-XV 4805,Aktuert ventil
+C025-V-HO27-J-_E-102-01,Huldra SCD's,27,TT,27-TT 4820,Temperaturtransmitter
+C025-V-HO27-J-_E-102-01,Huldra SCD's,27,TT,27-TT 4821,Temperaturtransmitter
+C025-V-HO27-J-_E-102-01,Huldra SCD's,27,TT,27-TT 4816,Temperaturtransmitter
+C025-V-HO27-J-_E-102-01,Huldra SCD's,50,FT,50-FT 4810,Mengdetransmitter
+C025-V-HO27-J-_E-102-01,Huldra SCD's,50,PT,50-PT 4804,Trykktransmitter
+C025-V-HO27-J-_E-102-01,Huldra SCD's,50,XS,50-XS 4801,Bryter (div.)
+C025-V-HO27-J-_E-102-01,Huldra SCD's,50,TT,50-TT 4803,Temperaturtransmitter
+C025-V-HO27-J-_E-102-01,Huldra SCD's,50,PT,50-PT 4802,Trykktransmitter
+C025-V-HO27-J-_E-102-01,Huldra SCD's,50,PT,50-PT 4801,Trykktransmitter
+C025-V-HO27-J-_E-102-01,Huldra SCD's,50,FT,50-FT 4807,Mengdetransmitter
+C025-V-HO27-J-_E-102-01,Huldra SCD's,50,PT,50-PT 4806,Trykktransmitter
+C025-V-HO27-J-_E-102-01,Huldra SCD's,27,FT,27-FT 2050,Mengdetransmitter
+C025-V-HO27-J-_E-102-01,Huldra SCD's,,PI,PI 4806,Trykkindikator
+C025-V-HO27-J-_E-102-01,Huldra SCD's,,FI,FI 4807,Mengdeindikator
+C025-V-HO45-J-_E-101-01,Huldra SCD's,45,XV,45-XV 4820,Aktuert ventil
+C025-V-HO45-J-_E-101-01,Huldra SCD's,45,XV,45-XV 4821,Aktuert ventil
+C025-V-HO45-J-_E-101-01,Huldra SCD's,45,XV,45-XV 4822,Aktuert ventil
+C025-V-HO45-J-_E-101-01,Huldra SCD's,45,HV,45-HV 4824,Handventil (fjernstyrt)
+C025-V-HO45-J-_E-101-01,Huldra SCD's,45,XV,45-XV 4829,Aktuert ventil
+C025-V-HO45-J-_E-101-01,Huldra SCD's,45,TI,45-TI 4848,Temperaturindikator
+C025-V-HO45-J-_E-101-01,Huldra SCD's,45,TI,45-TI 4842,Temperaturindikator
+C025-V-HO45-J-_E-101-01,Huldra SCD's,45,XV,45-XV 4806,Aktuert ventil
+C025-V-HO45-J-_E-101-01,Huldra SCD's,,ZSL,ZSL 4820,Posisjonsbryter (lukket)
+C025-V-HO45-J-_E-101-01,Huldra SCD's,,HS,HS 4831,Handbryter
+C025-V-HO45-J-_E-101-01,Huldra SCD's,,HS,HS 4854,Handbryter
+C025-V-HO45-J-_E-101-01,Huldra SCD's,,ZSH,ZSH 4842,Posisjonsbryter (aapen)
+C025-V-HO45-J-_E-101-01,Huldra SCD's,,TI,TI 4822,Temperaturindikator
+C025-V-HO45-J-_E-101-01,Huldra SCD's,,HS,HS 4856,Handbryter
+C025-V-HO45-J-_E-101-01,Huldra SCD's,,TI,TI 4829,Temperaturindikator
+C025-V-HO45-J-_E-102-01,Huldra SCD's,45,ZSL,45-ZSL 4809,Posisjonsbryter (lukket)
+C025-V-HO45-J-_E-102-01,Huldra SCD's,45,XV,45-XV 4804,Aktuert ventil
+C025-V-HO45-J-_E-102-01,Huldra SCD's,45,XV,45-XV 4805,Aktuert ventil
+C025-V-HO45-J-_E-102-01,Huldra SCD's,45,XV,45-XV 4806A,Aktuert ventil
+C025-V-HO45-J-_E-102-01,Huldra SCD's,45,TI,45-TI 4850,Temperaturindikator
+C025-V-HO45-J-_E-102-01,Huldra SCD's,45,TI,45-TI 4842,Temperaturindikator
+C025-V-HO45-J-_E-102-01,Huldra SCD's,45,XV,45-XV 4830,Aktuert ventil
+C025-V-HO45-J-_E-102-01,Huldra SCD's,45,XV,45-XV 4823,Aktuert ventil
+C025-V-HO45-J-_E-102-01,Huldra SCD's,45,HV,45-HV 4825,Handventil (fjernstyrt)
+C025-V-HO45-J-_E-102-01,Huldra SCD's,45,XV,45-XV 4806,Aktuert ventil
+C025-V-HO45-J-_E-102-01,Huldra SCD's,,ZSL,ZSL 4823,Posisjonsbryter (lukket)
+C025-V-HO45-J-_E-102-01,Huldra SCD's,,HS,HS 4858,Handbryter
+C025-V-HO45-J-_E-102-01,Huldra SCD's,,TI,TI 4830,Temperaturindikator
+C025-V-HO45-J-_E-102-01,Huldra SCD's,,LSL,LSL 4804,Nivaabryter lav
+C025-V-HO45-J-_E-102-01,Huldra SCD's,,LSL,LSL 4805,Nivaabryter lav
+C025-V-HO45-J-_E-102-01,Huldra SCD's,,ZSL,ZSL 4810,Posisjonsbryter (lukket)
+C025-V-HO45-J-_E-102-01,Huldra SCD's,,ZSL,ZSL 4809,Posisjonsbryter (lukket)
+C025-V-HO45-J-_E-102-01,Huldra SCD's,,XA,XA 4859B,Alarm
+C025-V-HO45-J-_E-103-01,Huldra SCD's,45,HS,45-HS 4820,Handbryter
+C025-V-HO45-J-_E-103-01,Huldra SCD's,45,XA,45-XA 9299,Alarm
+C025-V-HO45-J-_E-103-01,Huldra SCD's,45,HS,45-HS 4830,Handbryter
+C025-V-HO45-J-_E-103-01,Huldra SCD's,45,HS,45-HS 4825,Handbryter
+C025-V-HO45-J-_E-103-01,Huldra SCD's,45,HS,45-HS 4829,Handbryter
+C025-V-HO45-J-_E-103-01,Huldra SCD's,45,HS,45-HS 4824,Handbryter
+C025-V-HO45-J-_E-103-01,Huldra SCD's,45,HS,45-HS 4822,Handbryter
+C025-V-HO45-J-_E-103-01,Huldra SCD's,45,HS,45-HS 4821,Handbryter
+C025-V-HO45-J-_E-103-01,Huldra SCD's,45,HS,45-HS 4823,Handbryter
+C025-V-HO45-J-_E-103-01,Huldra SCD's,45,XV,45-XV 4804,Aktuert ventil
+C025-V-HO45-J-_E-103-01,Huldra SCD's,45,XV,45-XV 4805,Aktuert ventil
+C025-V-HO45-J-_E-103-01,Huldra SCD's,45,XA,45-XA 9201,Alarm
+C025-V-HO45-J-_E-103-01,Huldra SCD's,27,HS,27-HS 4806,Handbryter
+C025-V-HO45-J-_E-103-01,Huldra SCD's,27,ZSH,27-ZSH 4005,Posisjonsbryter (aapen)
+C025-V-HO45-J-_E-103-01,Huldra SCD's,27,HS,27-HS 4006,Handbryter
+C025-V-HO45-J-_E-103-01,Huldra SCD's,45,HS,45-HS 4806,Handbryter
+C025-V-HO45-J-_E-103-01,Huldra SCD's,45,XA,45-XA 9101A,Alarm
+C025-V-HO45-J-_E-103-01,Huldra SCD's,45,TI,45-TI 4848,Temperaturindikator
+C025-V-HO45-J-_E-103-01,Huldra SCD's,45,TI,45-TI 4850,Temperaturindikator
+C025-V-HO45-J-_E-103-01,Huldra SCD's,45,XV,45-XV 4806A,Aktuert ventil
+C025-V-HO45-J-_E-103-01,Huldra SCD's,45,XA,45-XA 9203,Alarm
+C025-V-HO45-J-_E-103-01,Huldra SCD's,79,UZS,79-UZS 4513,Sekvens/interlock
+C025-V-HO45-J-_E-103-01,Huldra SCD's,45,XA,45-XA 9101B,Alarm
+C025-V-HO45-J-_E-103-01,Huldra SCD's,45,HV,45-HV 4824,Handventil (fjernstyrt)
+C025-V-HO45-J-_E-103-01,Huldra SCD's,45,HV,45-HV 4825,Handventil (fjernstyrt)
+C025-V-HO77-J-_E-102-01,Huldra SCD's,77,XA,77-XA 9101,Alarm
+C025-V-HO77-J-_E-102-01,Huldra SCD's,77,ZSL,77-ZSL 2013,Posisjonsbryter (lukket)
+C025-V-HO77-J-_E-102-01,Huldra SCD's,77,ZSL,77-ZSL 2014,Posisjonsbryter (lukket)
+C025-V-HO77-J-_E-102-01,Huldra SCD's,77,ZSL,77-ZSL 2016,Posisjonsbryter (lukket)
+C025-V-HO77-J-_E-102-01,Huldra SCD's,77,ZSL,77-ZSL 2017,Posisjonsbryter (lukket)
+C025-V-HO77-J-_E-102-01,Huldra SCD's,77,HS,77-HS 9100L,Handbryter
+C025-V-HO77-J-_E-102-01,Huldra SCD's,77,XA,77-XA 9102,Alarm
+C025-V-HO77-J-_E-102-01,Huldra SCD's,77,XA,77-XA 9103,Alarm
+C025-V-HO77-J-_E-102-01,Huldra SCD's,77,XA,77-XA 9104,Alarm
+C025-V-HO77-J-_E-104-01,Huldra SCD's,77,XA,77-XA 9201,Alarm
+C025-V-HO77-J-_E-104-01,Huldra SCD's,77,XA,77-XA 9202,Alarm
+C025-V-HO77-J-_E-104-01,Huldra SCD's,77,HS,77-HS 9200L,Handbryter
+C025-V-HO77-J-_E-104-01,Huldra SCD's,77,XA,77-XA 9203,Alarm
+C025-V-HO77-J-_E-104-01,Huldra SCD's,77,XA,77-XA 9204,Alarm
+C025-V-HO77-J-_E-104-01,Huldra SCD's,77,XA,77-XA 9206,Alarm
+C025-V-HO77-J-_E-104-01,Huldra SCD's,77,XA,77-XA 9207,Alarm
+C025-V-HO77-J-_E-104-01,Huldra SCD's,77,XA,77-XA 9205,Alarm
+C025-V-HO77-J-_E-104-01,Huldra SCD's,77,ZSL,77-ZSL 4089,Posisjonsbryter (lukket)
+C025-V-HO77-J-_E-104-01,Huldra SCD's,77,ZSL,77-ZSL 4087,Posisjonsbryter (lukket)
+C025-V-HO77-J-_E-105-01,Huldra SCD's,77,HS,77-HS 9000H,Handbryter
+C025-V-HO77-J-_E-105-01,Huldra SCD's,,HS,HS 9300H,Handbryter
+C025-V-HO77-J-_E-105-01,Huldra SCD's,,HS,HS 9300L,Handbryter
+C025-V-HO82-J-_E-102-01,Huldra SCD's,27,HS,27-HS 4338,Handbryter
+C025-V-HO82-J-_E-102-01,Huldra SCD's,50,FT,50-FT 4810,Mengdetransmitter
+C025-V-HO82-J-_E-102-01,Huldra SCD's,82,XA,82-XA 4880,Alarm
+C025-V-HO82-J-_E-102-01,Huldra SCD's,82,XA,82-XA 4881,Alarm
+C025-V-HO82-J-_E-102-01,Huldra SCD's,82,XA,82-XA 4882,Alarm
+C025-V-HO82-J-_E-102-01,Huldra SCD's,82,XA,82-XA 4883,Alarm
+C025-V-HO82-J-_E-102-01,Huldra SCD's,82,XA,82-XA 4884,Alarm
+C025-V-HO82-J-_E-102-01,Huldra SCD's,82,XA,82-XA 4885,Alarm
+C025-V-HO82-J-_E-102-01,Huldra SCD's,82,XA,82-XA 4886,Alarm
+C025-V-HO82-J-_E-102-01,Huldra SCD's,82,XA,82-XA 4887,Alarm
+C025-V-HO82-J-_E-102-01,Huldra SCD's,82,XA,82-XA 4888,Alarm
+C025-V-HO82-J-_E-102-01,Huldra SCD's,82,XA,82-XA 4889,Alarm
+C025-V-HO82-J-_E-102-01,Huldra SCD's,82,XA,82-XA 4890,Alarm
+C025-V-HO82-J-_E-102-01,Huldra SCD's,82,XA,82-XA 4891,Alarm
+C025-V-HO82-J-_E-102-01,Huldra SCD's,82,XA,82-XA 4892,Alarm
+C025-V-HO82-J-_E-102-01,Huldra SCD's,82,XA,82-XA 4893,Alarm
+C025-V-HO82-J-_E-102-01,Huldra SCD's,82,XA,82-XA 4894,Alarm
+C025-V-HO82-J-_E-103-01,Huldra SCD's,,HS,HS 9999,Handbryter
+C025-V-HO85-J-_E-101-01,Huldra SCD's,50,FT,50-FT 4807,Mengdetransmitter
+C025-W-HO00-J-_E-020-01,Huldra SCD's,70,XS,70-XS 2112B,Bryter (div.)
+C025-W-HO00-J-_E-020-01,Huldra SCD's,70,XS,70-XS 2002A,Bryter (div.)
+C025-W-HO00-J-_E-021-01,Huldra SCD's,70,XS,70-XS 2014B,Bryter (div.)
+C025-W-HO00-J-_E-021-01,Huldra SCD's,24,XA,24-XA 2165,Alarm
+C025-W-HO00-J-_E-021-01,Huldra SCD's,24,XA,24-XA 2166,Alarm
+C025-W-HO00-J-_E-021-01,Huldra SCD's,24,XA,24-XA 2167,Alarm
+C025-W-HO00-J-_E-021-01,Huldra SCD's,24,XA,24-XA 2168,Alarm
+C025-W-HO00-J-_E-021-01,Huldra SCD's,70,XS,70-XS 2015B,Bryter (div.)
+C025-W-HO00-J-_E-021-01,Huldra SCD's,50,XA,50-XA 4802,Alarm
+C025-W-HO00-J-_E-030-01,Huldra SCD's,,UZS,UZS 0020,Sekvens/interlock
+C025-W-HO00-J-_E-040-01,Huldra SCD's,,HS,HS 2015H,Handbryter
+C025-W-HO00-J-_E-040-01,Huldra SCD's,,HS,HS 2015V,Handbryter
+C025-W-HO13-J-_E-001-01,Huldra SCD's,13,ESV,13-ESV 2303,Nodavstengningsventil
+C025-W-HO13-J-_E-001-01,Huldra SCD's,13,HV,13-HV 2309,Handventil (fjernstyrt)
+C025-W-HO13-J-_E-001-01,Huldra SCD's,13,XV,13-XV 2321,Aktuert ventil
+C025-W-HO13-J-_E-001-01,Huldra SCD's,13,XV,13-XV 2322,Aktuert ventil
+C025-W-HO13-J-_E-001-01,Huldra SCD's,13,ESV,13-ESV 2302,Nodavstengningsventil
+C025-W-HO13-J-_E-001-01,Huldra SCD's,13,HV,13-HV 2004,Handventil (fjernstyrt)
+C025-W-HO13-J-_E-001-01,Huldra SCD's,13,HV,13-HV 2002,Handventil (fjernstyrt)
+C025-W-HO13-J-_E-001-01,Huldra SCD's,13,ESV,13-ESV 2301,Nodavstengningsventil
+C025-W-HO13-J-_E-001-01,Huldra SCD's,42,FI,42-FI 2216,Mengdeindikator
+C025-W-HO13-J-_E-001-01,Huldra SCD's,13,XV,13-XV 2329,Aktuert ventil
+C025-W-HO13-J-_E-001-01,Huldra SCD's,42,XV,42-XV 2055,Aktuert ventil
+C025-W-HO13-J-_E-001-01,Huldra SCD's,13,HV,13-HV 2314,Handventil (fjernstyrt)
+C025-W-HO13-J-_E-001-01,Huldra SCD's,13,HV,13-HV 2337,Handventil (fjernstyrt)
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,PI,PI 2312A,Trykkindikator
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,PI,PI 2327,Trykkindikator
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,PI,PI 2315,Trykkindikator
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,TI,TI 2330,Temperaturindikator
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,XA,XA 2320A,Alarm
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,XA,XA 2320C,Alarm
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,XI,XI 2320,Indikering (div.)
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,XA,XA 2320B,Alarm
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,HIC,HIC 2309,Handregulator
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,UZS,UZS 4205,Sekvens/interlock
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,UZS,UZS 1321,Sekvens/interlock
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,PDI,PDI 2310,Differansetrykk-indikator
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,PI,PI 2006,Trykkindikator
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,TI,TI 2313,Temperaturindikator
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,PI,PI 2310A,Trykkindikator
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,PDI,PDI 2349,Differansetrykk-indikator
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,PX,PX 2349,Trykk (beregnet)
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,FI,FI 2325B,Mengdeindikator
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,FI,FI 2325C,Mengdeindikator
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,FI,FI 2325A,Mengdeindikator
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,TI,TI 2323,Temperaturindikator
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,PI,PI 2324,Trykkindikator
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,XA,XA 2347,Alarm
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,HS,HS 2004,Handbryter
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,HS,HS 2002,Handbryter
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,TI,TI 2002,Temperaturindikator
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,PI,PI 2306A,Trykkindikator
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,US,US 9105A,Multifunksjonsbryter
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,US,US 9105B,Multifunksjonsbryter
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,PI,PI 2001,Trykkindikator
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,HS,HS 9105,Handbryter
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,HS,HS 9205,Handbryter
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,HS,HS 9005,Handbryter
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,TI,TI 2336B,Temperaturindikator
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,PI,PI 2336A,Trykkindikator
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,PI,PI 2336B,Trykkindikator
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,TI,TI 2336A,Temperaturindikator
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,HS,HS 9000,Handbryter
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,HS,HS 9001,Handbryter
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,US,US 9100B,Multifunksjonsbryter
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,US,US 9100A,Multifunksjonsbryter
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,HS,HS 2329,Handbryter
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,US,US 9005B,Multifunksjonsbryter
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,US,US 9005A,Multifunksjonsbryter
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,FI,FI 2316,Mengdeindikator
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,HS,HS 2055,Handbryter
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,HS,HS 2320,Handbryter
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,HIC,HIC 2314,Handregulator
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,XI,XI 2343B,Indikering (div.)
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,HS,HS 2337,Handbryter
+C025-W-HO13-J-_E-001-01,Huldra SCD's,,PDI,PDI 2015,Differansetrykk-indikator
+C025-W-HO13-J-_E-002-01,Huldra SCD's,13,ESV,13-ESV 2302,Nodavstengningsventil
+C025-W-HO13-J-_E-002-01,Huldra SCD's,13,XV,13-XV 2322,Aktuert ventil
+C025-W-HO13-J-_E-002-01,Huldra SCD's,13,XV,13-XV 2321,Aktuert ventil
+C025-W-HO13-J-_E-002-01,Huldra SCD's,13,ESV,13-ESV 2301,Nodavstengningsventil
+C025-W-HO13-J-_E-002-01,Huldra SCD's,13,ESV,13-ESV 2303,Nodavstengningsventil
+C025-W-HO13-J-_E-002-01,Huldra SCD's,13,HS,13-HS 2349A,Handbryter
+C025-W-HO13-J-_E-002-01,Huldra SCD's,13,HS,13-HS 2350A,Handbryter
+C025-W-HO13-J-_E-002-01,Huldra SCD's,,HS,HS 2302,Handbryter
+C025-W-HO13-J-_E-002-01,Huldra SCD's,,HS,HS 2322,Handbryter
+C025-W-HO13-J-_E-002-01,Huldra SCD's,,HS,HS 2321,Handbryter
+C025-W-HO13-J-_E-002-01,Huldra SCD's,,HS,HS 2301,Handbryter
+C025-W-HO13-J-_E-002-01,Huldra SCD's,,PI,PI 2301,Trykkindikator
+C025-W-HO13-J-_E-002-01,Huldra SCD's,,UZS,UZS 1320,Sekvens/interlock
+C025-W-HO13-J-_E-002-01,Huldra SCD's,,UZS,UZS 1324,Sekvens/interlock
+C025-W-HO13-J-_E-002-01,Huldra SCD's,,PI,PI 2321,Trykkindikator
+C025-W-HO13-J-_E-002-01,Huldra SCD's,,PI,PI 2322,Trykkindikator
+C025-W-HO13-J-_E-002-01,Huldra SCD's,,PI,PI 2302,Trykkindikator
+C025-W-HO13-J-_E-002-01,Huldra SCD's,,PI,PI 2303,Trykkindikator
+C025-W-HO13-J-_E-002-01,Huldra SCD's,,HS,HS 2303,Handbryter
+C025-W-HO13-J-_E-002-01,Huldra SCD's,,UZS,UZS 1322,Sekvens/interlock
+C025-W-HO13-J-_E-002-01,Huldra SCD's,,UZS,UZS 1323,Sekvens/interlock
+C025-W-HO20-J-_E-001-01,Huldra SCD's,20,XV,20-XV 2009,Aktuert ventil
+C025-W-HO20-J-_E-001-01,Huldra SCD's,20,XV,20-XV 2015,Aktuert ventil
+C025-W-HO20-J-_E-001-01,Huldra SCD's,20,XV,20-XV 2202A,Aktuert ventil
+C025-W-HO20-J-_E-001-01,Huldra SCD's,20,XV,20-XV 2202B,Aktuert ventil
+C025-W-HO20-J-_E-001-01,Huldra SCD's,20,XV,20-XV 2008,Aktuert ventil
+C025-W-HO20-J-_E-001-01,Huldra SCD's,20,ESV,20-ESV 2007,Nodavstengningsventil
+C025-W-HO20-J-_E-001-01,Huldra SCD's,20,PT,20-PT 2016,Trykktransmitter
+C025-W-HO20-J-_E-001-01,Huldra SCD's,20,TT,20-TT 2060,Temperaturtransmitter
+C025-W-HO20-J-_E-001-01,Huldra SCD's,20,FT,20-FT 2000,Mengdetransmitter
+C025-W-HO20-J-_E-001-01,Huldra SCD's,,HS,HS 2009,Handbryter
+C025-W-HO20-J-_E-001-01,Huldra SCD's,,HS,HS 2015,Handbryter
+C025-W-HO20-J-_E-001-01,Huldra SCD's,,PI,PI 2003,Trykkindikator
+C025-W-HO20-J-_E-001-01,Huldra SCD's,,ZSH,ZSH 2201,Posisjonsbryter (aapen)
+C025-W-HO20-J-_E-001-01,Huldra SCD's,,LI,LI 2005,Nivaaindikator
+C025-W-HO20-J-_E-001-01,Huldra SCD's,,HS,HS 2202A,Handbryter
+C025-W-HO20-J-_E-001-01,Huldra SCD's,,HS,HS 2202B,Handbryter
+C025-W-HO20-J-_E-001-01,Huldra SCD's,,TI,TI 2001A,Temperaturindikator
+C025-W-HO20-J-_E-001-01,Huldra SCD's,,TI,TI 2001B,Temperaturindikator
+C025-W-HO20-J-_E-001-01,Huldra SCD's,,PI,PI 2019,Trykkindikator
+C025-W-HO20-J-_E-001-01,Huldra SCD's,,HS,HS 2008,Handbryter
+C025-W-HO20-J-_E-001-01,Huldra SCD's,,UZS,UZS 2010,Sekvens/interlock
+C025-W-HO20-J-_E-001-01,Huldra SCD's,,HS,HS 2007,Handbryter
+C025-W-HO20-J-_E-001-01,Huldra SCD's,,PI,PI 2012,Trykkindikator
+C025-W-HO20-J-_E-001-01,Huldra SCD's,,PI,PI 2018,Trykkindikator
+C025-W-HO20-J-_E-001-01,Huldra SCD's,,TI,TI 2010,Temperaturindikator
+C025-W-HO20-J-_E-001-01,Huldra SCD's,,UZS,UZS 2011,Sekvens/interlock
+C025-W-HO20-J-_E-001-01,Huldra SCD's,,US,US 2200A,Multifunksjonsbryter
+C025-W-HO20-J-_E-001-01,Huldra SCD's,,US,US 2200B,Multifunksjonsbryter
+C025-W-HO20-J-_E-001-01,Huldra SCD's,,PI,PI 2016,Trykkindikator
+C025-W-HO20-J-_E-001-01,Huldra SCD's,,TI,TI 2060,Temperaturindikator
+C025-W-HO20-J-_E-002-01,Huldra SCD's,,LI,LI 2056,Nivaaindikator
+C025-W-HO20-J-_E-002-01,Huldra SCD's,,FI,FI 2061,Mengdeindikator
+C025-W-HO20-J-_E-002-01,Huldra SCD's,,TI,TI 2059,Temperaturindikator
+C025-W-HO20-J-_E-002-01,Huldra SCD's,,UZS,UZS 2020,Sekvens/interlock
+C025-W-HO20-J-_E-002-01,Huldra SCD's,,FI,FI 2064,Mengdeindikator
+C025-W-HO20-J-_E-002-01,Huldra SCD's,,US,US 2055,Multifunksjonsbryter
+C025-W-HO21-J-_E-001-01,Huldra SCD's,42,XV,42-XV 2152,Aktuert ventil
+C025-W-HO21-J-_E-001-01,Huldra SCD's,,XI,XI 2003B,Indikering (div.)
+C025-W-HO21-J-_E-001-01,Huldra SCD's,,TI,TI 2010,Temperaturindikator
+C025-W-HO21-J-_E-001-01,Huldra SCD's,,PI,PI 2005,Trykkindikator
+C025-W-HO21-J-_E-001-01,Huldra SCD's,,XI,XI 2007,Indikering (div.)
+C025-W-HO21-J-_E-001-01,Huldra SCD's,,XA,XA 2007,Alarm
+C025-W-HO21-J-_E-001-01,Huldra SCD's,,PI,PI 2006,Trykkindikator
+C025-W-HO21-J-_E-001-01,Huldra SCD's,,HS,HS 2006,Handbryter
+C025-W-HO21-J-_E-001-01,Huldra SCD's,,HS,HS 2007A,Handbryter
+C025-W-HO21-J-_E-001-01,Huldra SCD's,,HS,HS 2007B,Handbryter
+C025-W-HO21-J-_E-001-01,Huldra SCD's,,HS,HS 2152,Handbryter
+C025-W-HO21-J-_E-001-01,Huldra SCD's,,UZS,UZS 2120,Sekvens/interlock
+C025-W-HO21-J-_E-001-01,Huldra SCD's,,UZS,UZS 4217,Sekvens/interlock
+C025-W-HO24-J-_E-001-01,Huldra SCD's,24,XV,24-XV 2157,Aktuert ventil
+C025-W-HO24-J-_E-001-01,Huldra SCD's,24,XV,24-XV 2163A,Aktuert ventil
+C025-W-HO24-J-_E-001-01,Huldra SCD's,24,XV,24-XV 2163B,Aktuert ventil
+C025-W-HO24-J-_E-001-01,Huldra SCD's,24,XV,24-XV 2153A,Aktuert ventil
+C025-W-HO24-J-_E-001-01,Huldra SCD's,24,XV,24-XV 2153B,Aktuert ventil
+C025-W-HO24-J-_E-001-01,Huldra SCD's,24,ESV,24-ESV 2156,Nodavstengningsventil
+C025-W-HO24-J-_E-001-01,Huldra SCD's,24,PT,24-PT 2159,Trykktransmitter
+C025-W-HO24-J-_E-001-01,Huldra SCD's,24,FT,24-FT 2100,Mengdetransmitter
+C025-W-HO24-J-_E-001-01,Huldra SCD's,24,PT,24-PT 2160,Trykktransmitter
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,PI,PI 2165,Trykkindikator
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,PI,PI 2166,Trykkindikator
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,TI,TI 2009,Temperaturindikator
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,TI,TI 2011,Temperaturindikator
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,PI,PI 2001,Trykkindikator
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,PI,PI 2170,Trykkindikator
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,PI,PI 2169,Trykkindikator
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,TI,TI 2010,Temperaturindikator
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,XA,XA 2166,Alarm
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,XA,XA 2165,Alarm
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,XA,XA 2009,Alarm
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,HS,HS 2157,Handbryter
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,PI,PI 2168,Trykkindikator
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,XA,XA 2167,Alarm
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,PI,PI 2167,Trykkindikator
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,XA,XA 2168,Alarm
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,XA,XA 2008,Alarm
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,TI,TI 2171,Temperaturindikator
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,TI,TI 2172,Temperaturindikator
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,XA,XA 2017,Alarm
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,XA,XA 2014,Alarm
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,HS,HS 2163A,Handbryter
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,HS,HS 2163B,Handbryter
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,HS,HS 2153A,Handbryter
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,HS,HS 2153B,Handbryter
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,HS,HS 2156,Handbryter
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,XA,XA 2015,Alarm
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,LI,LI 2003,Nivaaindikator
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,US,US 2162A,Multifunksjonsbryter
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,PI,PI 2160,Trykkindikator
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,US,US 2152A,Multifunksjonsbryter
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,US,US 2152B,Multifunksjonsbryter
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,US,US 2162B,Multifunksjonsbryter
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,PDI,PDI 2183,Differansetrykk-indikator
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,PI,PI 2159,Trykkindikator
+C025-W-HO24-J-_E-001-01,Huldra SCD's,,LSH,LSH 2005,Nivaabryter hoy
+C025-W-HO27-J-_E-001-01,Huldra SCD's,27,ESV,27-ESV 2240,Nodavstengningsventil
+C025-W-HO27-J-_E-001-01,Huldra SCD's,42,XV,42-XV 2150,Aktuert ventil
+C025-W-HO27-J-_E-001-01,Huldra SCD's,27,HV,27-HV 2203A,Handventil (fjernstyrt)
+C025-W-HO27-J-_E-001-01,Huldra SCD's,27,ESV,27-ESV 2241,Nodavstengningsventil
+C025-W-HO27-J-_E-001-01,Huldra SCD's,27,FT,27-FT 2060,Mengdetransmitter
+C025-W-HO27-J-_E-001-01,Huldra SCD's,27,HV,27-HV 2065,Handventil (fjernstyrt)
+C025-W-HO27-J-_E-001-01,Huldra SCD's,27,HV,27-HV 2055,Handventil (fjernstyrt)
+C025-W-HO27-J-_E-001-01,Huldra SCD's,27,FT,27-FT 2050,Mengdetransmitter
+C025-W-HO27-J-_E-001-01,Huldra SCD's,27,TT,27-TT 2054A,Temperaturtransmitter
+C025-W-HO27-J-_E-001-01,Huldra SCD's,27,TT,27-TT 2064A,Temperaturtransmitter
+C025-W-HO27-J-_E-001-01,Huldra SCD's,27,XV,27-XV 2203,Aktuert ventil
+C025-W-HO27-J-_E-001-01,Huldra SCD's,,HS,HS 2240,Handbryter
+C025-W-HO27-J-_E-001-01,Huldra SCD's,,PI,PI 2005,Trykkindikator
+C025-W-HO27-J-_E-001-01,Huldra SCD's,,PI,PI 2006,Trykkindikator
+C025-W-HO27-J-_E-001-01,Huldra SCD's,,HS,HS 2006,Handbryter
+C025-W-HO27-J-_E-001-01,Huldra SCD's,,US,US 2006,Multifunksjonsbryter
+C025-W-HO27-J-_E-001-01,Huldra SCD's,,TI,TI 2054,Temperaturindikator
+C025-W-HO27-J-_E-001-01,Huldra SCD's,,PI,PI 2061,Trykkindikator
+C025-W-HO27-J-_E-001-01,Huldra SCD's,,PI,PI 2051,Trykkindikator
+C025-W-HO27-J-_E-001-01,Huldra SCD's,,XI,XI 2003B,Indikering (div.)
+C025-W-HO27-J-_E-001-01,Huldra SCD's,,XI,XI 2007,Indikering (div.)
+C025-W-HO27-J-_E-001-01,Huldra SCD's,,XA,XA 2007,Alarm
+C025-W-HO27-J-_E-001-01,Huldra SCD's,,HS,HS 2007B,Handbryter
+C025-W-HO27-J-_E-001-01,Huldra SCD's,,HS,HS 2007A,Handbryter
+C025-W-HO27-J-_E-001-01,Huldra SCD's,,HS,HS 2150,Handbryter
+C025-W-HO27-J-_E-001-01,Huldra SCD's,,HS,HS 2203A,Handbryter
+C025-W-HO27-J-_E-001-01,Huldra SCD's,,FI,FI 2060,Mengdeindikator
+C025-W-HO27-J-_E-001-01,Huldra SCD's,,FI,FI 2050,Mengdeindikator
+C025-W-HO27-J-_E-001-01,Huldra SCD's,,TI,TI 2064,Temperaturindikator
+C025-W-HO27-J-_E-001-01,Huldra SCD's,,UZS,UZS 2710,Sekvens/interlock
+C025-W-HO27-J-_E-001-01,Huldra SCD's,,HS,HS 2241,Handbryter
+C025-W-HO27-J-_E-001-01,Huldra SCD's,,UZS,UZS 4218,Sekvens/interlock
+C025-W-HO27-J-_E-001-01,Huldra SCD's,,US,US 2201,Multifunksjonsbryter
+C025-W-HO27-J-_E-001-01,Huldra SCD's,,FI,FI 2070,Mengdeindikator
+C025-W-HO42-J-_E-003-01,Huldra SCD's,27,FI,27-FI 2050,Mengdeindikator
+C025-W-HO42-J-_E-003-01,Huldra SCD's,27,FI,27-FI 2060,Mengdeindikator
+C025-W-HO42-J-_E-003-01,Huldra SCD's,42,XV,42-XV 2060,Aktuert ventil
+C025-W-HO42-J-_E-003-01,Huldra SCD's,,LI,LI 2050,Nivaaindikator
+C025-W-HO42-J-_E-003-01,Huldra SCD's,,LI,LI 2005A,Nivaaindikator
+C025-W-HO42-J-_E-003-01,Huldra SCD's,,UZS,UZS 4240,Sekvens/interlock
+C025-W-HO42-J-_E-003-01,Huldra SCD's,,UZS,UZS 4243,Sekvens/interlock
+C025-W-HO42-J-_E-003-01,Huldra SCD's,,HIC,HIC 2081,Handregulator
+C025-W-HO42-J-_E-003-01,Huldra SCD's,,PI,PI 2002,Trykkindikator
+C025-W-HO42-J-_E-003-01,Huldra SCD's,,PI,PI 2036,Trykkindikator
+C025-W-HO42-J-_E-003-01,Huldra SCD's,,PI,PI 2034,Trykkindikator
+C025-W-HO42-J-_E-003-01,Huldra SCD's,,PI,PI 2004,Trykkindikator
+C025-W-HO42-J-_E-003-01,Huldra SCD's,,HIC,HIC 2080,Handregulator
+C025-W-HO42-J-_E-003-01,Huldra SCD's,,UZS,UZS 4241,Sekvens/interlock
+C025-W-HO42-J-_E-003-01,Huldra SCD's,,UZS,UZS 4242,Sekvens/interlock
+C025-W-HO42-J-_E-003-01,Huldra SCD's,,HS,HS 2060,Handbryter
+C025-W-HO42-J-_E-003-01,Huldra SCD's,,PI,PI 2072A,Trykkindikator
+C025-W-HO42-J-_E-003-01,Huldra SCD's,,HS,HS 2005,Handbryter
+C025-W-HO42-J-_E-003-01,Huldra SCD's,,HS,HS 2129,Handbryter
+C025-W-HO42-J-_E-003-01,Huldra SCD's,,LI,LI 2005C,Nivaaindikator
+C025-W-HO42-J-_E-003-01,Huldra SCD's,,LI,LI 2005B,Nivaaindikator
+C025-W-HO42-J-_E-003-01,Huldra SCD's,,LI,LI 2005D,Nivaaindikator
+C025-W-HO42-J-_E-004-01,Huldra SCD's,42,XV,42-XV 2210,Aktuert ventil
+C025-W-HO42-J-_E-004-01,Huldra SCD's,,PI,PI 2070,Trykkindikator
+C025-W-HO42-J-_E-004-01,Huldra SCD's,,PI,PI 2069,Trykkindikator
+C025-W-HO42-J-_E-004-01,Huldra SCD's,,LI,LI 2046,Nivaaindikator
+C025-W-HO42-J-_E-004-01,Huldra SCD's,,PI,PI 2211,Trykkindikator
+C025-W-HO42-J-_E-004-01,Huldra SCD's,,UZS,UZS 4251,Sekvens/interlock
+C025-W-HO42-J-_E-004-01,Huldra SCD's,,HS,HS 2210,Handbryter
+C025-W-HO42-J-_E-004-01,Huldra SCD's,,PI,PI 2047A,Trykkindikator
+C025-W-HO42-J-_E-004-01,Huldra SCD's,,PI,PI 2047C,Trykkindikator
+C025-W-HO42-J-_E-004-01,Huldra SCD's,,PI,PI 2059,Trykkindikator
+C025-W-HO42-J-_E-004-01,Huldra SCD's,,PI,PI 2063A,Trykkindikator
+C025-W-HO42-J-_E-004-01,Huldra SCD's,,FI,FI 2215,Mengdeindikator
+C025-W-HO42-J-_E-004-01,Huldra SCD's,,LI,LI 2054,Nivaaindikator
+C025-W-HO42-J-_E-004-01,Huldra SCD's,,LI,LI 2054B,Nivaaindikator
+C025-W-HO42-J-_E-006-01,Huldra SCD's,42,XV,42-XV 2212,Aktuert ventil
+C025-W-HO42-J-_E-006-01,Huldra SCD's,42,HV,42-HV 2058,Handventil (fjernstyrt)
+C025-W-HO42-J-_E-006-01,Huldra SCD's,42,LI,42-LI 2099,Nivaaindikator
+C025-W-HO42-J-_E-006-01,Huldra SCD's,42,PI,42-PI 2086,Trykkindikator
+C025-W-HO42-J-_E-006-01,Huldra SCD's,,HS,HS 2212,Handbryter
+C025-W-HO42-J-_E-006-01,Huldra SCD's,,PI,PI 2086,Trykkindikator
+C025-W-HO42-J-_E-006-01,Huldra SCD's,,PI,PI 2087,Trykkindikator
+C025-W-HO42-J-_E-006-01,Huldra SCD's,,PI,PI 2213,Trykkindikator
+C025-W-HO42-J-_E-006-01,Huldra SCD's,,HS,HS 2058,Handbryter
+C025-W-HO42-J-_E-006-01,Huldra SCD's,,UZS,UZS 4215,Sekvens/interlock
+C025-W-HO42-J-_E-006-01,Huldra SCD's,,PI,PI 2092,Trykkindikator
+C025-W-HO42-J-_E-006-01,Huldra SCD's,,HS,HS 2208,Handbryter
+C025-W-HO42-J-_E-006-01,Huldra SCD's,,TI,TI 2089,Temperaturindikator
+C025-W-HO42-J-_E-006-01,Huldra SCD's,,PI,PI 2077,Trykkindikator
+C025-W-HO42-J-_E-006-01,Huldra SCD's,,LI,LI 2098,Nivaaindikator
+C025-W-HO42-J-_E-006-01,Huldra SCD's,,UZS,UZS 4214,Sekvens/interlock
+C025-W-HO42-J-_E-006-01,Huldra SCD's,,XA,XA 2085,Alarm
+C025-W-HO42-J-_E-006-01,Huldra SCD's,,US,US 2208B,Multifunksjonsbryter
+C025-W-HO42-J-_E-006-01,Huldra SCD's,,US,US 2208A,Multifunksjonsbryter
+C025-W-HO42-J-_E-006-01,Huldra SCD's,,HS,HS 2214,Handbryter
+C025-W-HO42-J-_E-006-01,Huldra SCD's,,FI,FI 2216,Mengdeindikator
+C025-W-HO42-J-_E-006-01,Huldra SCD's,,LI,LI 2099B,Nivaaindikator
+C025-W-HO42-J-_E-006-01,Huldra SCD's,,US,US 2092A,Multifunksjonsbryter
+C025-W-HO42-J-_E-006-01,Huldra SCD's,,US,US 2092B,Multifunksjonsbryter
+C025-W-HO42-J-_E-006-01,Huldra SCD's,,US,US 2068,Multifunksjonsbryter
+C025-W-HO42-J-_E-006-01,Huldra SCD's,,US,US 2126,Multifunksjonsbryter
+C025-W-HO42-J-_E-006-01,Huldra SCD's,,UZS,UZS 4219,Sekvens/interlock
+C025-W-HO43-J-_E-001-01,Huldra SCD's,43,PT,43-PT 2033,Trykktransmitter
+C025-W-HO43-J-_E-001-01,Huldra SCD's,43,TT,43-TT 2034,Temperaturtransmitter
+C025-W-HO43-J-_E-001-01,Huldra SCD's,43,XV,43-XV 2021,Aktuert ventil
+C025-W-HO43-J-_E-001-01,Huldra SCD's,43,XV,43-XV 2003,Aktuert ventil
+C025-W-HO43-J-_E-001-01,Huldra SCD's,43,FT,43-FT 2004A,Mengdetransmitter
+C025-W-HO43-J-_E-001-01,Huldra SCD's,,PI,PI 2015,Trykkindikator
+C025-W-HO43-J-_E-001-01,Huldra SCD's,,PI,PI 2014,Trykkindikator
+C025-W-HO43-J-_E-001-01,Huldra SCD's,,PDI,PDI 2016,Differansetrykk-indikator
+C025-W-HO43-J-_E-001-01,Huldra SCD's,,PI,PI 2019,Trykkindikator
+C025-W-HO43-J-_E-001-01,Huldra SCD's,,UZS,UZS 4311,Sekvens/interlock
+C025-W-HO43-J-_E-001-01,Huldra SCD's,,UZS,UZS 4310,Sekvens/interlock
+C025-W-HO43-J-_E-001-01,Huldra SCD's,,XS,XS 215,Bryter (div.)
+C025-W-HO43-J-_E-001-01,Huldra SCD's,,UZS,UZS 4312,Sekvens/interlock
+C025-W-HO43-J-_E-001-01,Huldra SCD's,,UZS,UZS 4313,Sekvens/interlock
+C025-W-HO43-J-_E-001-01,Huldra SCD's,,US,US 2035,Multifunksjonsbryter
+C025-W-HO43-J-_E-001-01,Huldra SCD's,,US,US 2036,Multifunksjonsbryter
+C025-W-HO43-J-_E-001-01,Huldra SCD's,,PI,PI 2023,Trykkindikator
+C025-W-HO43-J-_E-001-01,Huldra SCD's,,HS,HS 2002,Handbryter
+C025-W-HO43-J-_E-001-01,Huldra SCD's,,LI,LI 2022,Nivaaindikator
+C025-W-HO43-J-_E-001-01,Huldra SCD's,,LI,LI 2001,Nivaaindikator
+C025-W-HO43-J-_E-001-01,Huldra SCD's,,US,US 2002,Multifunksjonsbryter
+C025-W-HO43-J-_E-001-01,Huldra SCD's,,TI,TI 2025,Temperaturindikator
+C025-W-HO43-J-_E-001-01,Huldra SCD's,,TI,TI 2007,Temperaturindikator
+C025-W-HO43-J-_E-001-01,Huldra SCD's,,PI,PI 2012,Trykkindikator
+C025-W-HO43-J-_E-001-01,Huldra SCD's,,PI,PI 2008,Trykkindikator
+C025-W-HO43-J-_E-001-01,Huldra SCD's,,FI,FI 2004,Mengdeindikator
+C025-W-HO43-J-_E-001-01,Huldra SCD's,,PI,PI 2033,Trykkindikator
+C025-W-HO43-J-_E-001-01,Huldra SCD's,,TI,TI 2034,Temperaturindikator
+C025-W-HO43-J-_E-001-01,Huldra SCD's,,TI,TI 2006,Temperaturindikator
+C025-W-HO43-J-_E-001-01,Huldra SCD's,,TI,TI 2030,Temperaturindikator
+C025-W-HO43-J-_E-001-01,Huldra SCD's,,HS,HS 2021,Handbryter
+C025-W-HO43-J-_E-001-01,Huldra SCD's,,UZS,UZS 4314,Sekvens/interlock
+C025-W-HO43-J-_E-001-01,Huldra SCD's,,LI,LI 2002,Nivaaindikator
+C025-W-HO43-J-_E-001-01,Huldra SCD's,,HS,HS 2003,Handbryter
+C025-W-HO43-J-_E-001-01,Huldra SCD's,,HS,HS 2004,Handbryter
+C025-W-HO53-J-_E-001-01,Huldra SCD's,,US,US 2017,Multifunksjonsbryter
+C025-W-HO62-J-_E-001-01,Huldra SCD's,62,HV,62-HV 2036,Handventil (fjernstyrt)
+C025-W-HO62-J-_E-001-01,Huldra SCD's,62,XV,62-XV 2027,Aktuert ventil
+C025-W-HO62-J-_E-001-01,Huldra SCD's,62,XV,62-XV 2029,Aktuert ventil
+C025-W-HO62-J-_E-001-01,Huldra SCD's,62,XV,62-XV 2018,Aktuert ventil
+C025-W-HO62-J-_E-001-01,Huldra SCD's,62,XV,62-XV 2020,Aktuert ventil
+C025-W-HO62-J-_E-001-01,Huldra SCD's,62,XV,62-XV 2010,Aktuert ventil
+C025-W-HO62-J-_E-001-01,Huldra SCD's,82,XV,82-XV 2812,Aktuert ventil
+C025-W-HO62-J-_E-001-01,Huldra SCD's,82,XV,82-XV 2612,Aktuert ventil
+C025-W-HO62-J-_E-001-01,Huldra SCD's,56,XV,56-XV 2012,Aktuert ventil
+C025-W-HO62-J-_E-001-01,Huldra SCD's,56,XV,56-XV 2013,Aktuert ventil
+C025-W-HO62-J-_E-001-01,Huldra SCD's,62,XV,62-XV 2035,Aktuert ventil
+C025-W-HO62-J-_E-001-01,Huldra SCD's,62,HS,62-HS 2033,Handbryter
+C025-W-HO62-J-_E-001-01,Huldra SCD's,62,HS,62-HS 2034,Handbryter
+C025-W-HO62-J-_E-001-01,Huldra SCD's,70,XS,70-XS 2015A,Bryter (div.)
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,UZS,UZS 6211,Sekvens/interlock
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,UZS,UZS 6212,Sekvens/interlock
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,PDI,PDI 2017,Differansetrykk-indikator
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,PDI,PDI 2026,Differansetrykk-indikator
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,PDI,PDI 2019,Differansetrykk-indikator
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,PDI,PDI 2028,Differansetrykk-indikator
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,LI,LI 2024,Nivaaindikator
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,LI,LI 2015,Nivaaindikator
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,UZS,UZS 8210,Sekvens/interlock
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,UZS,UZS 8220,Sekvens/interlock
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,PI,PI 2003,Trykkindikator
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,HIC,HIC 2036,Handregulator
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,XA,XA 2045,Alarm
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,FI,FI 2009,Mengdeindikator
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,LI,LI 2006,Nivaaindikator
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,HS,HS 2027,Handbryter
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,HS,HS 2029,Handbryter
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,HS,HS 2018,Handbryter
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,HS,HS 2020,Handbryter
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,HS,HS 2010,Handbryter
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,HS,HS 2002,Handbryter
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,LI,LI 2002B,Nivaaindikator
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,LI,LI 2002C,Nivaaindikator
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,HS,HS 2812,Handbryter
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,LI,LI 2812,Nivaaindikator
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,HS,HS 2612,Handbryter
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,XA,XA 2044,Alarm
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,LI,LI 2612,Nivaaindikator
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,HS,HS 2012,Handbryter
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,UZS,UZS 6210,Sekvens/interlock
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,HS,HS 2013,Handbryter
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,LI,LI 2002A,Nivaaindikator
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,HS,HS 2035,Handbryter
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,US,US 2012,Multifunksjonsbryter
+C025-W-HO62-J-_E-001-01,Huldra SCD's,,US,US 2036,Multifunksjonsbryter
+C025-W-HO77-J-_E-001-01,Huldra SCD's,,PDI,PDI 2005,Differansetrykk-indikator
+C025-W-HO77-J-_E-001-01,Huldra SCD's,,TI,TI 2040,Temperaturindikator
+C025-W-HO77-J-_E-001-01,Huldra SCD's,,TI,TI 2039,Temperaturindikator
+C025-W-HO77-J-_E-001-01,Huldra SCD's,,TI,TI 2041,Temperaturindikator
+C025-W-HO77-J-_E-001-01,Huldra SCD's,,HS,HS 9000H,Handbryter
+C025-W-HO77-J-_E-001-01,Huldra SCD's,,US,US 9001,Multifunksjonsbryter
+C025-W-HO77-J-_E-001-01,Huldra SCD's,,US,US 9002,Multifunksjonsbryter
+C025-W-HO77-J-_E-001-01,Huldra SCD's,,US,US 9003,Multifunksjonsbryter
+C025-W-HO77-J-_E-001-01,Huldra SCD's,,US,US 9004,Multifunksjonsbryter
+C025-W-HO77-J-_E-001-01,Huldra SCD's,,US,US 9005,Multifunksjonsbryter
+C025-W-HO77-J-_E-001-01,Huldra SCD's,,HS,HS 9000L,Handbryter
+C025-W-HO77-J-_E-001-01,Huldra SCD's,,HS,HS 2004,Handbryter
+C025-W-HO77-J-_E-001-01,Huldra SCD's,,TI,TI 2043,Temperaturindikator
+C025-W-HO77-J-_E-001-01,Huldra SCD's,,TI,TI 2042,Temperaturindikator
+C025-W-HO77-J-_E-001-01,Huldra SCD's,,TI,TI 2044,Temperaturindikator
+C025-W-HO82-J-_E-002-01,Huldra SCD's,82,XA,82-XA 2074,Alarm
+C025-W-HO82-J-_E-002-01,Huldra SCD's,,UZS,UZS 9999,Sekvens/interlock
+C025-W-HO82-J-_E-003-01,Huldra SCD's,,UZS,UZS 9998,Sekvens/interlock
+C025-W-HO85-J-_E-001-01,Huldra SCD's,70,XS,70-XS 2003A,Bryter (div.)
+C025-W-HO85-J-_E-001-01,Huldra SCD's,70,XS,70-XS 2002A,Bryter (div.)
+C025-W-HO85-J-_E-001-01,Huldra SCD's,71,XS,71-XS 2051,Bryter (div.)
+C025-W-HO85-J-_E-001-01,Huldra SCD's,71,XS,71-XS 2051A,Bryter (div.)
+C025-W-HO85-J-_E-001-01,Huldra SCD's,71,XS,71-XS 2051B,Bryter (div.)
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,XA,XA 2103,Alarm
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,XA,XA 2104,Alarm
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,XA,XA 2105,Alarm
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,XA,XA 2106,Alarm
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,XA,XA 2107,Alarm
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,XA,XA 2101,Alarm
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,XA,XA 2102,Alarm
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,XI,XI 2108,Indikering (div.)
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,XA,XA 2111,Alarm
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,XA,XA 2112,Alarm
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,XA,XA 2113,Alarm
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,XA,XA 2114,Alarm
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,XA,XA 2115,Alarm
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,XA,XA 2116,Alarm
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,XA,XA 2117,Alarm
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,XI,XI 2118,Indikering (div.)
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,HS,HS 2064A,Handbryter
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,HS,HS 2063A,Handbryter
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,HS,HS 2061A,Handbryter
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,HS,HS 2011,Handbryter
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,HS,HS 2064B,Handbryter
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,HS,HS 2063B,Handbryter
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,HS,HS 2061B,Handbryter
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,HS,HS 2091B,Handbryter
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,HS,HS 2010,Handbryter
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,HS,HS 2091A,Handbryter
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,HS,HS 2026,Handbryter
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,HS,HS 2027,Handbryter
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,XA,XA 2052,Alarm
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,XA,XA 2051,Alarm
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,XA,XA 2054,Alarm
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,XA,XA 2053,Alarm
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,XA,XA 2156,Alarm
+C025-W-HO85-J-_E-001-01,Huldra SCD's,,HS,HS 2092,Handbryter
+C025-W-HO85-J-_E-003-01,Huldra SCD's,,XA,XA 2122,Alarm
+C025-W-HO85-J-_E-003-01,Huldra SCD's,,XA,XA 2121,Alarm
+C025-W-HO85-J-_E-003-01,Huldra SCD's,,XA,XA 2123,Alarm
+C025-W-HO85-J-_E-003-01,Huldra SCD's,,XA,XA 2126,Alarm
+C025-W-HO85-J-_E-003-01,Huldra SCD's,,XA,XA 2125,Alarm
+C025-W-HO85-J-_E-003-01,Huldra SCD's,,XI,XI 2127,Indikering (div.)
+C025-W-HO85-J-_E-003-01,Huldra SCD's,,XA,XA 2142,Alarm
+C025-W-HO85-J-_E-003-01,Huldra SCD's,,XA,XA 2141,Alarm
+C025-W-HO85-J-_E-003-01,Huldra SCD's,,XA,XA 2144,Alarm
+C025-W-HO85-J-_E-003-01,Huldra SCD's,,XA,XA 2143,Alarm
+C025-W-HO85-J-_E-003-01,Huldra SCD's,,XA,XA 2146,Alarm
+C025-W-HO85-J-_E-003-01,Huldra SCD's,,XA,XA 2145,Alarm
+C025-W-HO85-J-_E-003-01,Huldra SCD's,,XA,XA 2147,Alarm
+C025-W-HO85-J-_E-003-01,Huldra SCD's,,XA,XA 2148,Alarm
+C025-W-HO85-J-_E-003-01,Huldra SCD's,,XI,XI 2149,Indikering (div.)
+C025-W-HO85-J-_E-003-01,Huldra SCD's,,XA,XA 2132,Alarm
+C025-W-HO85-J-_E-003-01,Huldra SCD's,,XA,XA 2131,Alarm
+C025-W-HO85-J-_E-003-01,Huldra SCD's,,XA,XA 2133,Alarm
+C025-W-HO85-J-_E-003-01,Huldra SCD's,,XA,XA 2136,Alarm
+C025-W-HO85-J-_E-003-01,Huldra SCD's,,XA,XA 2135,Alarm
+C025-W-HO85-J-_E-003-01,Huldra SCD's,,XI,XI 2137,Indikering (div.)
+C025-W-HO85-J-_E-003-01,Huldra SCD's,,XA,XA 2087,Alarm
+C025-W-HO85-J-_E-003-01,Huldra SCD's,,XA,XA 2088,Alarm
+C025-W-HO85-J-_E-003-01,Huldra SCD's,,HS,HS 2025,Handbryter
+C025-W-HO85-J-_E-003-01,Huldra SCD's,,HS,HS 2031C,Handbryter
+C025-W-HO85-J-_E-003-01,Huldra SCD's,,HS,HS 2031B,Handbryter
+C025-W-HO85-J-_E-003-01,Huldra SCD's,,HS,HS 2031A,Handbryter
+C025-W-HO85-J-_E-003-01,Huldra SCD's,,HS,HS 2067,Handbryter
+C025-W-HO85-J-_E-003-01,Huldra SCD's,,HS,HS 2033,Handbryter
+C025-W-HO85-J-_E-003-01,Huldra SCD's,,HS,HS 2068,Handbryter
+C025-W-HO85-J-_E-003-01,Huldra SCD's,,HS,HS 2012,Handbryter
+C025-V-HA24-P-_E-001-01,HuldraPIDs,24,HS,24-HS 2163A,Handbryter
+C025-V-HA24-P-_E-001-01,HuldraPIDs,24,XV,24-XV 2163A,Aktuert ventil
+C025-V-HA24-P-_E-001-01,HuldraPIDs,24,HS,24-HS 2163B,Handbryter
+C025-V-HA24-P-_E-001-01,HuldraPIDs,24,XV,24-XV 2163B,Aktuert ventil
+C025-V-HA24-P-_E-001-01,HuldraPIDs,24,LSH,24-LSH 2005,Nivaabryter hoy
+C025-V-HA24-P-_E-001-01,HuldraPIDs,24,PI,24-PI 2001,Trykkindikator
+C025-V-HA24-P-_E-001-01,HuldraPIDs,24,PT,24-PT 2159,Trykktransmitter
+C025-V-HA24-P-_E-001-01,HuldraPIDs,24,PT,24-PT 2001,Trykktransmitter
+C025-V-HA24-P-_E-001-01,HuldraPIDs,,XV,XV 2163B,Aktuert ventil
+C025-V-HA24-P-_E-001-01,HuldraPIDs,,XV,XV 2163A,Aktuert ventil
+C025-V-HA24-P-_E-001-01,HuldraPIDs,,HS,HS 2163,Handbryter
+C025-V-HA24-P-_E-001-01,HuldraPIDs,,PT,PT 2160,Trykktransmitter
+C025-V-HA24-P-_E-001-01,HuldraPIDs,,FT,FT 2100,Mengdetransmitter
+C025-V-HA24-P-_E-001-01,HuldraPIDs,,PI,PI 2159,Trykkindikator
+C025-V-HA24-P-_E-001-01,HuldraPIDs,,PT,PT 2159,Trykktransmitter
+C025-V-HA24-P-_E-001-01,HuldraPIDs,,LSH,LSH 2005,Nivaabryter hoy
+C025-V-HA24-P-_E-001-01,HuldraPIDs,,PDI,PDI 2001,Differansetrykk-indikator
+C025-V-HB20-P-_E-001-01,HuldraPIDs,20,XV,20-XV 2202B,Aktuert ventil
+C025-V-HB20-P-_E-001-01,HuldraPIDs,20,HS,20-HS 2202A,Handbryter
+C025-V-HB20-P-_E-001-01,HuldraPIDs,20,XV,20-XV 2202A,Aktuert ventil
+C025-V-HB20-P-_E-001-01,HuldraPIDs,20,HS,20-HS 2202B,Handbryter
+C025-V-HO27-P-_E-001-01,HuldraPIDs,27,XV,27-XV 4826,Aktuert ventil
+C025-V-HO27-P-_E-001-01,HuldraPIDs,27,XV,27-XV 4828,Aktuert ventil
+C025-V-HO27-P-_E-001-01,HuldraPIDs,27,PT,27-PT 4252A,Trykktransmitter
+C025-V-HO27-P-_E-001-01,HuldraPIDs,27,PT,27-PT 4250A,Trykktransmitter
+C025-V-HO27-P-_E-001-01,HuldraPIDs,27,XV,27-XV 4813,Aktuert ventil
+C025-V-HO27-P-_E-001-01,HuldraPIDs,,HS,HS 4814,Handbryter
+C025-V-HO27-P-_E-001-01,HuldraPIDs,,HS,HS 4813,Handbryter
+C025-V-HO27-P-_E-001-01,HuldraPIDs,,TI,TI 4806,Temperaturindikator
+C025-V-HO27-P-_E-001-01,HuldraPIDs,,PI,PI 4805,Trykkindikator
+C025-V-HO27-P-_E-001-01,HuldraPIDs,,PI,PI 4807,Trykkindikator
+C025-V-HO27-P-_E-001-01,HuldraPIDs,,HS,HS 4811,Handbryter
+C025-V-HO27-P-_E-002-01,HuldraPIDs,50,XV,50-XV 4805,Aktuert ventil
+C025-V-HO27-P-_E-002-01,HuldraPIDs,27,PSV,27-PSV 4820,Sikkerhetsventil (trykk)
+C025-V-HO45-P-_F-001-01,HuldraPIDs,45,PT,45-PT 4805,Trykktransmitter
+C025-V-HO45-P-_F-001-01,HuldraPIDs,45,PT,45-PT 4804,Trykktransmitter
+C025-V-HO45-P-_F-001-01,HuldraPIDs,,FI,FI 4810,Mengdeindikator
+C025-W-HO20-P-_E-002-01,HuldraPIDs,20,TI,20-TI 2001B,Temperaturindikator
+C025-W-HO65-P-_U-002-01,HuldraPIDs,27,ESV,27-ESV 2240,Nodavstengningsventil
+C025-W-HO65-P-_U-002-01,HuldraPIDs,21,ESV,21-ESV 2152,Nodavstengningsventil
