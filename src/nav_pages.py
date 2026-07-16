@@ -19,6 +19,7 @@ PAGES = {
     "hazop":       st.Page("hazop.py", title="HAZOP-forberedelse", icon="⚠️"),
     "hazop_cmp":   st.Page("hazop_compare.py", title="HAZOP: PDF vs DEXPI", icon="⚖️"),
     "kontrollrom": st.Page("kontrollrom.py", title="Kontrollrom-assistent", icon="🎛️"),
+    "anlegg":      st.Page("anleggsoversikt.py", title="Anleggsoversikt", icon="🏭"),
     "neqsim":      st.Page("neqsim_side.py", title="NeqSim-simulering", icon="🧪"),
 }
 
@@ -31,6 +32,7 @@ NAV = [
     PAGES["dexpi_vs_pdf"],
     PAGES["hazop"],
     PAGES["hazop_cmp"],
+    PAGES["anlegg"],
     PAGES["kontrollrom"],
     PAGES["neqsim"],
 ]

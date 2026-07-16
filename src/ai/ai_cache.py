@@ -77,3 +77,30 @@ def load_rewrite(system: str, node: str) -> dict | None:
     m = re.match(r"<!-- saved_at: (.*?) -->\n", raw)
     return {"text": raw[m.end():] if m else raw,
             "saved_at": m.group(1) if m else "ukjent"}
+
+# ---- control-room Q&A ---------------------------------------------------------
+# Free-text answers can only be cached if the scenario is reproducible: the
+# cache key is a hash of the FULL prompt (facts + question), so an identical
+# scenario (see the demo-mode toggle in kontrollrom.py, fixed seed) plus the
+# same question gives a hit — the mechanism behind offline-safe demo Q&A.
+
+def save_qa(prompt: str, question: str, answer: str) -> None:
+    import hashlib
+    AI_DIR.mkdir(parents=True, exist_ok=True)
+    key = hashlib.sha1(prompt.encode("utf-8")).hexdigest()[:16]
+    stamp = time.strftime("%Y-%m-%d %H:%M")
+    (AI_DIR / f"qa_{key}.json").write_text(json.dumps(
+        {"question": question, "answer": answer, "saved_at": stamp},
+        ensure_ascii=False, indent=1), encoding="utf-8")
+
+
+def load_qa(prompt: str) -> dict | None:
+    import hashlib
+    key = hashlib.sha1(prompt.encode("utf-8")).hexdigest()[:16]
+    f = AI_DIR / f"qa_{key}.json"
+    if not f.exists():
+        return None
+    try:
+        return json.loads(f.read_text(encoding="utf-8"))
+    except Exception:                                       # noqa: BLE001
+        return None

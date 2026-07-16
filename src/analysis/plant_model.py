@@ -122,8 +122,10 @@ def build_plant_model(raw_dir: Path) -> dict:
     drawings_of: dict[str, list[str]] = defaultdict(list)
     line_anchors: dict[str, dict[str, list[str]]] = {}   # drawing -> line -> tags
 
+    all_stems = []
     for x in files:
         stem = x.stem.replace(".DGN", "")
+        all_stems.append(stem)
         m = load_dexpi_model(x)
         for o in m["objects"]:
             if o.tag not in objects:
@@ -158,6 +160,7 @@ def build_plant_model(raw_dir: Path) -> dict:
                       if d.get("kind") == "cross_drawing")
     return {
         "graph": G,
+        "drawings": all_stems,
         "objects": list(objects.values()),
         "drawings_of": {t: sorted(set(ds)) for t, ds in drawings_of.items()},
         "stitches": stitches,
@@ -189,3 +192,83 @@ if __name__ == "__main__":
               f"{len(order)} alarmer over {len(drawn)} tegninger:")
         for d in sorted(drawn):
             print(f"  {d[-14:]}")
+
+# ---------------------------------------------------------------------------
+# Metro map: the plant at DRAWING level — 17 readable nodes, not 885
+# ---------------------------------------------------------------------------
+
+def metro_svg(model: dict, w: int = 980, h: int = 560) -> str:
+    """Self-contained SVG of the drawing-level metagraph: one node per
+    drawing (coloured by system), one edge per drawing pair that shares at
+    least one line number, edge width by number of shared lines, hover
+    title listing them. Readable in three seconds — the establishing shot
+    before any plant-wide demo."""
+    import html as _html
+    import math
+    from collections import defaultdict
+
+    # drawings and their pairwise stitches
+    stitched = defaultdict(list)
+    for line, a, b, _, _ in model["stitches"]:
+        stitched[tuple(sorted((a, b)))].append(line)
+    drawings = sorted(model.get("drawings") or
+                      {d for ds in model["drawings_of"].values() for d in ds})
+
+    palette = ["#2d7dd2", "#b8442c", "#3a7d44", "#8e5aa8", "#c98a1b",
+               "#12233b", "#5aa8a0", "#a83a5f"]
+    systems = sorted({d[-14:-12] if len(d) >= 14 else "??" for d in drawings})
+    sys_color = {s: palette[i % len(palette)] for i, s in enumerate(systems)}
+
+    # circle layout, grouped by system so related sheets sit together
+    order = sorted(drawings, key=lambda d: d[-14:])
+    cx, cy, r = w / 2, h / 2, min(w, h) / 2 - 70
+    pos = {d: (cx + r * math.cos(2 * math.pi * i / len(order) - math.pi / 2),
+               cy + r * math.sin(2 * math.pi * i / len(order) - math.pi / 2))
+           for i, d in enumerate(order)}
+
+    parts = [f'<svg viewBox="0 0 {w} {h}" xmlns="http://www.w3.org/2000/svg" '
+             f'style="width:100%;height:auto;font-family:sans-serif">']
+    for (a, b), lines in sorted(stitched.items()):
+        (x1, y1), (x2, y2) = pos[a], pos[b]
+        title = _html.escape("; ".join(lines))
+        parts.append(
+            f'<line x1="{x1:.0f}" y1="{y1:.0f}" x2="{x2:.0f}" y2="{y2:.0f}" '
+            f'stroke="#8a93a0" stroke-width="{1 + 1.5 * len(lines):.1f}" '
+            f'opacity="0.8"><title>{len(lines)} delt(e) linje(r): {title}'
+            f'</title></line>')
+    for d, (x, y) in pos.items():
+        s = d[-14:-12] if len(d) >= 14 else "??"
+        n_tags = sum(1 for ds in model["drawings_of"].values() if d in ds)
+        label = _html.escape(d[-14:])
+        parts.append(
+            f'<g><circle cx="{x:.0f}" cy="{y:.0f}" r="16" '
+            f'fill="{sys_color[s]}"><title>{label} — {n_tags} tags'
+            f'</title></circle>'
+            f'<text x="{x:.0f}" y="{y - 22:.0f}" text-anchor="middle" '
+            f'font-size="11" fill="#e8e8e8">{label}</text>'
+            f'<text x="{x:.0f}" y="{y + 4:.0f}" text-anchor="middle" '
+            f'font-size="10" fill="#fff" font-weight="bold">{s}</text></g>')
+    parts.append("</svg>")
+    return "".join(parts)
+
+
+def plant_criticality(model: dict, top: int = 10) -> list[dict]:
+    """Most structurally connected components across the WHOLE plant —
+    the exposure ranking no per-drawing view can produce. Degree counts
+    in-drawing edges only, so bidirectional cross-stitches don't inflate."""
+    G = model["graph"]
+    deg = {}
+    for n in G.nodes:
+        d = sum(1 for _, _, e in G.edges(n, data=True)
+                if e.get("kind") != "cross_drawing")
+        d += sum(1 for _, _, e in G.in_edges(n, data=True)
+                 if e.get("kind") != "cross_drawing")
+        deg[n] = d
+    by_tag = {o.tag: o for o in model["objects"]}
+    out = []
+    for t in sorted(deg, key=deg.get, reverse=True)[:top]:
+        out.append({"tag": t, "koblinger": deg[t],
+                    "kategori": by_tag[t].category if t in by_tag else "?",
+                    "tegninger": ", ".join(d[-14:] for d in
+                                           model["drawings_of"].get(t, []))})
+    return out

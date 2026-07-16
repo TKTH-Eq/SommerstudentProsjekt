@@ -1,0 +1,165 @@
+{
+ "excerpt": {
+  "summary": "The drawing depicts the instrument air distribution network and the HHP Air Compressor/Drier Package (63-KC051). It illustrates the supply of instrument air from a main distribution header to various consumers including compressors, gas turbines, and other utility systems, along with the seawater cooling interfaces for the HHP compressor.",
+  "observations": [
+   {
+    "observation": "The entire instrument air distribution network relies on a single main supply line from W-H063-P-*-U-001. A failure in this main header represents a single point of failure that could lead to a complete loss of instrument air to all connected consumers.",
+    "deviation": "No flow",
+    "tags": [
+     {
+      "tag": "W-H063-P-*-U-001",
+      "status": "suspect"
+     },
+     {
+      "tag": "2\"-AI-634632-AS200-0",
+      "status": "suspect"
+     }
+    ]
+   },
+   {
+    "observation": "Note 1 indicates that instrument air take-offs, such as those to 63-JX051 and 63-JX060, are \"1\" complete with ball valve.\" Relying on a single manual isolation valve for each connection may not provide sufficient integrity against leakage or accidental closure for critical instrument air users.",
+    "deviation": "No flow, More flow",
+    "tags": [
+     {
+      "tag": "63-4474AI",
+      "status": "verified"
+     },
+     {
+      "tag": "63-JX051",
+      "status": "verified"
+     },
+     {
+      "tag": "63-4489AI",
+      "status": "new_candidate"
+     },
+     {
+      "tag": "63-JX060",
+      "status": "new_candidate"
+     },
+     {
+      "tag": "NOTE 1",
+      "status": "suspect"
+     }
+    ]
+   },
+   {
+    "observation": "The 63-KC051 package has specified operating parameters, including a pressure range of 9.0-10.0 barg. Deviations from these parameters (e.g., high or low pressure) could lead to process upset, equipment damage, or impaired performance of dependent systems.",
+    "deviation": "High pressure, Low pressure",
+    "tags": [
+     {
+      "tag": "63-KC051",
+      "status": "verified"
+     },
+     {
+      "tag": "HHP AIR COMPRESSOR/DRIER PACKAGE",
+      "status": "suspect"
+     }
+    ]
+   },
+   {
+    "observation": "The water trap on the 2\"-DO-564731-AS200-0 line requires heat tracing and insulation to maintain 5°C as per Note 2. A failure of this heating system or insulation could lead to freezing of collected water, resulting in a blocked drain and potential line rupture or operational issues.",
+    "deviation": "Low temperature, Blockage",
+    "tags": [
+     {
+      "tag": "2\"-DO-564731-AS200-0",
+      "status": "suspect"
+     },
+     {
+      "tag": "NOTE 2",
+      "status": "suspect"
+     }
+    ]
+   },
+   {
+    "observation": "The 63-KC051 HHP Air Compressor/Drier Package relies on HO27-P-*-E-003 for seawater supply and return. Loss or reduction of seawater flow, or an increase in its temperature, could cause overheating of the compressor/drier, leading to its shutdown or damage.",
+    "deviation": "No flow, Less flow, High temperature",
+    "tags": [
+     {
+      "tag": "HO27-P-*-E-003",
+      "status": "suspect"
+     },
+     {
+      "tag": "2\"-WS-504725-AS200-0",
+      "status": "suspect"
+     },
+     {
+      "tag": "2\"-WS-504726-AS200-0",
+      "status": "suspect"
+     },
+     {
+      "tag": "63-KC051",
+      "status": "verified"
+     }
+    ]
+   },
+   {
+    "observation": "Instrument air is routed to TO HAZARDOUS OPEN DRAIN (W-H042-P-*-F-003) via line 2\"-DO-564732-AS200-0. This connection poses a risk of reverse flow from the drain system into the instrument air system or uncontrolled release of instrument air if not adequately protected or isolated.",
+    "deviation": "Reverse flow, More flow",
+    "tags": [
+     {
+      "tag": "W-H042-P-*-F-003",
+      "status": "suspect"
+     },
+     {
+      "tag": "2\"-DO-564732-AS200-0",
+      "status": "suspect"
+     }
+    ]
+   }
+  ],
+  "possible_symbol_only": [
+   {
+    "tag": "63-JX051",
+    "symbol": "manual valve",
+    "status": "verified"
+   },
+   {
+    "tag": "63-JX060",
+    "symbol": "manual valve",
+    "status": "new_candidate"
+   },
+   {
+    "tag": "63-JX061",
+    "symbol": "manual valve",
+    "status": "new_candidate"
+   },
+   {
+    "tag": "63-JX053",
+    "symbol": "manual valve",
+    "status": "verified"
+   },
+   {
+    "tag": "63-JX054",
+    "symbol": "manual valve",
+    "status": "new_candidate"
+   },
+   {
+    "tag": "63-JX057",
+    "symbol": "manual valve",
+    "status": "verified"
+   },
+   {
+    "tag": "50-4594WS",
+    "symbol": "manual valve",
+    "status": "new_candidate"
+   },
+   {
+    "tag": "50-4596WS",
+    "symbol": "manual valve",
+    "status": "verified"
+   },
+   {
+    "tag": "50-4595WS",
+    "symbol": "manual valve",
+    "status": "verified"
+   }
+  ],
+  "tag_totals": {
+   "verified": 9,
+   "verified_loose": 0,
+   "new_candidate": 6,
+   "suspect": 11
+  }
+ },
+ "saved_at": "2026-07-16 13:07"
+}

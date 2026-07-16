@@ -128,17 +128,27 @@ def verify_tags(excerpt: dict, known_tags) -> dict:
     return excerpt
 
 
-def vision_hazop_excerpt(pdf_path: Path, known_tags, dpi: int = 200) -> dict:
+def vision_hazop_excerpt(pdf_path: Path, known_tags, dpi: int = 200,
+                         focus: str = "") -> dict:
     """Render page 1, ask Gemini for HAZOP observations, verify every tag.
-    Requires GEMINI_API_KEY and pypdfium2 (same as vision_extract)."""
+    Requires GEMINI_API_KEY and pypdfium2 (same as vision_extract).
+
+    focus: optional operator steering ("fokuser på erosjon og noter om
+    midlertidig utstyr"). Inserted as a clearly bounded section — the JSON
+    schema and the tag rules are NOT user-editable, because the verification
+    layer depends on them. Steering changes attention, never the contract."""
     from google.genai import types
     from extraction.vision_extract import _render_png
     from ai.gemini_client import generate
 
+    prompt = PROMPT
+    if focus.strip():
+        prompt += ("\nOPERATOR FOCUS (steer attention, all rules above "
+                   f"still apply): {focus.strip()[:400]}\n")
     png = _render_png(Path(pdf_path), dpi)
     img = Path(png).read_bytes()
     resp = generate(
-        [types.Part.from_bytes(data=img, mime_type="image/png"), PROMPT],
+        [types.Part.from_bytes(data=img, mime_type="image/png"), prompt],
         config=types.GenerateContentConfig(response_mime_type="application/json"),
     )
     try:

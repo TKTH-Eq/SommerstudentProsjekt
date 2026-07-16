@@ -95,27 +95,83 @@ def load(system: str, pid: str, scd: str):
 
 objs, g, all_rows = load(system, str(pid_path), str(scd_path))
 
-st.title(f"System {system} — HAZOP preparation")
-st.caption("Pre-filled worksheet from AI-extracted P&ID/SCD data. Nodes are "
-           "functional loops (real HAZOP nodes are process sections — that "
-           "requires traced connectivity, i.e. DEXPI). Every tag referenced "
-           "exists in the extraction; nothing is invented. For HAZOP team "
-           "review — not a completed study.")
+from config import CATEGORY_COLORS
+
+
+def _chips(tags):
+    by = {o.tag: o for o in objs}
+    out = ""
+    for t in tags:
+        c = CATEGORY_COLORS.get(by[t].category if t in by else "other", "#9aa0a6")
+        out += (f"<span style='background:{c};color:#fff;border-radius:20px;"
+                f"padding:2px 8px;margin:2px;display:inline-block;"
+                f"font-size:12px'>{t}</span> ")
+    return out or "_ingen_"
+
+
+st.title(f"⚠️ System {system} — HAZOP-forberedelse")
+st.caption("Ferdig utfylt arbeidsark fra AI-uttrukket P&ID/SCD-data. Noder er "
+           "funksjonelle løkker (ekte HAZOP-noder er prosessseksjoner — det "
+           "krever DEXPI, se ⚖️-siden). Hver tag som refereres finnes i "
+           "uttrekket; ingenting er funnet på. For HAZOP-team-gjennomgang — "
+           "ikke en fullført studie.")
 
 nodes = sorted({r["node"] for r in all_rows})
 if not nodes:
-    st.warning("No loop in this system has instruments that map to a process "
-               "parameter — nothing to propose.")
+    st.warning("Ingen løkke i systemet har instrumenter som gir en "
+               "prosessparameter — ingenting å foreslå.")
     st.stop()
 
-sel_all = st.checkbox(f"Velg alle noder i systemet ({len(nodes)})")
-if sel_all:
-    picked = nodes
-    st.multiselect("Nodes (functional loops)", nodes, default=nodes,
-                   disabled=True,
-                   help="Alle noder valgt — fjern haken over for å velge manuelt.")
-else:
-    picked = st.multiselect("Nodes (functional loops)", nodes, default=nodes[:3])
+# nøkkeltall for hele systemet (master om den finnes, ellers råforslagene)
+_state_key = f"hazop_master_{system}"
+_df_all = st.session_state.get(_state_key, pd.DataFrame(all_rows))
+_n_rows = len(_df_all)
+_with_sg = int((~_df_all["safeguards"].str.startswith("(none")).sum())
+_done = int((_df_all["status"] != "proposed").sum())
+m1, m2, m3, m4 = st.columns(4)
+m1.metric("Noder", len(nodes),
+          help="Funksjonelle løkker med minst én prosessparameter.")
+m2.metric("Avviksrader", _n_rows,
+          help="Én rad per (node, guideword-avvik).")
+m3.metric("Rader med funnet barriere", f"{_with_sg}/{_n_rows}",
+          help="Avviksrader der minst én ekte, uttrukket safeguard-tag ble "
+               "identifisert. Gapet er der forberedelsesarbeidet ligger — "
+               "og der recall-taket på 55 % koster (se ⚖️-siden).")
+m4.metric("Gjennomgått", f"{_done}/{_n_rows}",
+          help="Rader satt til reviewed eller rejected i arbeidsarket.")
+st.progress(_done / _n_rows if _n_rows else 0.0)
+
+tab_ark, tab_vision, tab_ai = st.tabs(
+    ["📋 Arbeidsark", "👁️ Vision-utdrag", "🤖 AI-utkast per node"])
+
+with tab_ark:
+    f1, f2 = st.columns([2, 1])
+    with f1:
+        sel_all = st.checkbox(f"Velg alle noder i systemet ({len(nodes)})")
+        if sel_all:
+            picked = nodes
+            st.multiselect("Noder (funksjonelle løkker)", nodes, default=nodes,
+                           disabled=True,
+                           help="Alle noder valgt — fjern haken for manuelt valg.")
+        else:
+            picked = st.multiselect("Noder (funksjonelle løkker)", nodes,
+                                    default=nodes[:3])
+    with f2:
+        only_gap = st.toggle("Kun rader uten funnet barriere",
+                             help="Filtrer til avvikene som mangler en "
+                                  "identifisert safeguard — det er disse et "
+                                  "HAZOP-team må bruke tid på.")
+        status_f = st.multiselect("Status", ["proposed", "reviewed", "rejected"],
+                                  default=["proposed", "reviewed", "rejected"])
+
+    if picked:
+        with st.expander("Komponentene i valgte noder"):
+            by_node_rows = pd.DataFrame(all_rows)
+            for nd in picked:
+                mem = by_node_rows[by_node_rows["node"] == nd]["node_members"]
+                tags = sorted(set(mem.iloc[0].split(", "))) if len(mem) else []
+                st.markdown(f"**{nd}**  \n" + _chips(tags),
+                            unsafe_allow_html=True)
 
 # ---- editable worksheet with review status ---------------------------------
 # Master copy lives in session state (per system) so edits survive reruns and
@@ -128,23 +184,44 @@ if state_key not in st.session_state:
 master: pd.DataFrame = st.session_state[state_key]
 
 view = master[master["node"].isin(set(picked))] if picked else master.iloc[0:0]
+if not view.empty and only_gap:
+    view = view[view["safeguards"].str.startswith("(none")]
+if not view.empty and status_f:
+    view = view[view["status"].isin(status_f)]
 
-if not view.empty:
-    st.caption("Arbeidsarket er redigerbart: juster tekst, fyll inn "
-               "anbefaling/ansvarlig og sett status per rad "
-               "(proposed → reviewed/rejected). Endringer huskes i økten "
-               "og følger med i eksporten.")
+with tab_ark:
+ if not view.empty:
+    st.caption("Redigerbart: juster tekst, fyll inn anbefaling/ansvarlig og "
+               "sett status per rad. Endringer huskes i økten og følger med "
+               "i eksporten — også for rader som er filtrert bort akkurat nå.")
     edited = st.data_editor(
         view[["node", "parameter", "deviation", "causes", "consequences",
               "safeguards", "recommendation", "action_party", "status"]],
         use_container_width=True, hide_index=True, num_rows="fixed",
         disabled=["node", "parameter", "deviation"],
         column_config={
+            "node": st.column_config.TextColumn("node", width="small"),
+            "parameter": st.column_config.TextColumn("param.", width="small"),
+            "deviation": st.column_config.TextColumn(
+                "avvik", width="small",
+                help="Guideword-avvik (High/Low/No/Reverse …)"),
+            "causes": st.column_config.TextColumn(
+                "årsaker", width="large",
+                help="Feilmodi fra løkkas reguleringselementer (ekte tags) + "
+                     "generiske prosessårsaker merket (generic)."),
+            "consequences": st.column_config.TextColumn(
+                "konsekvenser", width="large"),
+            "safeguards": st.column_config.TextColumn(
+                "barrierer", width="medium",
+                help="Kun tags som faktisk finnes i uttrekket. «(none found)» "
+                     "betyr: ikke funnet i tekstlaget — sjekk tegningen."),
+            "recommendation": st.column_config.TextColumn("anbefaling",
+                                                          width="medium"),
+            "action_party": st.column_config.TextColumn("ansvarlig",
+                                                        width="small"),
             "status": st.column_config.SelectboxColumn(
                 "status", options=["proposed", "reviewed", "rejected"],
-                required=True),
-            "recommendation": st.column_config.TextColumn("recommendation"),
-            "action_party": st.column_config.TextColumn("action party"),
+                required=True, width="small"),
         },
         key=f"editor_{system}")
 
@@ -176,8 +253,10 @@ if not view.empty:
         del st.session_state[state_key]
         st.rerun()
 
-    # optional AI passes — both gated on the Gemini key the project uses
-    st.divider()
+with tab_ai:
+    st.caption("LLM-omskriving av én nodes deterministiske rader til flytende "
+               "arbeidsark-tekst — kun tags fra noden, generisk merkes. "
+               "Utkast caches til disk (demo-sikring).")
     if os.getenv("GEMINI_API_KEY"):
         node_ai = st.selectbox("AI-omskriving av én node", picked or nodes)
         from ai.ai_cache import load_rewrite, save_rewrite
@@ -194,8 +273,12 @@ if not view.empty:
             st.caption(f"🗂️ Utkast generert: {cached_rw['saved_at']}")
             st.markdown(cached_rw["text"])
 
-        st.divider()
-        st.subheader("👁️ Vision-utdrag fra selve tegningen")
+    else:
+        st.caption("Sett GEMINI_API_KEY for AI-utkast — arbeidsarket i første "
+                   "fane er deterministisk og komplett uten.")
+
+with tab_vision:
+    if os.getenv("GEMINI_API_KEY"):
         st.caption("Gemini SER på P&ID-en og foreslår HAZOP-observasjoner. "
                    "Hver tag den nevner verifiseres mot tag-registeret: "
                    "✅ finnes i uttrekket · 🟠 velformet men ikke uttrukket "
@@ -210,6 +293,19 @@ if not view.empty:
                 st.session_state[f"vision_{system}"] = cached["excerpt"]
                 st.session_state[f"vision_png_{system}"] = cached["png"]
                 st.session_state[f"vision_ts_{system}"] = cached["saved_at"]
+        focus = st.text_input(
+            "Ekstra fokus (valgfritt)",
+            placeholder="F.eks.: fokuser på erosjon/sand og noter om "
+                        "midlertidig utstyr",
+            help="Styrer modellens oppmerksomhet. JSON-formatet og "
+                 "tag-reglene kan IKKE overstyres — verifiseringslaget "
+                 "avhenger av dem. Nytt fokus krever ny API-kjøring.")
+        with st.expander("Vis den faste prompten (skrivebeskyttet)"):
+            from ai.hazop_vision import PROMPT as _VISION_PROMPT
+            st.code(_VISION_PROMPT, language="text")
+            st.caption("Gjenbrukbar prompt — se også README «Gjenbrukbare "
+                       "prompts». Fokusfeltet over settes inn som en merket "
+                       "tilleggsseksjon; reglene består.")
         btn_label = ("🔄 Kjør på nytt mot API (overskriver cache)"
                      if st.session_state.get(f"vision_{system}")
                      else "Generer vision-utdrag for P&ID-en")
@@ -218,7 +314,7 @@ if not view.empty:
             try:
                 with st.spinner("Rasteriserer og spør Gemini…"):
                     st.session_state[f"vision_{system}"] = vision_hazop_excerpt(
-                        Path(pid_path), [o.tag for o in objs])
+                        Path(pid_path), [o.tag for o in objs], focus=focus)
                     # gjenbruk rasteret til visning ved siden av utdraget
                     from extraction.vision_extract import _render_png
                     st.session_state[f"vision_png_{system}"] = _render_png(
@@ -262,8 +358,9 @@ if not view.empty:
                                mime="application/vnd.openxmlformats-"
                                     "officedocument.spreadsheetml.sheet")
     else:
-        st.caption("Sett GEMINI_API_KEY for valgfri AI-omskriving og "
-                   "vision-utdrag — arbeidsarket over er deterministisk og "
-                   "komplett uten.")
-if view.empty:
+        st.caption("Sett GEMINI_API_KEY for vision-utdrag — arbeidsarket i "
+                   "første fane er deterministisk og komplett uten.")
+
+with tab_ark:
+ if view.empty:
     st.info("Velg minst én node.")

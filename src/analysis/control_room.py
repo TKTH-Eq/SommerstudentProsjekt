@@ -88,22 +88,45 @@ def assist(graph: nx.DiGraph, by_tag, active: list[str]) -> dict:
     return out
 
 
+def alarm_capable(obj) -> bool:
+    """Can this component actually raise an alarm in the SAS?
+
+    Only measuring/logic functions and safety functions alarm (a PT via
+    PAH/PALL, an LSHH, a controller deviation) — a hand valve, an orifice
+    or a heat exchanger has no alarm of its own. Structural exposure and
+    alarm generation are different things, and the shower must show the
+    second while the debrief can still report the first."""
+    if obj is None:
+        return False
+    return obj.category in ("input", "logic") or obj.type_code in SAFETY_TYPES
+
+
 def alarm_shower(graph: nx.DiGraph, fault: str, noise: int = 2,
-                 seed: int | None = None) -> dict:
+                 seed: int | None = None, by_tag=None) -> dict:
     """A realistic incident picture: the fault's whole cascade fires AT ONCE,
     mixed (shuffled) with a couple of unrelated 'noise' alarms — chatter from
     elsewhere in the plant, independent of the fault. The operator's task is
     to separate root from symptom from noise, which is exactly what a real
-    alarm flood demands."""
+    alarm flood demands.
+
+    If by_tag is given, the alarm BOARD is filtered to alarm-capable
+    components only (see alarm_capable) — everything downstream is still
+    reported as 'exposed', but a hand valve does not ring."""
     import random as _r
     rng = _r.Random(seed)
     cascade = scenario_order(graph, fault)
+    if by_tag is not None:
+        board = [t for t in cascade if alarm_capable(by_tag.get(t))]
+    else:
+        board = list(cascade)
     related = set(cascade) | set(nx.ancestors(graph, fault))
-    pool = [n for n in graph.nodes if n not in related]
+    pool = [n for n in graph.nodes if n not in related
+            and (by_tag is None or alarm_capable(by_tag.get(n)))]
     noise_tags = rng.sample(pool, min(noise, len(pool))) if pool else []
-    alarms = cascade + noise_tags
+    alarms = board + noise_tags
     rng.shuffle(alarms)
-    return {"alarms": alarms, "cascade": cascade, "noise": noise_tags}
+    return {"alarms": alarms, "cascade": cascade, "noise": noise_tags,
+            "exposed": len(cascade)}
 
 
 def candidate_brief(graph: nx.DiGraph, by_tag, active: list[str]) -> list[dict]:
