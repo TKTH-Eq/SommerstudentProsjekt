@@ -1,0 +1,311 @@
+{
+ "excerpt": {
+  "summary": "This P&ID illustrates the seawater cooling system for an Export Booster Compressor Aftercooler (27-HA50) and a Hot Seawater Circulation Pump (50-PA52). It details the cooling water supply, circulation, and return, along with associated instrumentation for pressure, temperature, and flow control, and various safety interlocks and relief systems to protect the equipment.",
+  "observations": [
+   {
+    "observation": "A pressure safety valve (PSV 4820) is installed on the inlet header to the aftercooler, set at 150 barg, providing protection against overpressure from the upstream compressor discharge. Note 2 indicates that pressure switches PSE 4801A/B are located close to the heat exchanger for additional safety monitoring.",
+    "deviation": "High pressure",
+    "tags": [
+     {
+      "tag": "PSV 4820",
+      "status": "verified_loose"
+     },
+     {
+      "tag": "27-HA50",
+      "status": "verified"
+     },
+     {
+      "tag": "AS200",
+      "status": "new_candidate"
+     },
+     {
+      "tag": "BS200",
+      "status": "new_candidate"
+     },
+     {
+      "tag": "ED200",
+      "status": "new_candidate"
+     },
+     {
+      "tag": "PSE 4801A",
+      "status": "verified_loose"
+     },
+     {
+      "tag": "PSE 4801B",
+      "status": "verified_loose"
+     }
+    ]
+   },
+   {
+    "observation": "The aftercooler outlet temperature is actively controlled by TIC 4808, which manipulates the flow control valve FV 4808 on the cooling water outlet. Note 7 highlights that the response time of 50-TV4808 (FV 4808) is slower than 50-TV4816, potentially leading to control lag. Note 17 states that FV 4808's maximum opening is limited to 65% (approx 150 m3/h), which could restrict cooling capacity during high heat load scenarios. The controller aims for a setpoint around H+20°C and L+13°C.",
+    "deviation": "High temperature",
+    "tags": [
+     {
+      "tag": "TIC 4808",
+      "status": "verified_loose"
+     },
+     {
+      "tag": "FV 4808",
+      "status": "new_candidate"
+     },
+     {
+      "tag": "FY 4808",
+      "status": "new_candidate"
+     },
+     {
+      "tag": "TI 4808",
+      "status": "new_candidate"
+     },
+     {
+      "tag": "TT 4808",
+      "status": "verified_loose"
+     },
+     {
+      "tag": "50-4588WS",
+      "status": "verified"
+     },
+     {
+      "tag": "50-4592WS",
+      "status": "new_candidate"
+     },
+     {
+      "tag": "50-TV4808",
+      "status": "verified"
+     },
+     {
+      "tag": "50-TV4816",
+      "status": "verified"
+     },
+     {
+      "tag": "27-HA50",
+      "status": "verified"
+     }
+    ]
+   },
+   {
+    "observation": "The seawater circulation pump (50-PA52) is equipped with flow meters (FI 4807, FT 4807) on its discharge. A minimum flow bypass controlled by FIC 4810, which actuates FV 4810, is provided to protect the pump from operating at low or no-flow conditions. Note 8 emphasizes the requirement for straight pipe lengths around clamp-on flow meters for accurate readings.",
+    "deviation": "Low flow",
+    "tags": [
+     {
+      "tag": "50-PA52",
+      "status": "verified"
+     },
+     {
+      "tag": "FIC 4810",
+      "status": "verified_loose"
+     },
+     {
+      "tag": "FY 4810",
+      "status": "verified_loose"
+     },
+     {
+      "tag": "FV 4810",
+      "status": "verified_loose"
+     },
+     {
+      "tag": "FI 4807",
+      "status": "verified_loose"
+     },
+     {
+      "tag": "FT 4807",
+      "status": "verified_loose"
+     },
+     {
+      "tag": "50-4585WS",
+      "status": "new_candidate"
+     },
+     {
+      "tag": "50-4587WS",
+      "status": "new_candidate"
+     }
+    ]
+   },
+   {
+    "observation": "The seawater side inlet to the aftercooler is subject to pressure control by PIC 4809, manipulating PV 4809. Note 12 indicates the presence of a rupture disc set at 5 barg, likely 27-PSV4820 mentioned in Note 16, providing critical overpressure protection for the seawater circuit of the aftercooler.",
+    "deviation": "High pressure",
+    "tags": [
+     {
+      "tag": "PIC 4809",
+      "status": "verified_loose"
+     },
+     {
+      "tag": "PT 4809",
+      "status": "verified_loose"
+     },
+     {
+      "tag": "PV 4809",
+      "status": "verified_loose"
+     },
+     {
+      "tag": "27-HA50",
+      "status": "verified"
+     },
+     {
+      "tag": "27-PSV4820",
+      "status": "verified"
+     },
+     {
+      "tag": "50-4565WS",
+      "status": "new_candidate"
+     },
+     {
+      "tag": "50-4549WS",
+      "status": "new_candidate"
+     }
+    ]
+   },
+   {
+    "observation": "Multiple vacuum breakers and air release traps (e.g., 43-4508VF, 43-4518VF, 43-4598VF) are strategically placed on the seawater return lines, especially at high points, as detailed in Note 1. This prevents vacuum formation in the piping and ensures proper venting of trapped air, crucial for stable system operation.",
+    "deviation": "Vacuum",
+    "tags": [
+     {
+      "tag": "43-4508VF",
+      "status": "new_candidate"
+     },
+     {
+      "tag": "43-4518VF",
+      "status": "new_candidate"
+     },
+     {
+      "tag": "43-4598VF",
+      "status": "new_candidate"
+     },
+     {
+      "tag": "W-H043-P-F-001",
+      "status": "suspect"
+     }
+    ]
+   },
+   {
+    "observation": "The process gas inlet line from the compressor discharge (HO27-P-E-001) to the aftercooler includes a manually operated shutdown valve (symbol 'S') with associated control logic (XY 4805). The absence of a clear bypass or redundancy for this critical isolation point could pose operational challenges during maintenance or in case of valve failure.",
+    "deviation": "No flow",
+    "tags": [
+     {
+      "tag": "HO27-P-E-001",
+      "status": "suspect"
+     },
+     {
+      "tag": "27-HA50",
+      "status": "verified"
+     },
+     {
+      "tag": "ZL 4805",
+      "status": "verified_loose"
+     },
+     {
+      "tag": "ZS 4805",
+      "status": "verified_loose"
+     },
+     {
+      "tag": "XY 4805",
+      "status": "verified_loose"
+     }
+    ]
+   }
+  ],
+  "possible_symbol_only": [
+   {
+    "tag": "PSV 4820",
+    "symbol": "Pressure Safety Valve",
+    "status": "verified_loose"
+   },
+   {
+    "tag": "50-PA52",
+    "symbol": "Centrifugal Pump",
+    "status": "verified"
+   },
+   {
+    "tag": "27-HA50",
+    "symbol": "Shell and Tube Heat Exchanger",
+    "status": "verified"
+   },
+   {
+    "tag": "FIC 4810",
+    "symbol": "Flow Indicator Controller",
+    "status": "verified_loose"
+   },
+   {
+    "tag": "FV 4810",
+    "symbol": "Control Valve",
+    "status": "verified_loose"
+   },
+   {
+    "tag": "FI 4807",
+    "symbol": "Flow Indicator",
+    "status": "verified_loose"
+   },
+   {
+    "tag": "FT 4807",
+    "symbol": "Flow Transmitter",
+    "status": "verified_loose"
+   },
+   {
+    "tag": "PIC 4809",
+    "symbol": "Pressure Indicator Controller",
+    "status": "verified_loose"
+   },
+   {
+    "tag": "PV 4809",
+    "symbol": "Control Valve",
+    "status": "verified_loose"
+   },
+   {
+    "tag": "TIC 4808",
+    "symbol": "Temperature Indicator Controller",
+    "status": "verified_loose"
+   },
+   {
+    "tag": "FV 4808",
+    "symbol": "Control Valve",
+    "status": "new_candidate"
+   },
+   {
+    "tag": "43-4508VF",
+    "symbol": "Vacuum Breaker",
+    "status": "new_candidate"
+   },
+   {
+    "tag": "PSE 4801A",
+    "symbol": "Pressure Switch, Emergency",
+    "status": "verified_loose"
+   },
+   {
+    "tag": "XA 4801",
+    "symbol": "Annunciator",
+    "status": "new_candidate"
+   },
+   {
+    "tag": "SI 4205",
+    "symbol": "Safety Interlock",
+    "status": "new_candidate"
+   },
+   {
+    "tag": "PT 4801",
+    "symbol": "Pressure Transmitter",
+    "status": "verified_loose"
+   },
+   {
+    "tag": "TI 4803",
+    "symbol": "Temperature Indicator",
+    "status": "verified_loose"
+   },
+   {
+    "tag": "ZS 4805",
+    "symbol": "Level Switch",
+    "status": "verified_loose"
+   },
+   {
+    "tag": "TI 4820",
+    "symbol": "Temperature Indicator",
+    "status": "verified_loose"
+   }
+  ],
+  "tag_totals": {
+   "verified": 11,
+   "verified_loose": 29,
+   "new_candidate": 18,
+   "suspect": 2
+  }
+ },
+ "saved_at": "2026-07-16 08:37"
+}

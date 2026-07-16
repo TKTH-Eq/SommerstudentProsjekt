@@ -1,0 +1,167 @@
+{
+ "excerpt": {
+  "summary": "This P&ID depicts the Export Booster Compressor (27-KA50) and its associated suction and discharge piping, including anti-surge control, safety systems, and instrumentation. The diagram details control strategies for the compressor, such as pressure control via discharge throttling or compressor speed, and includes notes on specific operational procedures and interlocks. It outlines connections to wet gas scrubbers, cold vents, and an aftercooler.",
+  "observations": [
+   {
+    "observation": "The anti-surge valve (implied by note 12 involving control logic) is designed to operate as a control valve with a minimum opening restriction (5%). If this minimum opening is too restrictive or the control logic fails, it could lead to an insufficient flow condition or surge.",
+    "deviation": "Low Flow",
+    "tags": [
+     {
+      "tag": "ANTI-SURGE CONTROL",
+      "status": "suspect"
+     },
+     {
+      "tag": "27-4453PV",
+      "status": "verified"
+     }
+    ]
+   },
+   {
+    "observation": "The spill-off valve 27-PV4803 is specifically designated for compressor start-up (Note 7). A failure to open during start-up could lead to high pressure or surge, while a failure to close after start-up could lead to continuous bypass and reduced compressor efficiency or low discharge pressure.",
+    "deviation": "High Pressure",
+    "tags": [
+     {
+      "tag": "27-PV4803",
+      "status": "verified"
+     },
+     {
+      "tag": "27-KA50",
+      "status": "verified"
+     }
+    ]
+   },
+   {
+    "observation": "A key interlock (SI 4208, Note 16) prevents 27-4453PV from being closed while 27-4452PV is open. A failure of this interlock, or bypassing it, could lead to an unintended valve configuration resulting in equipment damage or an unsafe operating condition (e.g., dead-heading the compressor).",
+    "deviation": "Incorrect Operation",
+    "tags": [
+     {
+      "tag": "SI 4208",
+      "status": "new_candidate"
+     },
+     {
+      "tag": "27-4452PV",
+      "status": "verified"
+     },
+     {
+      "tag": "27-4453PV",
+      "status": "verified"
+     }
+    ]
+   },
+   {
+    "observation": "Pressure upstream of the compressor can be controlled by two different methods: discharge throttling using 27-PIC4825A/B or varying compressor speed via 27-PIC4825C (Note 22). This dual control strategy introduces complexity which needs careful review for potential conflicts or failures leading to loss of control.",
+    "deviation": "Loss of Control",
+    "tags": [
+     {
+      "tag": "27-PIC4825A",
+      "status": "verified"
+     },
+     {
+      "tag": "27-PIC4825B",
+      "status": "verified"
+     },
+     {
+      "tag": "27-PIC4825C",
+      "status": "verified"
+     },
+     {
+      "tag": "27-KA50",
+      "status": "verified"
+     }
+    ]
+   },
+   {
+    "observation": "The bolt catcher must be removed one month after compressor start-up (Note 20). Failure to follow this temporary operational instruction could lead to reduced flow, increased pressure drop, or potential damage to downstream equipment due to foreign material if the catcher breaks apart.",
+    "deviation": "Less Flow",
+    "tags": [
+     {
+      "tag": "27-KA50",
+      "status": "verified"
+     }
+    ]
+   },
+   {
+    "observation": "Low pressure permissives are required for opening drain valves 27-XV4826 and 27-XV4828 (Notes 17, 18). If these permissives (likely sensed by 27-PT4807) fail or are overridden, it could lead to the opening of drain valves under high pressure, posing a safety risk.",
+    "deviation": "High Pressure",
+    "tags": [
+     {
+      "tag": "27-XV4826",
+      "status": "verified"
+     },
+     {
+      "tag": "27-XV4828",
+      "status": "verified"
+     },
+     {
+      "tag": "27-PT4807",
+      "status": "verified"
+     }
+    ]
+   }
+  ],
+  "possible_symbol_only": [
+   {
+    "tag": "27-KA50",
+    "symbol": "Reciprocating Compressor",
+    "status": "verified"
+   },
+   {
+    "tag": "27-PT4803",
+    "symbol": "Pressure Transmitter",
+    "status": "verified"
+   },
+   {
+    "tag": "27-PV4803",
+    "symbol": "Control Valve",
+    "status": "verified"
+   },
+   {
+    "tag": "27-PI4801",
+    "symbol": "Pressure Indicator",
+    "status": "new_candidate"
+   },
+   {
+    "tag": "27-PSV4809",
+    "symbol": "Pressure Safety Valve",
+    "status": "verified"
+   },
+   {
+    "tag": "27-PSV4810",
+    "symbol": "Pressure Safety Valve",
+    "status": "verified"
+   },
+   {
+    "tag": "27-TT4806",
+    "symbol": "Temperature Transmitter",
+    "status": "verified"
+   },
+   {
+    "tag": "SI 4208",
+    "symbol": "Safety Interlock",
+    "status": "new_candidate"
+   },
+   {
+    "tag": "27-PIC4825A",
+    "symbol": "Pressure Indicating Controller",
+    "status": "verified"
+   },
+   {
+    "tag": "27-XV4826",
+    "symbol": "Manual Valve",
+    "status": "verified"
+   },
+   {
+    "tag": "27-FO4827",
+    "symbol": "Flow Orifice",
+    "status": "verified"
+   }
+  ],
+  "tag_totals": {
+   "verified": 22,
+   "verified_loose": 0,
+   "new_candidate": 3,
+   "suspect": 1
+  }
+ },
+ "saved_at": "2026-07-16 08:41"
+}

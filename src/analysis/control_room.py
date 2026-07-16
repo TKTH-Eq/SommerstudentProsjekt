@@ -108,20 +108,73 @@ def alarm_shower(graph: nx.DiGraph, fault: str, noise: int = 2,
 
 def candidate_brief(graph: nx.DiGraph, by_tag, active: list[str]) -> list[dict]:
     """Evidence per candidate root — deliberately WITHOUT declaring a winner.
-    The structural facts (how many of the active alarms each candidate would
-    explain, its failure modes, what to cross-check) are the brief; weighing
-    them is the operator's exercise. Candidates are the independent roots the
-    graph analysis finds, alphabetically ordered to avoid ranking cues."""
-    res = root_cause(graph, active)
+
+    Cycle-aware: the plant model adds cross-drawing edges in BOTH directions
+    (direction across a sheet boundary is not stated in the export), which
+    creates cycles — and inside a cycle every alarm has an active
+    predecessor, so the naive "no active upstream" root test finds nothing.
+    Instead we condense the active-alarm subgraph into strongly connected
+    components and take the SOURCE components as candidate groups; within a
+    group the representative shown is the member that would explain most of
+    the other active alarms. On a cycle-free graph (single-drawing mode)
+    every SCC is a single node and this reduces exactly to the old test.
+    """
+    act = [a for a in active if a in graph]
+    sub = graph.subgraph(act)
+    cond = nx.condensation(sub)
     out = []
-    for cand in sorted(res["roots"]):
-        out.append({
-            "tag": cand,
-            "explains": sorted(res["explains"].get(cand, [])),
-            "checks": cross_checks(graph, by_tag, cand),
-            "barriers": relevant_barriers(graph, by_tag, cand),
-        })
-    return out
+    for c in cond.nodes:
+        if cond.in_degree(c) != 0:
+            continue                       # not a source component
+        members = cond.nodes[c]["members"]
+        # explains = active alarms reachable in the FULL graph
+        def _explains(t):
+            return sorted(set(nx.descendants(graph, t)) & set(act) - {t})
+        rep = max(members, key=lambda t: len(_explains(t)))
+        exp = _explains(rep)
+        entry = {
+            "tag": rep,
+            "explains": exp,
+            "checks": cross_checks(graph, by_tag, rep),
+            "barriers": relevant_barriers(graph, by_tag, rep),
+        }
+        if len(members) > 1:
+            entry["group"] = sorted(m for m in members if m != rep)
+        out.append(entry)
+    return sorted(out, key=lambda b: b["tag"])
+
+
+def audit_answer_tags(text: str, by_tag) -> dict:
+    """Verify every tag-like token in an AI answer against the register —
+    the same 'LLM proposes, register verifies' pattern as the vision layer,
+    applied to chat. Returns {'verified': [...], 'suspect': [...]} where
+    verified covers exact matches and (type, number)-normalised matches
+    (HV 2264 ≡ 13-HV2264 ≡ 13-2264HV). Pure function, unit-testable."""
+    import re as _re
+    known = {t.upper() for t in by_tag}
+
+    def _pair(t: str):
+        u = _re.sub(r"\s+", "", t.upper())
+        u = u.split("-", 1)[1] if _re.match(r"^\d{2}-", u) else u
+        u = u.replace("-", "")
+        m = _re.match(r"^([A-Z]{1,4})(\d{2,4})[A-Z]?$", u)
+        if m:
+            return m.group(1), m.group(2)
+        m = _re.match(r"^(\d{2,4})([A-Z]{1,4})$", u)
+        return (m.group(2), m.group(1)) if m else None
+
+    known_pairs = {p for t in known if (p := _pair(t))}
+    tokens = set(_re.findall(
+        r"\b\d{2}-[A-Z]{1,4}-?\d{2,4}[A-Z]?\b|\b\d{2}-\d{3,4}[A-Z]{1,4}\b"
+        r"|\b[A-Z]{2,4}[ -]\d{3,4}[A-Z]?\b", text))
+    verified, suspect = [], []
+    for tok in sorted(tokens):
+        u = _re.sub(r"\s+", "", tok.upper())
+        if u in known or (_pair(tok) and _pair(tok) in known_pairs):
+            verified.append(tok)
+        else:
+            suspect.append(tok)
+    return {"verified": verified, "suspect": suspect}
 
 
 def shower_debrief(fault: str, chosen: str | None, noise: list[str],

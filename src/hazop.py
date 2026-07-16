@@ -27,6 +27,50 @@ from analysis.hazop_export import write_worksheet_xlsx, write_vision_xlsx
 from system_analysis import find_systems  # reuse discovery — one source of truth
 
 
+@st.cache_data(show_spinner=False)
+def _png_b64(path: str, mtime: float) -> str:
+    import base64
+    return base64.b64encode(Path(path).read_bytes()).decode()
+
+
+def _zoomable_image(png_path: str, height: int = 620):
+    """Inline pan/zoom viewer (scrollhjul = zoom mot pekeren, dra = panorer,
+    dobbeltklikk = tilbakestill). Ingen ekstra avhengigheter — ren HTML/JS i
+    en components-iframe, samme teknikk som DEXPI-demoen."""
+    import streamlit.components.v1 as components
+    b64 = _png_b64(png_path, Path(png_path).stat().st_mtime)
+    components.html(f"""
+<div id="vp" style="width:100%;height:{height - 20}px;overflow:hidden;
+     border:1px solid #444;border-radius:8px;background:#1a1a1a;
+     cursor:grab;position:relative;user-select:none">
+  <img id="im" src="data:image/png;base64,{b64}" draggable="false"
+       style="transform-origin:0 0;position:absolute;left:0;top:0;
+              max-width:none;width:100%"/>
+  <div style="position:absolute;right:8px;bottom:8px;color:#aaa;
+       font:11px sans-serif;background:#0008;padding:3px 8px;
+       border-radius:6px;pointer-events:none">
+    scroll = zoom &nbsp;·&nbsp; dra = panorer &nbsp;·&nbsp; dobbeltklikk = reset
+  </div>
+</div>
+<script>
+const vp=document.getElementById("vp"),im=document.getElementById("im");
+let s=1,tx=0,ty=0,drag=false,sx=0,sy=0;
+function apply(){{im.style.transform=`translate(${{tx}}px,${{ty}}px) scale(${{s}})`;}}
+vp.addEventListener("wheel",e=>{{
+  e.preventDefault();
+  const r=vp.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+  const f=e.deltaY<0?1.25:0.8,ns=Math.min(Math.max(s*f,0.5),40);
+  tx=mx-(mx-tx)*(ns/s); ty=my-(my-ty)*(ns/s); s=ns; apply();
+}},{{passive:false}});
+vp.addEventListener("mousedown",e=>{{drag=true;sx=e.clientX-tx;sy=e.clientY-ty;
+  vp.style.cursor="grabbing";}});
+window.addEventListener("mousemove",e=>{{if(!drag)return;
+  tx=e.clientX-sx;ty=e.clientY-sy;apply();}});
+window.addEventListener("mouseup",()=>{{drag=false;vp.style.cursor="grab";}});
+vp.addEventListener("dblclick",()=>{{s=1;tx=0;ty=0;apply();}});
+</script>""", height=height)
+
+
 systems = find_systems()
 st.sidebar.title("HAZOP-forberedelse")
 if not systems:
@@ -132,10 +176,19 @@ if not view.empty:
     st.divider()
     if os.getenv("GEMINI_API_KEY"):
         node_ai = st.selectbox("AI-omskriving av én node", picked or nodes)
-        if st.button("Generer AI-utkast for noden"):
+        from ai.ai_cache import load_rewrite, save_rewrite
+        cached_rw = load_rewrite(system, node_ai)
+        rw_label = ("🔄 Nytt AI-utkast (overskriver cache)" if cached_rw
+                    else "Generer AI-utkast for noden")
+        if st.button(rw_label):
             node_rows = [r for r in all_rows if r["node"] == node_ai]
             with st.spinner("Spør modellen…"):
-                st.markdown(ai_enrich_node(node_rows))
+                text = ai_enrich_node(node_rows)
+            save_rewrite(system, node_ai, text)
+            cached_rw = {"text": text, "saved_at": "nå (live)"}
+        if cached_rw:
+            st.caption(f"🗂️ Utkast generert: {cached_rw['saved_at']}")
+            st.markdown(cached_rw["text"])
 
         st.divider()
         st.subheader("👁️ Vision-utdrag fra selve tegningen")
@@ -145,12 +198,31 @@ if not view.empty:
                    "(mulig symbol-only-funn — sjekk tegningen) · ❓ matcher "
                    "ikke kjent tagformat (mulig hallusinasjon). Krever "
                    "pypdfium2.")
-        if st.button("Generer vision-utdrag for P&ID-en"):
+        from ai.ai_cache import load_vision, save_vision
+        # demoforsikring: hent cachet utdrag fra disk om det finnes
+        if f"vision_{system}" not in st.session_state:
+            cached = load_vision(Path(pid_path).stem)
+            if cached:
+                st.session_state[f"vision_{system}"] = cached["excerpt"]
+                st.session_state[f"vision_png_{system}"] = cached["png"]
+                st.session_state[f"vision_ts_{system}"] = cached["saved_at"]
+        btn_label = ("🔄 Kjør på nytt mot API (overskriver cache)"
+                     if st.session_state.get(f"vision_{system}")
+                     else "Generer vision-utdrag for P&ID-en")
+        if st.button(btn_label):
             from ai.hazop_vision import vision_hazop_excerpt
             try:
                 with st.spinner("Rasteriserer og spør Gemini…"):
                     st.session_state[f"vision_{system}"] = vision_hazop_excerpt(
                         Path(pid_path), [o.tag for o in objs])
+                    # gjenbruk rasteret til visning ved siden av utdraget
+                    from extraction.vision_extract import _render_png
+                    st.session_state[f"vision_png_{system}"] = _render_png(
+                        Path(pid_path), 200)
+                    st.session_state[f"vision_ts_{system}"] = "nå (live)"
+                    save_vision(Path(pid_path).stem,
+                                st.session_state[f"vision_{system}"],
+                                st.session_state[f"vision_png_{system}"])
             except ImportError as e:
                 st.error(f"Mangler avhengighet: {e} — "
                          f"`uv add pypdfium2 google-genai`")
@@ -162,7 +234,22 @@ if not view.empty:
         ex = st.session_state.get(f"vision_{system}")
         if ex:
             from ai.hazop_vision import to_markdown
-            st.markdown(to_markdown(ex))
+            ts = st.session_state.get(f"vision_ts_{system}")
+            if ts:
+                st.caption(f"🗂️ Resultat generert: {ts} — bruk knappen over "
+                           f"for en fersk API-kjøring.")
+            png = st.session_state.get(f"vision_png_{system}")
+            if png and Path(png).exists():
+                img_col, txt_col = st.columns([1, 1])
+                with img_col:
+                    _zoomable_image(str(png))
+                    st.caption("Tegningen slik modellen så den (200 dpi). "
+                               "Zoom inn på tags og noter for å verifisere "
+                               "utdraget direkte.")
+                with txt_col:
+                    st.markdown(to_markdown(ex))
+            else:
+                st.markdown(to_markdown(ex))
             vx = Path("reports") / f"hazop_vision_system_{system}.xlsx"
             write_vision_xlsx(ex, vx,
                               title=f"Vision HAZOP excerpt — System {system}")

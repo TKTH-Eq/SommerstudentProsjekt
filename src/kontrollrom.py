@@ -74,9 +74,36 @@ st.sidebar.title("Kontrollrom-assistent")
 if not files:
     st.error("Fant ingen DEXPI-XML under data/raw/.")
     st.stop()
-choice = st.sidebar.selectbox("Tegning", list(files))
-M = load(str(files[choice]), files[choice].stat().st_mtime)
+
+PLANT = "🏭 Hele anlegget (alle tegninger)"
+
+
+@st.cache_resource(show_spinner="Syr sammen anleggsmodellen…")
+def load_plant() -> dict:
+    from analysis.plant_model import build_plant_model
+    Mp = build_plant_model(RAW_DIR)
+    return {"g": Mp["graph"], "by_tag": {o.tag: o for o in Mp["objects"]},
+            "fmap": failure_map(Mp["graph"], Mp["objects"]),
+            "drawings_of": Mp["drawings_of"], "stats": Mp["stats"]}
+
+
+choice = st.sidebar.selectbox("Kilde", [PLANT] + list(files))
+plant_mode = choice == PLANT
+if plant_mode:
+    M = load_plant()
+    st.sidebar.caption(f"{M['stats']['drawings']} tegninger · "
+                       f"{M['stats']['tags']} tags · "
+                       f"{M['stats']['line_stitches']} linje-sømmer · "
+                       f"{M['stats']['cross_edges']} kryss-kanter")
+else:
+    M = load(str(files[choice]), files[choice].stat().st_mtime)
 g, by_tag, fmap = M["g"], M["by_tag"], M["fmap"]
+drawings_of = M.get("drawings_of", {})
+
+
+def _drw(tag: str) -> str:
+    ds = drawings_of.get(tag, [])
+    return f" `[{ds[0][-14:]}]`" if ds else ""
 
 candidates = sorted((n for n in g.nodes if len(scenario_order(g, n)) >= 4),
                     key=lambda n: -len(scenario_order(g, n)))
@@ -122,7 +149,8 @@ with left:
     st.subheader(f"🔔 Alarmtavle — {len(active)} samtidige")
     for a in active:
         st.write(f"🔴 **{a}**  \u2003"
-                 f"`{by_tag[a].category if a in by_tag else '?'}`")
+                 f"`{by_tag[a].category if a in by_tag else '?'}`"
+                 + (_drw(a) if plant_mode else ""))
     if not done:
         st.divider()
         pick = st.selectbox("Mest sannsynlig årsak", ["(velg)"] + sorted(active))
@@ -144,6 +172,10 @@ with right:
             if b["tag"] in fmap:
                 st.code(operator_brief(b["tag"], fmap[b["tag"]], by_tag),
                         language="text")
+            if b.get("group"):
+                st.caption(f"⭕ Strukturelt uatskillelige (samme sykel via "
+                           f"tegnings-sømmer): {', '.join(b['group'][:8])}"
+                           + (" …" if len(b["group"]) > 8 else ""))
             if b["explains"]:
                 st.caption("Forklarer disse aktive alarmene som konsekvenser:")
                 st.markdown(chips(b["explains"], by_tag),
@@ -168,9 +200,30 @@ with right:
 if done:
     st.divider()
     st.subheader("📋 Debrief")
-    for line in shower_debrief(S["fault"], S["chosen"], S["shower"]["noise"],
-                               len(active)):
-        st.write("• " + line)
+    fault_group = set()
+    for b in candidate_brief(g, by_tag, active):
+        grp = {b["tag"]} | set(b.get("group", []))
+        if S["fault"] in grp:
+            fault_group = grp
+    if plant_mode and S["chosen"] in fault_group and S["chosen"] != S["fault"]:
+        st.write(f"• Faktisk feilkilde: {S['fault']} — valget ditt "
+                 f"({S['chosen']}) ligger i SAMME sykel over tegnings-sømmene "
+                 f"og er strukturelt uatskillelig fra kilden. Regnes som "
+                 f"riktig gruppe; fysisk verifisering må skille dem — nettopp "
+                 f"fordi retning over en søm ikke er oppgitt i leveransen.")
+        for line in shower_debrief(S["fault"], S["chosen"], S["shower"]["noise"],
+                                   len(active))[-1:]:
+            st.write("• " + line)
+    else:
+        for line in shower_debrief(S["fault"], S["chosen"], S["shower"]["noise"],
+                                   len(active)):
+            st.write("• " + line)
+    if plant_mode:
+        drawn = sorted({d for t in active for d in drawings_of.get(t, [])})
+        st.write(f"• Kaskaden berørte **{len(drawn)} tegninger**: "
+                 + ", ".join(d[-14:] for d in drawn)
+                 + " — umulig å se fra ett ark, mulig fordi leveransen er "
+                   "strukturert og sammensybar.")
     if st.button("↺ Nytt scenario"):
         del st.session_state["cr"]
         st.rerun()
@@ -189,6 +242,13 @@ hl_pick = st.selectbox("Marker kandidat (eller annen alarm)",
 he = fmap.get(hl_pick)
 highlight = ({"sel": hl_pick, "down": he["downstream"], "up": he["upstream"]}
              if he else None)
+if plant_mode:
+    keep = set(active) | {hl_pick}
+    if he:
+        keep |= set(he["downstream"]) | set(he["upstream"])
+    g = g.subgraph(keep).copy()
+    st.caption(f"Anleggsmodus: viser subgrafen rundt alarmbildet "
+               f"({g.number_of_nodes()} av {M['g'].number_of_nodes()} tags).")
 st.markdown(
     f"Markerer **{hl_pick}** &nbsp; "
     f"<span style='color:#12233b'>■ valgt</span> &nbsp; "
@@ -202,30 +262,96 @@ components.html(
 # ---- optional grounded Q&A -----------------------------------------------------
 st.divider()
 if os.getenv("GEMINI_API_KEY"):
-    with st.expander("💬 Spør assistenten (Gemini, forankret i modellen)"):
-        q = st.text_input("Spørsmål om situasjonen",
-                          placeholder="F.eks.: Hvordan skiller jeg kandidatene "
-                                      "fra hverandre?")
+    with st.expander("💬 Spør assistenten (Gemini, forankret i modellen)",
+                     expanded=bool(st.session_state.get("qa_hist"))):
+        from analysis.control_room import audit_answer_tags
+
+        # samtaleminne per scenario — nullstilles når nytt scenario startes
+        hist_key = f"qa_hist_{S['fault']}_{len(S['shower']['alarms'])}"
+        hist = st.session_state.setdefault(hist_key, [])
+        st.session_state["qa_hist"] = hist
+
+        def _qa_context() -> str:
+            briefs = candidate_brief(g if not plant_mode else M["g"],
+                                     by_tag, active)
+            lines = [f"ACTIVE ALARMS ({len(active)}): {', '.join(active[:40])}"
+                     + (" …" if len(active) > 40 else "")]
+            for b in briefs:
+                fm = "; ".join(fmap.get(b["tag"], {}).get("modes", [])[:3])
+                drw = (f" on drawing {drawings_of.get(b['tag'], ['?'])[0]}"
+                       if plant_mode else "")
+                grp = (f"; cycle-group: {', '.join(b['group'][:5])}"
+                       if b.get("group") else "")
+                lines.append(
+                    f"- CANDIDATE {b['tag']}{drw}: explains "
+                    f"{len(b['explains'])} active alarms; failure modes: "
+                    f"{fm or 'n/a'}; barriers: "
+                    f"{', '.join(b['barriers']) or 'none'}; cross-checks: "
+                    f"{b['checks']}{grp}")
+            return "\n".join(lines)
+
+        # vis historikken som chat
+        for q_prev, a_prev, audit_prev in hist:
+            with st.chat_message("user"):
+                st.write(q_prev)
+            with st.chat_message("assistant"):
+                st.markdown(a_prev)
+                if audit_prev["suspect"]:
+                    st.caption("Tag-sjekk: ✅ "
+                               + ", ".join(audit_prev["verified"]) + " · ❓ **"
+                               + ", ".join(audit_prev["suspect"])
+                               + "** — finnes ikke i modellen, verifiser!")
+                elif audit_prev["verified"]:
+                    st.caption("Tag-sjekk: ✅ alle refererte tags finnes i "
+                               "modellen (" 
+                               + ", ".join(audit_prev["verified"]) + ")")
+
+        # foreslåtte spørsmål (demo-sikring) + fritekst
+        sugg = ["Gi meg en verifiseringsplan for alarmbildet",
+                "Hva taler for og mot hver kandidat?",
+                "Hva bør jeg ikke gjøre ennå, og hvorfor?"]
+        cols = st.columns(len(sugg))
+        clicked = None
+        for c, txt in zip(cols, sugg):
+            if c.button(txt, key=f"sugg_{txt[:12]}_{hist_key}"):
+                clicked = txt
+        typed = st.text_input("Eller still ditt eget spørsmål",
+                              key=f"qa_in_{hist_key}")
+        q = clicked or (typed if st.button("Send", key=f"qa_send_{hist_key}")
+                        else None)
+
         if q:
-            briefs = candidate_brief(g, by_tag, active)
-            ctx = "\n".join(
-                f"- {b['tag']}: explains {len(b['explains'])} active alarms "
-                f"({', '.join(b['explains']) or 'none'}); barriers: "
-                f"{', '.join(b['barriers']) or 'none'}" for b in briefs)
-            prompt = ("You are a control-room decision-support assistant "
-                      "during an alarm flood. Use ONLY the facts and tags "
-                      "below — NEVER invent a tag or process detail, and do "
-                      "NOT state which candidate is correct; help the "
-                      "operator reason about the evidence. Be terse. End "
-                      "with: 'Structural decision support — operator "
-                      "judgement decides.'\n\n"
-                      f"ACTIVE ALARMS: {', '.join(active)}\n"
-                      f"CANDIDATES:\n{ctx}\n\nQUESTION: {q}")
+            history_txt = "\n".join(
+                f"OPERATOR: {hq}\nASSISTANT: {ha}" for hq, ha, _ in hist[-3:])
+            prompt = (
+                "You are a control-room decision-support assistant during an "
+                "alarm flood. Answer in NORWEGIAN. Use ONLY the facts and "
+                "tags below — NEVER invent a tag; general process knowledge "
+                "may be used if marked '(generelt)'.\n"
+                "Your job is to turn the evidence into ACTION, not to "
+                "restate it. Structure the answer as:\n"
+                "1. BEVISVEIING — which candidate the structural evidence "
+                "favours and WHY (explains-counts, failure modes, position), "
+                "and what would speak against it. You SHOULD take a stand; "
+                "it is a structural assessment, not the verdict.\n"
+                "2. VERIFISERINGSPLAN — 3-5 numbered steps in priority "
+                "order. Each step: a concrete check tied to a REAL tag from "
+                "the facts, what reading/outcome to expect if the favoured "
+                "candidate is true, and what the opposite outcome would "
+                "imply.\n"
+                "3. IKKE GJØR ENNÅ — one line on actions to hold off on "
+                "and why.\n"
+                "Be concrete and terse. End with: 'Strukturell "
+                "beslutningsstøtte — operatørens vurdering avgjør.'\n\n"
+                f"FACTS:\n{_qa_context()}\n\n"
+                + (f"CONVERSATION SO FAR:\n{history_txt}\n\n" if hist else "")
+                + f"QUESTION: {q}")
             try:
                 from ai.gemini_client import generate
                 with st.spinner("Spør modellen…"):
-                    r = generate(prompt)
-                st.markdown(r.text)
+                    ans = generate(prompt).text
+                hist.append((q, ans, audit_answer_tags(ans, by_tag)))
+                st.rerun()
             except Exception as e:  # noqa: BLE001
                 st.error(f"Gemini-kallet feilet: {e}")
 else:

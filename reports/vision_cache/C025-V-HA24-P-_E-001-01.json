@@ -1,0 +1,267 @@
+{
+ "excerpt": {
+  "summary": "This P&ID illustrates the piping and instrumentation for the 24-PA001 Scrubber Pump, which is part of a gas treatment system. It details the pump's suction line from a wet gas scrubber, its discharge lines leading to condensate export and a sample receiver, and associated control and safety instrumentation for level, pressure, and flow.",
+  "observations": [
+   {
+    "observation": "There is no explicit bypass line or redundant pump for the 24-PA001 scrubber pump, indicating a single point of failure that could lead to a complete loss of scrubbing capacity if the pump fails or requires maintenance.",
+    "deviation": "No flow, no operation",
+    "tags": [
+     {
+      "tag": "24-PA001",
+      "status": "verified"
+     }
+    ]
+   },
+   {
+    "observation": "Note 5 highlights the importance of maintaining a liquid seal for the 24-PA001 pump, with an alarm triggered by a low differential pressure between 24-PT2159 and 24-PT2001. Loss of this seal could lead to pump damage or failure.",
+    "deviation": "Low differential pressure, loss of seal",
+    "tags": [
+     {
+      "tag": "24-PT2159",
+      "status": "verified"
+     },
+     {
+      "tag": "24-PT2001",
+      "status": "verified"
+     },
+     {
+      "tag": "24-PA001",
+      "status": "verified"
+     }
+    ]
+   },
+   {
+    "observation": "Note 3 states that the 24-LSH2005 ultrasonic level switch raises an alarm upon detecting oil. This suggests a potential for oil ingress into the scrubber system, which could contaminate the process or lead to issues if not effectively managed.",
+    "deviation": "High level (oil), contamination",
+    "tags": [
+     {
+      "tag": "24-LSH2005",
+      "status": "verified"
+     }
+    ]
+   },
+   {
+    "observation": "The pump's minimum flow line includes control valve 24-FV2100. Note 4 specifies that 24-FV2100 is manually set at 10% opening. If this manual setting is incorrect, altered, or if the valve malfunctions, it could result in insufficient minimum flow, potentially causing pump overheating or damage.",
+    "deviation": "Low flow, no flow (minimum flow)",
+    "tags": [
+     {
+      "tag": "24-FV2100",
+      "status": "verified"
+     },
+     {
+      "tag": "24-FT2100",
+      "status": "verified"
+     },
+     {
+      "tag": "24-FIC2100",
+      "status": "verified"
+     }
+    ]
+   },
+   {
+    "observation": "The discharge line has two parallel actuated on/off valves (24-XV2163A and 24-XV2163B) controlled by local hand switches (24-HS2163A and 24-HS2163B). The failure of both actuators or their controlling hand switches could lead to uncontrolled flow or complete isolation of the discharge, impacting condensate export.",
+    "deviation": "No flow, more flow, reverse flow",
+    "tags": [
+     {
+      "tag": "24-XV2163A",
+      "status": "verified"
+     },
+     {
+      "tag": "24-XV2163B",
+      "status": "verified"
+     },
+     {
+      "tag": "24-HS2163A",
+      "status": "verified"
+     },
+     {
+      "tag": "24-HS2163B",
+      "status": "verified"
+     }
+    ]
+   },
+   {
+    "observation": "The suction line from the Wet Gas Scrubber 24-VG50 includes an apparent restriction orifice (4\"x3\") and a manual valve (24-2053PL) immediately before the pump. This configuration could lead to inadequate suction pressure, cavitation, or insufficient flow to the pump if not properly sized or if the valve is not fully open.",
+    "deviation": "Low flow, cavitation",
+    "tags": [
+     {
+      "tag": "24-VG50",
+      "status": "verified"
+     },
+     {
+      "tag": "24-2053PL",
+      "status": "new_candidate"
+     },
+     {
+      "tag": "24-PA001",
+      "status": "verified"
+     }
+    ]
+   }
+  ],
+  "possible_symbol_only": [
+   {
+    "tag": "24-PA001",
+    "symbol": "Centrifugal Pump",
+    "status": "verified"
+   },
+   {
+    "tag": "24-PDI2001",
+    "symbol": "Differential Pressure Indicator",
+    "status": "verified"
+   },
+   {
+    "tag": "24-PI2159",
+    "symbol": "Pressure Indicator",
+    "status": "verified"
+   },
+   {
+    "tag": "24-PT2159",
+    "symbol": "Pressure Transmitter",
+    "status": "verified"
+   },
+   {
+    "tag": "24-PSD",
+    "symbol": "Pressure Safety Device",
+    "status": "suspect"
+   },
+   {
+    "tag": "24-LSH2005",
+    "symbol": "Level Switch High",
+    "status": "verified"
+   },
+   {
+    "tag": "24-FV2100",
+    "symbol": "Flow Control Valve",
+    "status": "verified"
+   },
+   {
+    "tag": "24-FT2100",
+    "symbol": "Flow Transmitter",
+    "status": "verified"
+   },
+   {
+    "tag": "24-FIC2100",
+    "symbol": "Flow Indicator Controller",
+    "status": "verified"
+   },
+   {
+    "tag": "24-PI2160",
+    "symbol": "Pressure Indicator",
+    "status": "verified"
+   },
+   {
+    "tag": "24-PT2160",
+    "symbol": "Pressure Transmitter",
+    "status": "verified"
+   },
+   {
+    "tag": "24-LV2162A",
+    "symbol": "Level Control Valve",
+    "status": "verified"
+   },
+   {
+    "tag": "24-LY2162A",
+    "symbol": "Level Controller/Converter",
+    "status": "verified"
+   },
+   {
+    "tag": "24-ZS2163A",
+    "symbol": "Position Switch",
+    "status": "verified"
+   },
+   {
+    "tag": "24-ZL2163A",
+    "symbol": "Position Indicator",
+    "status": "verified"
+   },
+   {
+    "tag": "24-XV2163A",
+    "symbol": "Automated On/Off Valve",
+    "status": "verified"
+   },
+   {
+    "tag": "24-HS2163",
+    "symbol": "Hand Switch",
+    "status": "verified"
+   },
+   {
+    "tag": "24-LV2162B",
+    "symbol": "Level Control Valve",
+    "status": "verified"
+   },
+   {
+    "tag": "24-LY2162B",
+    "symbol": "Level Controller/Converter",
+    "status": "verified"
+   },
+   {
+    "tag": "24-ZS2163B",
+    "symbol": "Position Switch",
+    "status": "verified"
+   },
+   {
+    "tag": "24-ZL2163B",
+    "symbol": "Position Indicator",
+    "status": "verified"
+   },
+   {
+    "tag": "24-XV2163B",
+    "symbol": "Automated On/Off Valve",
+    "status": "verified"
+   },
+   {
+    "tag": "24-2061PL",
+    "symbol": "Check Valve",
+    "status": "verified"
+   },
+   {
+    "tag": "24-2060PL",
+    "symbol": "Manual Gate Valve",
+    "status": "verified"
+   },
+   {
+    "tag": "24-2059PL",
+    "symbol": "Check Valve",
+    "status": "verified"
+   },
+   {
+    "tag": "24-2056PL",
+    "symbol": "Manual Gate Valve",
+    "status": "verified"
+   },
+   {
+    "tag": "24-2007PL",
+    "symbol": "Manual Gate Valve",
+    "status": "verified"
+   },
+   {
+    "tag": "24-2008PL",
+    "symbol": "Manual Gate Valve",
+    "status": "verified"
+   },
+   {
+    "tag": "24-2009PL",
+    "symbol": "Manual Globe Valve",
+    "status": "new_candidate"
+   },
+   {
+    "tag": "1\"GT6W3J 57-2001PL",
+    "symbol": "Manual Globe Valve",
+    "status": "suspect"
+   },
+   {
+    "tag": "1\"GT6W3J 56-2003PL",
+    "symbol": "Manual Globe Valve",
+    "status": "suspect"
+   }
+  ],
+  "tag_totals": {
+   "verified": 41,
+   "verified_loose": 0,
+   "new_candidate": 2,
+   "suspect": 3
+  }
+ },
+ "saved_at": "2026-07-16 08:38"
+}
