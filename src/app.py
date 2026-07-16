@@ -17,15 +17,6 @@ import streamlit as st
 # set_page_config must live ONLY in the entrypoint when using st.navigation.
 st.set_page_config(page_title="Huldra P&ID/SCD analysis", layout="wide")
 
-pages = [
-    st.Page("system_analysis.py", title="System-analyse", icon="🏠", default=True),
-    st.Page("system_analysis_dexpi.py", title="System-analyse (DEXPI)", icon="🧭"),
-    st.Page("tag_oversikt.py", title="Tag-oversikt", icon="🏷️"),
-    st.Page("dexpi_graph.py", title="DEXPI-topologi", icon="🔗"),
-    st.Page("dexpi_vs_pdf.py", title="DEXPI vs PDF (demo)", icon="🆚"),
-    st.Page("hazop.py", title="HAZOP-forberedelse", icon="⚠️"),
-    st.Page("hazop_compare.py", title="HAZOP: PDF vs DEXPI", icon="⚖️"),
-    st.Page("kontrollrom.py", title="Kontrollrom-assistent", icon="🎛️"),
-    st.Page("neqsim_side.py", title="NeqSim-simulering", icon="🧪"),
-]
-st.navigation(pages).run()
+from nav_pages import NAV
+
+st.navigation(NAV).run()
