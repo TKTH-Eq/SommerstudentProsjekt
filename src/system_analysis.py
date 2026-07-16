@@ -37,17 +37,7 @@ from ai.operator_brief import operator_brief
 
 
 # ---- data discovery --------------------------------------------------------
-def find_systems() -> dict:
-    """Systems that have BOTH a P&ID and an SCD, keyed by system code."""
-    def scan(d: Path) -> dict:
-        out = {}
-        for f in sorted(list(d.glob("*.PDF")) + list(d.glob("*.pdf"))):
-            m = re.search(r"H[A-Z](\d{2})", f.stem)
-            if m:
-                out.setdefault(m.group(1), f)
-        return out
-    pid, scd = scan(PID_DIR), scan(SCD_DIR)
-    return {s: (pid[s], scd[s]) for s in sorted(set(pid) & set(scd))}
+from utils.discovery import find_systems  # delt, se utils/discovery.py
 
 
 @st.cache_resource(show_spinner="Running pipeline…")

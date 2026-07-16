@@ -20,7 +20,7 @@ def _go(page, label: str, key: str):
 
 st.title("AI-muligheter for P&ID og SCD")
 st.caption("Sommerstudentprosjekt · Huldra-data (offentlige) · prototype "
-           "bygget som beslutningsunderlag for Wisting-digitaliseringen")
+           )
 
 st.markdown(
     "P&ID-er og SCD-er konsumeres i dag som tegninger og dokumenter. Denne "

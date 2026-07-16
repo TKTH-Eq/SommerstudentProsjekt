@@ -26,6 +26,10 @@ from pathlib import Path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import streamlit as st
+
+from dotenv import load_dotenv
+load_dotenv()  # eksplisitt: GEMINI_API_KEY-gaten under avhenger av .env,
+               # og skal ikke lene seg på at en annen import lastet den
 import streamlit.components.v1 as components
 
 from config import PID_DIR, CATEGORY_COLORS

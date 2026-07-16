@@ -20,11 +20,15 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import pandas as pd
 import streamlit as st
 
+from dotenv import load_dotenv
+load_dotenv()  # eksplisitt: GEMINI_API_KEY-gaten under avhenger av .env,
+               # og skal ikke lene seg på at en annen import lastet den
+
 from extraction.tag_extractor import extract_tags, create_objects
 from analysis.build_dependency_graph import build_graph
 from analysis.hazop_prep import build_worksheet, hazop_nodes, write_worksheet_csv, ai_enrich_node
 from analysis.hazop_export import write_worksheet_xlsx, write_vision_xlsx
-from system_analysis import find_systems  # reuse discovery — one source of truth
+from utils.discovery import find_systems  # reuse discovery — one source of truth
 
 
 @st.cache_data(show_spinner=False)
