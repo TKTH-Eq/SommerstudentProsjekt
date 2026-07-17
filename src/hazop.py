@@ -37,19 +37,36 @@ def _png_b64(path: str, mtime: float) -> str:
     return base64.b64encode(Path(path).read_bytes()).decode()
 
 
-def _zoomable_image(png_path: str, height: int = 620):
+def _zoomable_image(png_path: str, height: int = 620, markers=None):
     """Inline pan/zoom viewer (scrollhjul = zoom mot pekeren, dra = panorer,
     dobbeltklikk = tilbakestill). Ingen ekstra avhengigheter — ren HTML/JS i
     en components-iframe, samme teknikk som DEXPI-demoen."""
     import streamlit.components.v1 as components
     b64 = _png_b64(png_path, Path(png_path).stat().st_mtime)
+    # markører i BILDE-prosent (skalerer med bredden uansett zoom):
+    marker_html = ""
+    if markers:
+        from PIL import Image
+        iw, ih = Image.open(png_path).size
+        for (mx, my, mw, mh, color, label) in markers:
+            l, t = 100 * mx / iw, 100 * my / iw          # begge / iw: wrap
+            w_, h_ = 100 * mw / iw, 100 * mh / iw        # er breddestyrt
+            marker_html += (
+                f'<div title="{label}" style="position:absolute;'
+                f'left:{l:.2f}%;top:{t:.2f}%;width:{w_:.2f}%;'
+                f'height:{h_:.2f}%;border:2px solid {color};'
+                f'border-radius:3px;box-shadow:0 0 6px {color};'
+                f'pointer-events:auto"></div>')
     components.html(f"""
 <div id="vp" style="width:100%;height:{height - 20}px;overflow:hidden;
      border:1px solid #444;border-radius:8px;background:#1a1a1a;
      cursor:grab;position:relative;user-select:none">
-  <img id="im" src="data:image/png;base64,{b64}" draggable="false"
-       style="transform-origin:0 0;position:absolute;left:0;top:0;
-              max-width:none;width:100%"/>
+  <div id="wrap" style="transform-origin:0 0;position:absolute;left:0;top:0;
+       width:100%">
+    <img id="im" src="data:image/png;base64,{b64}" draggable="false"
+         style="max-width:none;width:100%;display:block"/>
+    {marker_html}
+  </div>
   <div style="position:absolute;right:8px;bottom:8px;color:#aaa;
        font:11px sans-serif;background:#0008;padding:3px 8px;
        border-radius:6px;pointer-events:none">
@@ -57,7 +74,7 @@ def _zoomable_image(png_path: str, height: int = 620):
   </div>
 </div>
 <script>
-const vp=document.getElementById("vp"),im=document.getElementById("im");
+const vp=document.getElementById("vp"),im=document.getElementById("wrap");
 let s=1,tx=0,ty=0,drag=false,sx=0,sy=0;
 function apply(){{im.style.transform=`translate(${{tx}}px,${{ty}}px) scale(${{s}})`;}}
 vp.addEventListener("wheel",e=>{{
@@ -141,8 +158,9 @@ m4.metric("Gjennomgått", f"{_done}/{_n_rows}",
           help="Rader satt til reviewed eller rejected i arbeidsarket.")
 st.progress(_done / _n_rows if _n_rows else 0.0)
 
-tab_ark, tab_vision, tab_ai = st.tabs(
-    ["📋 Arbeidsark", "👁️ Vision-utdrag", "🤖 AI-utkast per node"])
+tab_ark, tab_vision, tab_funn, tab_ai = st.tabs(
+    ["📋 Arbeidsark", "👁️ Vision-utdrag", "📐 Regelfunn på tegningen",
+     "🤖 AI-utkast per node"])
 
 with tab_ark:
     f1, f2 = st.columns([2, 1])
@@ -253,6 +271,96 @@ with tab_ark:
         del st.session_state[state_key]
         st.rerun()
 
+with tab_funn:
+    st.caption("Regelbasert screening av DEXPI-modellen: funn som handler om "
+               "det som ser ut til å MANGLE (avlastning, aksjonsvei, "
+               "overvåking) — en kapabilitet som beviselig krever "
+               "strukturert data, siden fravær ikke kan skilles fra "
+               "uttrekkstap i en PDF. Standardreferansene er VEILEDENDE: "
+               "fagingeniør må bekrefte både funn og klausul. Markørene "
+               "viser hvor på tegningen funnets tags står (kun tags "
+               "tekstlaget kan lese får boks).")
+
+    @st.cache_resource(show_spinner="Screener DEXPI-modellen…")
+    def _screen_drawing(pid_stem: str):
+        from config import PID_DIR
+        hits = list(Path(PID_DIR).parent.rglob(f"{pid_stem}.DGN.xml"))
+        if not hits:
+            return None
+        from analysis.hazop_dexpi import load_dexpi_model
+        from analysis.rule_screening import screen
+        m = load_dexpi_model(hits[0])
+        return screen(m["tag_graph"], m["objects"], m["sections"])
+
+    @st.cache_resource(show_spinner="Sjekker I-005-dekning P&ID↔SCD…")
+    def _screen_coverage(pid: str, scd: str):
+        from extraction.tag_extractor import extract_tags, create_objects
+        from analysis.rule_screening import screen_scd_coverage
+        return screen_scd_coverage(
+            create_objects(extract_tags(pid), "P&ID"),
+            create_objects(extract_tags(scd), "SCD"))
+
+    findings = _screen_drawing(Path(pid_path).stem)
+    coverage = _screen_coverage(str(pid_path), str(scd_path))
+    findings = (findings or []) + coverage if (findings or coverage) \
+        else findings
+    if findings is None:
+        st.info("Tegningen mangler DEXPI-XML — regelscreening krever "
+                "strukturert data (det er selve poenget).")
+    elif not findings:
+        st.success("Ingen funn fra reglene på denne tegningen.")
+    else:
+        _SEV = {"høy": "#b8442c", "middels": "#c98a1b", "lav": "#2d7dd2"}
+        rules = sorted({f["rule"] for f in findings})
+        pick_rules = st.multiselect("Vis regler", rules, default=rules,
+                                    help="R1 avlastning · R2 aksjonsvei · "
+                                         "R3 trykkovervåking · R4-R6 "
+                                         "I-005 Annex B-dekning P&ID↔SCD "
+                                         "(verifiserte klausuler)")
+        shown = [f for f in findings if f["rule"] in pick_rules]
+
+        for f in shown:
+            with st.expander(f"{'🔴' if f['severity']=='høy' else '🔵'} "
+                             f"[{f['rule']}] {f['title']} — "
+                             f"{', '.join(f['tags'][:3])}"):
+                st.write(f["description"])
+                st.write("**Anbefalt oppfølging:** " + f["recommendation"])
+                st.caption("📖 " + f["standard"])
+
+        # markører: funn-tags -> bokser fra det posisjonerte tekstlaget
+        from extraction.tag_locator import locate_tags
+        all_tags = sorted({t for f in shown for t in f["tags"]})
+        boxes = locate_tags(pid_path, all_tags, dpi=200)
+        markers = []
+        for f in shown:
+            for t in f["tags"]:
+                for (x, y, w, h) in boxes.get(t, []):
+                    pad = 4
+                    markers.append((x - pad, y - pad, w + 2*pad, h + 2*pad,
+                                    _SEV[f["severity"]],
+                                    f"[{f['rule']}] {f['title']}: {t}"))
+        located = sum(1 for f in shown for t in f["tags"] if t in boxes)
+        total = sum(len(f["tags"]) for f in shown)
+        st.caption(f"📍 {located} av {total} funn-tags lokalisert på "
+                   f"tegningen (hold musen over en boks for funnet). "
+                   f"Ulokaliserte tags er typisk symbol-only eller på "
+                   f"tilstøtende ark.")
+        png = st.session_state.get(f"vision_png_{system}")
+        if not (png and Path(png).exists()):
+            try:
+                from extraction.vision_extract import _render_png
+                png = _render_png(Path(pid_path), 200)
+                st.session_state[f"vision_png_{system}"] = png
+            except Exception as e:  # noqa: BLE001
+                png = None
+                st.caption(f"Kunne ikke rasterisere tegningen: {e}")
+        if png and markers:
+            _zoomable_image(str(png), markers=markers)
+        elif png:
+            st.caption("Ingen av funn-tagene kunne lokaliseres i tekstlaget "
+                       "— viser tegningen uten markører.")
+            _zoomable_image(str(png))
+
 with tab_ai:
     st.caption("LLM-omskriving av én nodes deterministiske rader til flytende "
                "arbeidsark-tekst — kun tags fra noden, generisk merkes. "
@@ -277,14 +385,39 @@ with tab_ai:
         st.caption("Sett GEMINI_API_KEY for AI-utkast — arbeidsarket i første "
                    "fane er deterministisk og komplett uten.")
 
+@st.cache_resource(show_spinner="Leser DEXPI-register…")
+def _dexpi_register(pid_stem: str) -> list[str] | None:
+    """Tags fra tegningens DEXPI-XML — den beste fasiten som finnes.
+    None hvis tegningen ikke har DEXPI."""
+    from config import PID_DIR
+    hits = list(Path(PID_DIR).parent.rglob(f"{pid_stem}.DGN.xml"))
+    if not hits:
+        return None
+    from analysis.hazop_dexpi import load_dexpi_model
+    return [o.tag for o in load_dexpi_model(hits[0])["objects"]]
+
+
 with tab_vision:
     if os.getenv("GEMINI_API_KEY"):
-        st.caption("Gemini SER på P&ID-en og foreslår HAZOP-observasjoner. "
-                   "Hver tag den nevner verifiseres mot tag-registeret: "
-                   "✅ finnes i uttrekket · 🟠 velformet men ikke uttrukket "
-                   "(mulig symbol-only-funn — sjekk tegningen) · ❓ matcher "
-                   "ikke kjent tagformat (mulig hallusinasjon). Krever "
-                   "pypdfium2.")
+        _dexpi_tags = _dexpi_register(Path(pid_path).stem)
+        if _dexpi_tags is not None:
+            register, reg_name = _dexpi_tags, "DEXPI-modellen (strukturert fasit)"
+            st.caption("Gemini SER på P&ID-en og foreslår HAZOP-observasjoner. "
+                       "Hver tag verifiseres mot **DEXPI-modellen** — den "
+                       "strukturerte fasiten for tegningen: ✅/☑️ bekreftet "
+                       "reell komponent · 🟠 velformet men IKKE i modellen — "
+                       "enten feillesning eller noe som mangler i leveransen "
+                       "(begge verdt å sjekke) · ❓ matcher ikke kjent "
+                       "tagformat. Krever pypdfium2.")
+        else:
+            register, reg_name = [o.tag for o in objs], \
+                "PDF-tekstlaget (ingen DEXPI for tegningen)"
+            st.caption("Gemini SER på P&ID-en og foreslår HAZOP-observasjoner. "
+                       "Tegningen mangler DEXPI, så verifiseringen bruker "
+                       "PDF-tekstlagets register: ✅ finnes i uttrekket · "
+                       "🟠 velformet men ikke uttrukket (mulig "
+                       "symbol-only-funn) · ❓ matcher ikke kjent tagformat.")
+        st.caption(f"🔎 Verifiseringsregister: {reg_name}")
         from ai.ai_cache import load_vision, save_vision
         # demoforsikring: hent cachet utdrag fra disk om det finnes
         if f"vision_{system}" not in st.session_state:
@@ -314,7 +447,7 @@ with tab_vision:
             try:
                 with st.spinner("Rasteriserer og spør Gemini…"):
                     st.session_state[f"vision_{system}"] = vision_hazop_excerpt(
-                        Path(pid_path), [o.tag for o in objs], focus=focus)
+                        Path(pid_path), register, focus=focus)
                     # gjenbruk rasteret til visning ved siden av utdraget
                     from extraction.vision_extract import _render_png
                     st.session_state[f"vision_png_{system}"] = _render_png(
