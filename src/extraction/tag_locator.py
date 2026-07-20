@@ -91,3 +91,51 @@ def locate_tags(pdf_path: str | Path, tags, dpi: int = 200) -> dict:
         if hits:
             out[tag] = hits
     return out
+
+
+def dexpi_fallback_boxes(pdf_path, xml_path, missing_tags, located: dict,
+                         dpi: int = 200) -> tuple[dict, dict]:
+    """Positions for tags the TEXT LAYER cannot see, from DEXPI geometry.
+
+    Calibration is MEASURED, not assumed: tags located in both worlds
+    (text-layer box centre + DEXPI Position) give a least-squares affine
+    fit per axis (handles scale, offset and a flipped y-axis). Applied
+    only if >=4 anchor pairs and residual < 60 px. Returns ({tag: [box]},
+    info) where info reports anchors/residual — honesty for the caption.
+    """
+    import xml.etree.ElementTree as ET
+    import numpy as np
+    from pathlib import Path as _P
+    try:
+        root = ET.parse(str(xml_path)).getroot()
+    except Exception:                                       # noqa: BLE001
+        return {}, {"ok": False}
+    xy = {}
+    for el in root.iter():
+        t, loc = el.get("TagName"), el.find("Position/Location")
+        if t and loc is not None:
+            try:
+                xy[_norm(t)] = (float(loc.get("X")), float(loc.get("Y")))
+            except Exception:                               # noqa: BLE001
+                pass
+    A = [(xy[_norm(t)], (b[0][0] + b[0][2] / 2, b[0][1] + b[0][3] / 2))
+         for t, b in located.items() if _norm(t) in xy]
+    if len(A) < 4:
+        return {}, {"ok": False, "anchors": len(A)}
+    src = np.array([a for a, _ in A]); dst = np.array([b for _, b in A])
+    fits, res = [], 0.0
+    for ax in (0, 1):
+        M = np.c_[src[:, ax], np.ones(len(A))]
+        (k, m), r, *_ = np.linalg.lstsq(M, dst[:, ax], rcond=None)
+        fits.append((k, m))
+        res += float(np.sqrt(r[0] / len(A))) if len(r) else 0.0
+    if res > 60:
+        return {}, {"ok": False, "anchors": len(A), "residual": res}
+    out = {}
+    for t in missing_tags:
+        p = xy.get(_norm(t))
+        if p:
+            cx = fits[0][0] * p[0] + fits[0][1]
+            cy = fits[1][0] * p[1] + fits[1][1]
+            out[t] = [(cx - 55, cy - 45, 110, 90)]
+    return out, {"ok": True, "anchors": len(A), "residual": round(res, 1)}

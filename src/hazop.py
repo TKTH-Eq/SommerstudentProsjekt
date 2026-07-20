@@ -114,7 +114,7 @@ def load(system: str, pid: str, scd: str):
 
 objs, g, all_rows = load(system, str(pid_path), str(scd_path))
 
-from config import CATEGORY_COLORS
+from config import CATEGORY_COLORS, PID_DIR
 
 
 def _chips(tags):
@@ -340,7 +340,6 @@ with tab_funn:
 
     @st.cache_resource(show_spinner="Screener DEXPI-modellen…")
     def _screen_drawing(pid_stem: str):
-        from config import PID_DIR
         hits = list(Path(PID_DIR).parent.rglob(f"{pid_stem}.DGN.xml"))
         if not hits:
             return None
@@ -357,6 +356,8 @@ with tab_funn:
             create_objects(extract_tags(pid), "P&ID"),
             create_objects(extract_tags(scd), "SCD"))
 
+    _dx = list(Path(PID_DIR).parent.rglob(
+        f"{Path(pid_path).stem}.DGN.xml"))
     findings = _screen_drawing(Path(pid_path).stem)
     coverage = _screen_coverage(str(pid_path), str(scd_path))
     findings = (findings or []) + coverage if (findings or coverage) \
@@ -383,6 +384,17 @@ with tab_funn:
                 st.write(f["description"])
                 st.write("**Anbefalt oppfølging:** " + f["recommendation"])
                 st.caption("📖 " + f["standard"])
+                if f["rule"] in ("R1", "R2", "R3") and _dx:
+                    from analysis.rule_screening import (fluids_for_tags,
+                                                         FLUID_MEANINGS)
+                    if True:
+                        _fc = fluids_for_tags(_dx[0], f["tags"])
+                        if _fc:
+                            st.caption("🧪 Fluid på tilknyttede linjer "
+                                       "(fra linjetags, antatt betydning): "
+                                       + " · ".join(
+                                           f"{c} = {FLUID_MEANINGS.get(c, 'ukjent')}"
+                                           for c in _fc))
                 if os.getenv("GEMINI_API_KEY"):
                     ck = f"vcheck_{f['rule']}_{'_'.join(f['tags'][:2])}"
                     target_pdf = scd_path if f["rule"] in ("R4", "R5", "R6", "R7") \
@@ -453,6 +465,26 @@ with tab_funn:
                                     w + 2 * pad_x, h + 2 * pad_y,
                                     _SEV[f["severity"]],
                                     f"[{f['rule']}] {f['title']}: {t}"))
+        _missing = sorted({t for f in shown for t in f["tags"]
+                           if t not in boxes})
+        _fb_info = {}
+        if _missing and _dx:
+            from extraction.tag_locator import dexpi_fallback_boxes
+            if True:
+                _fb, _fb_info = dexpi_fallback_boxes(pid_path, _dx[0],
+                                                     _missing, boxes)
+                for f in shown:
+                    for t in f["tags"]:
+                        for (x, y, w, h) in _fb.get(t, []):
+                            markers.append((x, y, w, h, "#8e5aa8",
+                                            f"[{f['rule']}] {t} — posisjon "
+                                            f"fra DEXPI-geometri (kalibrert)"))
+                boxes = {**boxes, **_fb}
+        if _fb_info.get("ok"):
+            st.caption(f"🟣 {len([t for t in _missing if t in boxes])} "
+                       f"symbol-only-tags posisjonert fra DEXPI-geometri "
+                       f"(kalibrert mot {_fb_info['anchors']} felles tags, "
+                       f"residual {_fb_info['residual']} px).")
         located = sum(1 for f in shown for t in f["tags"] if t in boxes)
         total = sum(len(f["tags"]) for f in shown)
         st.caption(f"📍 {located} av {total} funn-tags lokalisert på "
@@ -503,7 +535,6 @@ with tab_ai:
 def _dexpi_register(pid_stem: str) -> list[str] | None:
     """Tags fra tegningens DEXPI-XML — den beste fasiten som finnes.
     None hvis tegningen ikke har DEXPI."""
-    from config import PID_DIR
     hits = list(Path(PID_DIR).parent.rglob(f"{pid_stem}.DGN.xml"))
     if not hits:
         return None

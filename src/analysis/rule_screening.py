@@ -197,3 +197,31 @@ def screen_scd_coverage(pid_objects, scd_objects) -> list[dict]:
          "innbyrdes utveksling av status, målevariabler, forriglinger og "
          "undertrykking")
     return findings
+
+
+# Fluid annotation (slice of "media-aware relevance"): ANNOTATE, never
+# filter — the codes are assumptions (see the fluid-code table in the
+# report), so they inform the team without hiding rows.
+FLUID_MEANINGS = {  # subset of Table 1; basis/confidence per report
+    "PV": "Process Vapour (antatt, moderat)", "PL": "Process Liquid (antatt, moderat)",
+    "VF": "Vent/Flare gas (antatt, moderat)", "DC": "Drain Closed (antatt, moderat)",
+    "WS": "Water Service (antatt, lav-moderat)", "WF": "Water Fresh (antatt, lav-moderat)",
+    "GF": "Gas Fuel (antatt, lav-moderat)", "AI": "Air Instrument (antatt, moderat)",
+    "GI": "Gas Injection (antatt, lav-moderat)", "OL": "Oil Line (antatt, lav-moderat)",
+}
+
+
+def fluids_for_tags(xml_path, tags: list[str]) -> list[str]:
+    """Fluid codes on lines anchored by these tags, via the plant-model
+    line-anchor helper. Codes come from the line tags themselves
+    (4\"-PV-274599 -> PV)."""
+    from analysis.plant_model import _line_anchor_tags
+    import re as _re
+    anchors = _line_anchor_tags(xml_path, set(tags))
+    codes = []
+    for line, ts in anchors.items():
+        if any(t in tags for t in ts):
+            m = _re.match(r'^[^-]*-([A-Z]{2})-', line)
+            if m and m.group(1) not in codes:
+                codes.append(m.group(1))
+    return codes
