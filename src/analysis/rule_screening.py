@@ -188,4 +188,12 @@ def screen_scd_coverage(pid_objects, scd_objects) -> list[dict]:
          "Shutdown-funksjon ikke gjenfunnet på SCD", "R6", "B.2.3.2",
          "alle shutdown-funksjoner innen PCS og PSD skal implementeres på "
          "SCD-ene")
+    # reguleringsfunksjoner: typekoder som ender på IC (PIC, LIC, FIC, TIC …)
+    import re as _re
+    _gap([o for o in pid_objects
+          if o.type_code and _re.match(r"^[A-Z]{1,3}IC$", o.type_code)],
+         "Reguleringsfunksjon ikke gjenfunnet på SCD", "R7", "B.2.3.1",
+         "SCD-en skal inkludere alle reguleringsfunksjoner og deres "
+         "innbyrdes utveksling av status, målevariabler, forriglinger og "
+         "undertrykking")
     return findings

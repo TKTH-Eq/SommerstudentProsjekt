@@ -196,3 +196,75 @@ if __name__ == "__main__":
     known = extract_tags(str(pdf))
     ex = vision_hazop_excerpt(pdf, known)
     print(to_markdown(ex))
+
+# ---------------------------------------------------------------------------
+# Vision second opinion on rule findings — asymmetric by design
+# ---------------------------------------------------------------------------
+
+_CHECK_TARGETS = {
+    "R1": ("the P&ID", "a pressure relief device (PSV or PSE symbol, "
+                       "typically a spring-loaded valve to flare/vent)"),
+    "R2": ("the P&ID", "an actuated shutdown valve (XV/ESV) that the "
+                       "flagged safety function could act on"),
+    "R3": ("the P&ID", "any pressure measurement (PT/PI instrument bubble)"),
+    "R4": ("the SCD", "the flagged instrument tag(s)"),
+    "R5": ("the SCD", "the flagged valve tag(s)"),
+    "R6": ("the SCD", "the flagged shutdown function tag(s)"),
+    "R7": ("the SCD", "the flagged controller function tag(s)"),
+}
+
+
+def vision_check_finding(pdf_path: Path, finding: dict, known_tags,
+                         dpi: int = 200) -> dict:
+    """Ask the vision model whether a rule finding might be a FALSE
+    POSITIVE caused by extraction gaps: does it SEE, drawn on the sheet,
+    the thing the screening says is missing?
+
+    Asymmetric on purpose: a positive sighting can weaken the finding
+    (symbol-only content the text layer missed — verify on the drawing);
+    a negative can never strengthen it, because absence cannot be proven
+    by a reader with measured variance. The return value says which.
+    """
+    import json as _json
+    from google.genai import types
+    from extraction.vision_extract import _render_png
+    from ai.gemini_client import generate
+
+    _, target = _CHECK_TARGETS.get(finding.get("rule", ""),
+                                   ("the drawing", "the flagged item"))
+    anchors = ", ".join(finding.get("tags", [])[:6])
+    prompt = (
+        "You are looking at a rendered engineering drawing. A rule "
+        f"screening flagged this finding: {finding.get('title', '')} — "
+        f"{finding.get('description', '')}\n"
+        f"Anchor tags: {anchors}\n"
+        f"QUESTION: Do you SEE, drawn on this sheet, {target} connected "
+        "to or near the anchor area? Only report what is visibly drawn — "
+        "do not infer. Respond ONLY with JSON: "
+        '{"seen": true/false, "evidence": "<one sentence, what and where>", '
+        '"tags_or_symbols": ["..."]}')
+    png = _render_png(Path(pdf_path), dpi)
+    img = Path(png).read_bytes()
+    resp = generate(
+        [types.Part.from_bytes(data=img, mime_type="image/png"), prompt],
+        config=types.GenerateContentConfig(response_mime_type="application/json"))
+    try:
+        data = _json.loads(resp.text)
+    except Exception:                                       # noqa: BLE001
+        return {"ok": False, "verdict": "Kunne ikke tolke modellsvaret."}
+    mentioned = [str(t) for t in data.get("tags_or_symbols", [])][:8]
+    checked = verify_tags({"summary": "", "observations": [
+        {"observation": "", "deviation": "", "tags": mentioned}],
+        "possible_symbol_only": []}, known_tags)
+    tag_line = ", ".join(
+        f"{t['tag']} ({ {'verified':'✅','verified_loose':'☑️','new_candidate':'🟠','suspect':'❓'}[t['status']] })"
+        for t in checked["observations"][0]["tags"]) if mentioned else ""
+    if data.get("seen"):
+        verdict = ("⚠️ Vision ser mulig relevant innhold — funnet KAN være "
+                   "falskt positivt pga. uttrekkstap. Verifiser på tegningen.")
+    else:
+        verdict = ("Vision så det heller ikke — men fravær kan ikke bevises "
+                   "(målt varians), så funnet står som screeningkandidat.")
+    return {"ok": True, "seen": bool(data.get("seen")),
+            "evidence": str(data.get("evidence", ""))[:300],
+            "tags": tag_line, "verdict": verdict}

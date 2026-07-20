@@ -65,27 +65,29 @@ def locate_tags(pdf_path: str | Path, tags, dpi: int = 200) -> dict:
 
     out: dict[str, list] = {}
     for tag in tags:
-        hits = []
-        # pass 1: the whole tag (with or without system prefix) as one word
-        t_full = _norm(tag)                      # hyphen already stripped
-        t_nosys = t_full[2:] if re.match(r"^\d{2}-", str(tag).strip()) \
-            else t_full
-        for key in {t_full, t_nosys}:
-            for w in by_text.get(key, []):
-                hits.append(box(w))
-        # pass 2: stacked bubble — type word + number word in same column
+        # BUBBLE hits (type + number stacked or side-by-side) are the
+        # component symbol; INLINE full-text hits may be mentions in the
+        # NOTES column or line labels. Prefer bubbles when they exist —
+        # a note mention must never shadow (or stand in for) the symbol.
+        bubble, inline = [], []
         parsed = _parse(tag)
-        if parsed and not hits:
+        if parsed:
             ty, num = parsed
             for tw in by_text.get(ty, []):
                 for nw in by_text.get(num, []):
                     stacked = (abs(nw["x0"] - tw["x0"]) < _X_TOL
                                and abs(nw["top"] - tw["top"]) < _Y_TOL)
-                    # wellhead style: "PT 2438" side by side on one line
                     side = (abs(nw["top"] - tw["top"]) < 10
                             and -5 < nw["x0"] - tw["x1"] < 25)
                     if stacked or side:
-                        hits.append(box(tw, nw))
+                        bubble.append(box(tw, nw))
+        t_full = _norm(tag)                      # hyphen already stripped
+        t_nosys = t_full[2:] if re.match(r"^\d{2}-", str(tag).strip()) \
+            else t_full
+        for key in {t_full, t_nosys}:
+            for w in by_text.get(key, []):
+                inline.append(box(w))
+        hits = bubble or inline
         if hits:
             out[tag] = hits
     return out

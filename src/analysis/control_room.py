@@ -239,3 +239,101 @@ def debrief(fault: str, isolated: str | None, alarms_seen: int,
     lines.append("Treningsscenario på syntetiske data — assistentens forslag "
                  "var strukturelle, operatørens dømmekraft avgjorde.")
     return lines
+
+def layered_cause_svg(graph: nx.DiGraph, center: str, active: list[str],
+                      drawings_of: dict | None = None, max_depth: int = 4,
+                      per_col: int = 12, w: int = 1100) -> str:
+    """Readable cause map: ALARMED nodes only, laid out in columns by hop
+    distance from the selected candidate (upstream left, downstream
+    right), with arcs showing chains. Edges are the TRANSITIVE REDUCTION
+    of reachability between shown nodes — an arc means "reaches, with no
+    other shown alarm in between", and its tooltip tells the real hop
+    count through unalarmed components (hand valves etc. that never ring).
+    Far clearer than a spring hairball, and honest about what it hides.
+    """
+    import html as _html
+
+    act = [a for a in active if a in graph]
+    down = dict(nx.single_source_shortest_path_length(graph, center)) \
+        if center in graph else {center: 0}
+    up = dict(nx.single_source_shortest_path_length(graph.reverse(copy=False),
+                                                    center)) \
+        if center in graph else {}
+    depth: dict[str, int] = {center: 0}
+    for n in act:
+        if n == center:
+            continue
+        d, u = down.get(n), up.get(n)
+        if d is not None and d <= max_depth and (u is None or d <= u):
+            depth[n] = d
+        elif u is not None and u <= max_depth:
+            depth[n] = -u
+    cols: dict[int, list[str]] = {}
+    trunc = 0
+    for n, d in sorted(depth.items()):
+        cols.setdefault(d, [])
+        if len(cols[d]) < per_col:
+            cols[d].append(n)
+        else:
+            trunc += 1
+    shown = {n for ns in cols.values() for n in ns}
+
+    # transitive reduction over reachability among shown nodes
+    spl = {u: {v: l for v, l in
+               nx.single_source_shortest_path_length(graph, u).items()
+               if v in shown and v != u} for u in shown}
+    edges = []
+    for u in shown:
+        for v, l in spl[u].items():
+            if any(w in spl[u] and v in spl.get(w, {})
+                   and spl[u][w] + spl[w][v] == l for w in shown
+                   if w not in (u, v)):
+                continue
+            edges.append((u, v, l))
+
+    xs = sorted(cols)
+    colw = max(120, (w - 80) // max(len(xs), 1))
+    h = 90 + per_col * 52
+    pos = {}
+    for ci, d in enumerate(xs):
+        for ri, n in enumerate(cols[d]):
+            pos[n] = (60 + ci * colw + colw // 2, 70 + ri * 52)
+
+    def color(n):
+        if n == center:
+            return "#12233b"
+        return "#b8442c" if depth[n] > 0 else "#2d7dd2"
+
+    P = [f'<svg viewBox="0 0 {w} {h}" xmlns="http://www.w3.org/2000/svg" '
+         f'style="width:100%;height:auto;font-family:sans-serif">']
+    for ci, d in enumerate(xs):
+        label = ("valgt" if d == 0 else
+                 f"{abs(d)} hopp {'nedstrøms' if d > 0 else 'oppstrøms'}")
+        P.append(f'<text x="{60 + ci * colw + colw // 2}" y="30" '
+                 f'text-anchor="middle" font-size="12" fill="#888">'
+                 f'{label}</text>')
+    for u, v, l in edges:
+        (x1, y1), (x2, y2) = pos[u], pos[v]
+        mid = (x1 + x2) / 2
+        P.append(f'<path d="M{x1} {y1} Q{mid} {(y1 + y2) / 2 - 26} {x2} {y2}" '
+                 f'fill="none" stroke="#9aa" stroke-width="1.6" opacity="0.7" '
+                 f'marker-end="url(#ar)"><title>{u} → {v}: {l} hopp '
+                 f'(mellomledd alarmerer ikke)</title></path>')
+    P.append('<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" '
+             'markerWidth="6" markerHeight="6" orient="auto">'
+             '<path d="M0 0L10 5L0 10z" fill="#9aa"/></marker></defs>')
+    for n, (x, y) in pos.items():
+        drw = ""
+        if drawings_of:
+            ds = drawings_of.get(n, [])
+            drw = f" [{ds[0][-14:]}]" if ds else ""
+        P.append(f'<g><circle cx="{x}" cy="{y}" r="14" fill="{color(n)}">'
+                 f'<title>{_html.escape(n + drw)}</title></circle>'
+                 f'<text x="{x}" y="{y - 20}" text-anchor="middle" '
+                 f'font-size="10" fill="#ddd">{_html.escape(n)}</text></g>')
+    if trunc:
+        P.append(f'<text x="{w - 10}" y="{h - 8}" text-anchor="end" '
+                 f'font-size="11" fill="#888">+{trunc} alarmer utenfor '
+                 f'visningen (maks {per_col} per kolonne)</text>')
+    P.append("</svg>")
+    return "".join(P)

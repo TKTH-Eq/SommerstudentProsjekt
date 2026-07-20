@@ -20,7 +20,7 @@ def _go(page, label: str, key: str):
 
 st.title("AI-muligheter for P&ID og SCD")
 st.caption("Sommerstudentprosjekt · Huldra-data (offentlige) · prototype "
-           )
+           "bygget som beslutningsunderlag for Wisting-digitaliseringen")
 
 st.markdown(
     "P&ID-er og SCD-er konsumeres i dag som tegninger og dokumenter. Denne "
@@ -65,6 +65,38 @@ with c:
 
 st.markdown("Gjennomgående mønster: *samme verktøy, bedre data, bedre svar* "
             "— og *AI foreslår, strukturert register verifiserer*.")
+
+with st.expander("🩺 Demo-beredskap (sjekk før presentasjon)"):
+    import os
+    from pathlib import Path as _P
+    from config import PID_DIR
+
+    def _row(ok, label, hint):
+        st.write(("✅ " if ok else "⚠️ ") + label + ("" if ok else f" — {hint}"))
+
+    _raw = _P(PID_DIR).parent
+    _dexpi = list(_raw.rglob("*.DGN.xml"))
+    _row(len(_dexpi) >= 1, f"DEXPI-filer funnet: {len(_dexpi)}",
+         "legg XML-ene under data/raw/")
+    _pdfs = list(_P(PID_DIR).glob("*.PDF")) + list(_P(PID_DIR).glob("*.pdf"))
+    _row(len(_pdfs) >= 1, f"P&ID-PDF-er funnet: {len(_pdfs)}",
+         "legg PDF-ene i data/raw/P&ID/")
+    _row(bool(os.getenv("GEMINI_API_KEY")), "GEMINI_API_KEY satt",
+         "AI-flatene vises ikke uten; alt deterministisk virker likevel")
+    try:
+        import pypdfium2  # noqa: F401
+        _row(True, "pypdfium2 (rasterisering) installert", "")
+    except Exception:  # noqa: BLE001
+        _row(False, "pypdfium2 mangler", "vision/markører trenger den: uv sync")
+    _vc = list(_P("reports/vision_cache").glob("*.json"))
+    _row(len(_vc) >= 1, f"Vision-cache: {len(_vc)} tegning(er) varme",
+         "kjør python src/ai/warm_vision_cache.py <pdf> kvelden før")
+    _ac = list(_P("reports/ai_cache").glob("*.json"))
+    _row(len(_ac) >= 1, f"AI-cache (omskrivinger/Q&A): {len(_ac)} innslag",
+         "generer i appen med demo-modus på, så er demoen offline-trygg")
+    _pc = _P("data/processed/dexpi_tags.csv")
+    _row(_pc.exists(), "data/processed generert (NeqSim-koblingen)",
+         "kjør analysis/parse_dexpi_data.py")
 
 st.caption("Kun offentlig publiserte Huldra-data og syntetiske "
            "alarmer/sensorverdier. Prototype — se README og rapport for "

@@ -104,3 +104,29 @@ def load_qa(prompt: str) -> dict | None:
         return json.loads(f.read_text(encoding="utf-8"))
     except Exception:                                       # noqa: BLE001
         return None
+
+
+# ---- vision second opinions on rule findings ---------------------------------
+# Keyed on (drawing, rule, anchor tags) — same finding gives the same key
+# across sessions, so a demo can be warmed the evening before, exactly like
+# the Q&A cache above.
+
+def save_vcheck(key: str, result: dict) -> None:
+    import hashlib
+    AI_DIR.mkdir(parents=True, exist_ok=True)
+    h = hashlib.sha1(key.encode("utf-8")).hexdigest()[:16]
+    (AI_DIR / f"vc_{h}.json").write_text(json.dumps(
+        {"result": result, "saved_at": time.strftime("%Y-%m-%d %H:%M")},
+        ensure_ascii=False, indent=1), encoding="utf-8")
+
+
+def load_vcheck(key: str) -> dict | None:
+    import hashlib
+    h = hashlib.sha1(key.encode("utf-8")).hexdigest()[:16]
+    f = AI_DIR / f"vc_{h}.json"
+    if not f.exists():
+        return None
+    try:
+        return json.loads(f.read_text(encoding="utf-8"))
+    except Exception:                                       # noqa: BLE001
+        return None

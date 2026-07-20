@@ -324,9 +324,19 @@ with tab_graf:
         f"<span style='color:#b8442c'>■ nedstrøms (konsekvens)</span> &nbsp; "
         f"<span style='color:#2d7dd2'>■ oppstrøms (mulig årsak)</span>",
         unsafe_allow_html=True)
+    from analysis.control_room import layered_cause_svg
+    st.caption("Årsakskart: kun ALARMERTE noder, i kolonner etter avstand "
+               "fra valgt kandidat. En pil betyr «når frem, uten annen alarm "
+               "imellom» — hold musen over for faktisk antall hopp gjennom "
+               "komponenter som ikke alarmerer (håndventiler o.l.).")
     components.html(
-        f"<div style='font-family:sans-serif'>{interactive_svg(g_view, highlight=highlight)}</div>",
-        height=560, scrolling=False)
+        f"<div style='background:#141820;border-radius:10px;padding:8px'>"
+        f"{layered_cause_svg(g, hl_pick, active, drawings_of or None)}</div>",
+        height=760, scrolling=True)
+    with st.expander("Vis rå subgraf (spring-layout, alle mellomledd)"):
+        components.html(
+            f"<div style='font-family:sans-serif'>{interactive_svg(g_view, highlight=highlight)}</div>",
+            height=560, scrolling=False)
 
 
 with tab_chat:
@@ -374,7 +384,8 @@ with tab_chat:
                                    "modellen (" 
                                    + ", ".join(audit_prev["verified"]) + ")")
 
-            # foreslåtte spørsmål (demo-sikring) + fritekst
+
+        # foreslåtte spørsmål (demo-sikring) + fritekst
             sugg = ["Gi meg en verifiseringsplan for alarmbildet",
                     "Hva taler for og mot hver kandidat?",
                     "Hva bør jeg ikke gjøre ennå, og hvorfor?"]
@@ -432,6 +443,28 @@ with tab_chat:
                         st.rerun()
                     except Exception as e:  # noqa: BLE001
                         st.error(f"Gemini-kallet feilet: {e}")
+
+        st.divider()
+        with st.expander("Vis prompt-malen og gjeldende fakta (skrivebeskyttet)"):
+            st.caption("Samme standard som HAZOP-siden: malen er fast — "
+                       "skjemaet (BEVISVEIING/VERIFISERINGSPLAN/IKKE GJØR "
+                       "ENNÅ), tag-forbudet og norsk svar kan ikke "
+                       "overstyres. FAKTA-blokken under bygges deterministisk "
+                       "av modellen for hvert alarmbilde.")
+            st.code(
+                "You are a control-room decision-support assistant during an "
+                "alarm flood. Answer in NORWEGIAN. Use ONLY the facts and "
+                "tags below — NEVER invent a tag; general process knowledge "
+                "may be used if marked '(generelt)'.\n"
+                "1. BEVISVEIING — which candidate the structural evidence "
+                "favours and WHY …\n"
+                "2. VERIFISERINGSPLAN — 3-5 numbered steps tied to REAL "
+                "tags …\n"
+                "3. IKKE GJØR ENNÅ — …\n"
+                "End with: 'Strukturell beslutningsstøtte — operatørens "
+                "vurdering avgjør.'", language="text")
+            st.code(_qa_context(), language="text")
+
     else:
         st.caption("Sett GEMINI_API_KEY for valgfri spørsmål/svar forankret i "
                    "modellfakta — briefen over er deterministisk og komplett uten.")

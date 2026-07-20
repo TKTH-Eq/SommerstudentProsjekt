@@ -49,8 +49,10 @@ def _zoomable_image(png_path: str, height: int = 620, markers=None):
         from PIL import Image
         iw, ih = Image.open(png_path).size
         for (mx, my, mw, mh, color, label) in markers:
-            l, t = 100 * mx / iw, 100 * my / iw          # begge / iw: wrap
-            w_, h_ = 100 * mw / iw, 100 * mh / iw        # er breddestyrt
+            # CSS: left/width i % av BREDDEN, top/height i % av HØYDEN —
+            # wrap-diven har nøyaktig bildets proporsjoner (img display:block)
+            l, t = 100 * mx / iw, 100 * my / ih
+            w_, h_ = 100 * mw / iw, 100 * mh / ih
             marker_html += (
                 f'<div title="{label}" style="position:absolute;'
                 f'left:{l:.2f}%;top:{t:.2f}%;width:{w_:.2f}%;'
@@ -271,6 +273,61 @@ with tab_ark:
         del st.session_state[state_key]
         st.rerun()
 
+    # ---- nodegrenser på tegningen (HAZOP-pakkens tegningsvedlegg) ----------
+    st.divider()
+    st.subheader("🗺️ Noder markert på tegningen")
+    st.caption("Standard HAZOP-forberedelse markerer nodegrensene på "
+               "tegningspakken — her gjøres det automatisk: hver valgt "
+               "nodes medlemmer rammes inn i nodens farge. Medlemmer uten "
+               "ramme er enten symbol-only på P&ID-en (recall-gapet) eller "
+               "finnes kun på SCD-en — begge deler ærlig fravær, ikke feil.")
+    _NODE_COLORS = ["#2d7dd2", "#b8442c", "#3a7d44", "#8e5aa8",
+                    "#c98a1b", "#5aa8a0", "#a83a5f", "#6b705c"]
+    node_map_pick = picked[:8]
+    if len(picked) > 8:
+        st.caption("Viser de 8 første valgte nodene (flere blir uleselig).")
+    if node_map_pick:
+        _rows_df = pd.DataFrame(all_rows)
+        members_of = {}
+        for nd in node_map_pick:
+            mem = _rows_df[_rows_df["node"] == nd]["node_members"]
+            members_of[nd] = sorted(set(mem.iloc[0].split(", "))) if len(mem) else []
+        # fargelegende
+        leg = ""
+        for i, nd in enumerate(node_map_pick):
+            c = _NODE_COLORS[i % len(_NODE_COLORS)]
+            leg += (f"<span style='background:{c};color:#fff;"
+                    f"border-radius:20px;padding:2px 10px;margin:2px;"
+                    f"display:inline-block;font-size:12px'>{nd} "
+                    f"({len(members_of[nd])})</span> ")
+        st.markdown(leg, unsafe_allow_html=True)
+
+        from extraction.tag_locator import locate_tags
+        all_member_tags = sorted({t for ms in members_of.values() for t in ms})
+        nboxes = locate_tags(pid_path, all_member_tags, dpi=200)
+        nmarkers = []
+        for i, nd in enumerate(node_map_pick):
+            c = _NODE_COLORS[i % len(_NODE_COLORS)]
+            for t in members_of[nd]:
+                for (x, y, w, h) in nboxes.get(t, []):
+                    px, py = max(14, 0.45 * w), max(14, 0.55 * h)
+                    nmarkers.append((x - px, y - py, w + 2*px, h + 2*py,
+                                     c, f"{nd}: {t}"))
+        loc = sum(1 for ms in members_of.values() for t in ms if t in nboxes)
+        tot = sum(len(ms) for ms in members_of.values())
+        st.caption(f"📍 {loc} av {tot} nodemedlemmer lokalisert på tegningen.")
+        npng = st.session_state.get(f"vision_png_{system}")
+        if not (npng and Path(npng).exists()):
+            try:
+                from extraction.vision_extract import _render_png
+                npng = _render_png(Path(pid_path), 200)
+                st.session_state[f"vision_png_{system}"] = npng
+            except Exception as e:  # noqa: BLE001
+                npng = None
+                st.caption(f"Kunne ikke rasterisere tegningen: {e}")
+        if npng and nmarkers:
+            _zoomable_image(str(npng), markers=nmarkers)
+
 with tab_funn:
     st.caption("Regelbasert screening av DEXPI-modellen: funn som handler om "
                "det som ser ut til å MANGLE (avlastning, aksjonsvei, "
@@ -314,7 +371,7 @@ with tab_funn:
         rules = sorted({f["rule"] for f in findings})
         pick_rules = st.multiselect("Vis regler", rules, default=rules,
                                     help="R1 avlastning · R2 aksjonsvei · "
-                                         "R3 trykkovervåking · R4-R6 "
+                                         "R3 trykkovervåking · R4-R7 "
                                          "I-005 Annex B-dekning P&ID↔SCD "
                                          "(verifiserte klausuler)")
         shown = [f for f in findings if f["rule"] in pick_rules]
@@ -326,6 +383,59 @@ with tab_funn:
                 st.write(f["description"])
                 st.write("**Anbefalt oppfølging:** " + f["recommendation"])
                 st.caption("📖 " + f["standard"])
+                if os.getenv("GEMINI_API_KEY"):
+                    ck = f"vcheck_{f['rule']}_{'_'.join(f['tags'][:2])}"
+                    target_pdf = scd_path if f["rule"] in ("R4", "R5", "R6", "R7") \
+                        else pid_path
+                    if st.button("👁️ Andre-opinion fra vision "
+                                 f"({'SCD' if f['rule'] in ('R4','R5','R6') else 'P&ID'}-arket)",
+                                 key=ck):
+                        from ai.ai_cache import load_vcheck, save_vcheck
+                        vkey = (f"{Path(target_pdf).stem}|{f['rule']}|"
+                                + ",".join(f["tags"][:4]))
+                        hit = load_vcheck(vkey)
+                        if hit:
+                            r = hit["result"]
+                            r["cached_at"] = hit["saved_at"]
+                            st.session_state[ck + "_r"] = r
+                        else:
+                            from ai.hazop_vision import vision_check_finding
+                            with st.spinner("Ser på tegningen…"):
+                                try:
+                                    r = vision_check_finding(
+                                        Path(target_pdf), f,
+                                        [o.tag for o in objs])
+                                    if r.get("ok"):
+                                        save_vcheck(vkey, r)
+                                    st.session_state[ck + "_r"] = r
+                                except Exception as e:  # noqa: BLE001
+                                    st.session_state[ck + "_r"] = \
+                                        {"ok": False,
+                                         "verdict": f"Feilet: {e}"}
+                    vr = st.session_state.get(ck + "_r")
+                    if vr:
+                        if vr.get("cached_at"):
+                            st.caption(f"🗂️ Cachet svar fra {vr['cached_at']} "
+                                       "— slett reports/ai_cache/vc_*.json "
+                                       "for ny kjøring.")
+                        st.write(vr["verdict"])
+                        if vr.get("evidence"):
+                            st.caption(f"Modellens observasjon: {vr['evidence']}")
+                        if vr.get("tags"):
+                            st.caption(f"Nevnte tags: {vr['tags']}")
+                        st.caption("Kun frikjennende: et syn kan svekke "
+                                   "funnet; fravær styrker det aldri.")
+
+        _exp = pd.DataFrame([{
+            "rule": f["rule"], "severity": f["severity"],
+            "title": f["title"], "section": f.get("section", ""),
+            "tags": ", ".join(f["tags"]), "description": f["description"],
+            "recommendation": f["recommendation"], "standard": f["standard"],
+        } for f in shown])
+        st.download_button("⬇️ Last ned funnene (CSV)",
+                           _exp.to_csv(index=False).encode("utf-8-sig"),
+                           file_name=f"regelfunn_system_{system}.csv",
+                           mime="text/csv")
 
         # markører: funn-tags -> bokser fra det posisjonerte tekstlaget
         from extraction.tag_locator import locate_tags
@@ -335,8 +445,12 @@ with tab_funn:
         for f in shown:
             for t in f["tags"]:
                 for (x, y, w, h) in boxes.get(t, []):
-                    pad = 4
-                    markers.append((x - pad, y - pad, w + 2*pad, h + 2*pad,
+                    # romslig nok til å omslutte hele bobla/symbolet, ikke
+                    # bare tekstordene — proporsjonal med tag-størrelsen
+                    pad_x = max(14, 0.45 * w)
+                    pad_y = max(14, 0.55 * h)
+                    markers.append((x - pad_x, y - pad_y,
+                                    w + 2 * pad_x, h + 2 * pad_y,
                                     _SEV[f["severity"]],
                                     f"[{f['rule']}] {f['title']}: {t}"))
         located = sum(1 for f in shown for t in f["tags"] if t in boxes)
