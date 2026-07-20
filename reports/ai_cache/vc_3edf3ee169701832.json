@@ -1,0 +1,10 @@
+{
+ "result": {
+  "ok": true,
+  "seen": false,
+  "evidence": "24-LSH2005 sends a signal to a Process Shutdown System (PSD) block at E/9, but there is no explicit signal line drawn from this PSD block to any actuated shutdown valve (XV/ESV) on the sheet.",
+  "tags": "24-LSH2005 (✅), PSD (❓), 24-XV2163A (✅), 24-XV2163B (✅)",
+  "verdict": "Vision så det heller ikke — men fravær kan ikke bevises (målt varians), så funnet står som screeningkandidat."
+ },
+ "saved_at": "2026-07-20 12:03"
+}

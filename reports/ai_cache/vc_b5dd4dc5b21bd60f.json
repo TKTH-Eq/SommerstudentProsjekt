@@ -1,0 +1,10 @@
+{
+ "result": {
+  "ok": true,
+  "seen": true,
+  "evidence": "The exact tag 27-FV4811 is visible near (5,F) connected to an anti-surge block, and 27-PV4803 is visible near (4,E) connected to a pressure control valve.",
+  "tags": "27-FV4811 (✅), 27-PV4803 (✅)",
+  "verdict": "⚠️ Vision ser mulig relevant innhold — funnet KAN være falskt positivt pga. uttrekkstap. Verifiser på tegningen."
+ },
+ "saved_at": "2026-07-20 12:04"
+}

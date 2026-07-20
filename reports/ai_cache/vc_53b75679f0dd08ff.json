@@ -1,0 +1,10 @@
+{
+ "result": {
+  "ok": true,
+  "seen": true,
+  "evidence": "The instrument tags LSH C07 2005 MB 24 (corresponding to 24-LSH2005) are visible in grid D3/E3, and PI P05 2159 MA 24 with '24-PT2159' text are visible in grid D5/E5. The other flagged tags 24-AE2060, 24-PT2001, 24-ZL2163A, and 24-ZL2163B are not explicitly drawn with their full tags.",
+  "tags": "LSH C07 2005 MB 24 (❓), PI P05 2159 MA 24 (❓), 24-PT2159 (✅)",
+  "verdict": "⚠️ Vision ser mulig relevant innhold — funnet KAN være falskt positivt pga. uttrekkstap. Verifiser på tegningen."
+ },
+ "saved_at": "2026-07-20 12:03"
+}

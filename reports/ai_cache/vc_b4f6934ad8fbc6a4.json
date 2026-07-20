@@ -1,0 +1,10 @@
+{
+ "result": {
+  "ok": true,
+  "seen": true,
+  "evidence": "All four flagged controller function tags, 24-FIC2100, 24-LIC2162, 24-LIC2162A, and 24-LIC2162B, are visibly drawn in the area of grid location (7, D-E) and (7, C-D).",
+  "tags": "FIC C07 2100 CA 24 (❓), LIC C07 2162 CA 24 (❓), LIC C07 2162A CA 24 (❓), LIC C07 2162B CA 24 (❓)",
+  "verdict": "⚠️ Vision ser mulig relevant innhold — funnet KAN være falskt positivt pga. uttrekkstap. Verifiser på tegningen."
+ },
+ "saved_at": "2026-07-20 12:03"
+}

@@ -1,0 +1,10 @@
+{
+ "result": {
+  "ok": true,
+  "seen": true,
+  "evidence": "The tag LSH C07 2005 MB 24 is visible within a cloud in grid C-4/5, near 'SEAWATER RETURN 50-001'.",
+  "tags": "LSH (❓), C07 2005 MB 24 (❓)",
+  "verdict": "⚠️ Vision ser mulig relevant innhold — funnet KAN være falskt positivt pga. uttrekkstap. Verifiser på tegningen."
+ },
+ "saved_at": "2026-07-20 12:03"
+}

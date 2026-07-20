@@ -1,0 +1,10 @@
+{
+ "result": {
+  "ok": true,
+  "seen": true,
+  "evidence": "The valve tags 24-LV2162A and 24-XV2163A are visible in grid location D-6, while 24-LV2162B and 24-XV2163B are visible in grid location D-5/D-6. The tags 24-FV2100 and 24-XY2163A are not found as specified.",
+  "tags": "24-LV2162A (✅), 24-LV2162B (✅), 24-XV2163A (✅), 24-XV2163B (✅)",
+  "verdict": "⚠️ Vision ser mulig relevant innhold — funnet KAN være falskt positivt pga. uttrekkstap. Verifiser på tegningen."
+ },
+ "saved_at": "2026-07-20 12:03"
+}

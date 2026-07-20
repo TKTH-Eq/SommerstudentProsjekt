@@ -1,0 +1,10 @@
+{
+ "result": {
+  "ok": true,
+  "seen": false,
+  "evidence": "27-FT4801 is seen near D4, 27-PT4252A is seen near H8, 27-PT4252B is seen near H8, and 27-PT4807 is seen near C5; however, 27-PSE4254 and 27-PSE4255 are not found, instead 27-FSH4254 and 27-FSH4255 are seen around H7.",
+  "tags": "27-FT4801 (✅), 27-PT4252A (✅), 27-PT4252B (✅), 27-FSH4254 (🟠), 27-FSH4255 (🟠), 27-PT4807 (✅)",
+  "verdict": "Vision så det heller ikke — men fravær kan ikke bevises (målt varians), så funnet står som screeningkandidat."
+ },
+ "saved_at": "2026-07-20 12:04"
+}

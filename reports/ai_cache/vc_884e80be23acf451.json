@@ -1,0 +1,10 @@
+{
+ "result": {
+  "ok": true,
+  "seen": true,
+  "evidence": "The tag 'PIC C08 4803 CA 27 27-PT4803' (which corresponds to 27-PIC4803) is visible in the D-E/3-4 section of the drawing, connected to 27-PT4803.",
+  "tags": "PIC C08 4803 CA 27 27-PT4803 (❓)",
+  "verdict": "⚠️ Vision ser mulig relevant innhold — funnet KAN være falskt positivt pga. uttrekkstap. Verifiser på tegningen."
+ },
+ "saved_at": "2026-07-20 12:04"
+}
