@@ -1,0 +1,59 @@
+{
+  "source": "real Huldra model",
+  "date": "2026-07-21",
+  "seeds": 5,
+  "noise_levels": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "faults": 40,
+  "conditions": [
+    {
+      "name": "ideal",
+      "desc": "én feil, alle alarmer ringer — konsistenssjekk (100 % er forventet av konstruksjon)",
+      "scenarios": 800,
+      "hit1_pct": 100.0,
+      "hit3_pct": 100.0,
+      "mean_rank": 1.0,
+      "not_candidate": 0
+    },
+    {
+      "name": "20 % tapte alarmer",
+      "desc": "hver kaskadealarm uteblir med 20 % sannsynlighet — effektiv rot = tidligste alarm som faktisk ringte",
+      "scenarios": 800,
+      "hit1_pct": 98.1,
+      "hit3_pct": 99.4,
+      "mean_rank": 1.03,
+      "not_candidate": 4
+    },
+    {
+      "name": "40 % tapte alarmer",
+      "desc": "som over, 40 % — speiler recall-gapet i PDF-uttrekket",
+      "scenarios": 800,
+      "hit1_pct": 94.0,
+      "hit3_pct": 97.2,
+      "mean_rank": 1.09,
+      "not_candidate": 14
+    },
+    {
+      "name": "dobbel feil",
+      "desc": "to uavhengige feil samtidig — hit1: toppkandidat er en av rotene; hit3: BEGGE røtter i topp 3",
+      "scenarios": 800,
+      "hit1_pct": 95.0,
+      "hit3_pct": 95.0,
+      "mean_rank": 1.0,
+      "not_candidate": 40
+    },
+    {
+      "name": "dobbel feil + 20 % tap",
+      "desc": "hardeste betingelse",
+      "scenarios": 800,
+      "hit1_pct": 94.2,
+      "hit3_pct": 94.0,
+      "mean_rank": 1.01,
+      "not_candidate": 44
+    }
+  ]
+}

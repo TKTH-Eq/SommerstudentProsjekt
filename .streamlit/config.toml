@@ -1,0 +1,7 @@
+[theme]
+base = "light"
+primaryColor = "#007079"          # Moss Green — interaktive elementer
+backgroundColor = "#f7f9fa"       # rolig gråblå side-bakgrunn
+secondaryBackgroundColor = "#ffffff"  # kort/paneler/widgets
+textColor = "#243746"             # slate
+font = "sans serif"

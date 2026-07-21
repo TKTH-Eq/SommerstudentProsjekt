@@ -6,9 +6,25 @@ three guided paths into the app. Everything else in the app assumes
 context; this page provides it.
 """
 from __future__ import annotations
+import json
+from pathlib import Path
+
 import streamlit as st
 
 from nav_pages import PAGES
+
+_EVAL_JSON = Path(__file__).resolve().parents[1] / "reports" / "eval_root_cause.json"
+
+
+def _load_eval() -> dict | None:
+    """Result written by eval/eval_root_cause.py, if it has been run against
+    the real plant model. Synthetic-fallback results are not shown here —
+    the number on this page must mean 'measured on the real topology'."""
+    try:
+        d = json.loads(_EVAL_JSON.read_text(encoding="utf-8"))
+        return d if "real" in d.get("source", "") else None
+    except Exception:  # noqa: BLE001  (missing/invalid file -> just hide it)
+        return None
 
 
 def _go(page, label: str, key: str):
@@ -38,6 +54,37 @@ c2.metric("Recall (PDF-uttrekk)", "55 %", help="Resten er i hovedsak tags "
 c3.metric("Tegninger i anleggsmodellen", "17", help="Alle DEXPI-filene sydd "
           "sammen til én graf via delte linjenummer.")
 c4.metric("Tags i anleggsmodellen", "885")
+
+_ev = _load_eval()
+if _ev and _ev.get("conditions"):
+    def _cond(name):
+        return next((c for c in _ev["conditions"] if c["name"] == name), None)
+    ideal = _cond("ideal")
+    drop20 = _cond("20 % tapte alarmer")
+    hard = _cond("dobbel feil + 20 % tap") or _cond("dobbel feil")
+    e1, e2, e3, e4 = st.columns(4)
+    if drop20:
+        e1.metric("Rotårsak på plass 1", f"{drop20['hit1_pct']:.0f} %",
+                  help=f"Målt med 20 % tapte alarmer over "
+                       f"{drop20['scenarios']} syntetiske feilscenarioer i "
+                       f"den ekte Huldra-topologien (kjørt {_ev['date']}, "
+                       f"reproduserbart med eval/eval_root_cause.py). "
+                       f"Under ideelle forhold (én feil, alle alarmer "
+                       f"ringer) er treffraten "
+                       f"{ideal['hit1_pct']:.0f} % — forventet av "
+                       f"konstruksjon; tallet her er den reelle testen.")
+        e2.metric("Rotårsak i topp 3", f"{drop20['hit3_pct']:.0f} %",
+                  help="Samme betingelse (20 % tapte alarmer): andel "
+                       "scenarioer der roten er blant de tre øverste "
+                       "kandidatene.")
+    if hard:
+        e3.metric("Hardeste betingelse", f"{hard['hit1_pct']:.0f} %",
+                  help=f"«{hard['name']}»: {hard['desc']}. "
+                       f"hit3: {hard['hit3_pct']:.0f} %.")
+    e4.metric("Scenarioer målt",
+              f"{sum(c['scenarios'] for c in _ev['conditions'])}",
+              help="Totalt over alle betingelser: ideal, 20/40 % tapte "
+                   "alarmer, dobbel feil, dobbel feil + tap.")
 
 st.info("**Lesenøkkel:** All AI-output i appen er førsteutkast med målt "
         "feilrate — aldri en fasit. Hver AI-generert påstand verifiseres "

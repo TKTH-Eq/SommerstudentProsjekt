@@ -43,6 +43,8 @@ from analysis.control_room import (alarm_shower, candidate_brief,
 from analysis.alarm_priority import (alarm_semantics, DIR_ARROW,
                                      priority_sort_key)
 from ai.operator_brief import operator_brief, alarm_response_sheet
+from analysis.cause_effect import (load_ce, validate_ce, ce_lines_for,
+                                   designed_response_check)
 
 RAW_DIR = Path(PID_DIR).parent
 
@@ -63,33 +65,21 @@ def load(xml: str, mtime: float) -> dict:
             "fmap": failure_map(g, allo)}
 
 
-PRIO_COLOR = {1: "#c0392b", 2: "#e67e22", 3: "#c9a227", 4: "#7f8c8d"}
+from ui import prio_badge as _ui_prio_badge, chips as _ui_chips
 
 
 def prio_badge(tag, by_tag):
-    """Small coloured P1..P4 badge with a high/low arrow for a tag."""
+    """Design-system P1..P4 badge (delegates to ui.prio_badge). Keeps the
+    (tag, by_tag) signature so existing call sites are untouched."""
     o = by_tag.get(tag)
     if not o:
         return ""
-    s = alarm_semantics(o.type_code)
-    c = PRIO_COLOR.get(s["priority"], "#7f8c8d")
-    arrow = DIR_ARROW.get(s["direction"], "")
-    return (f"<span style='background:{c};color:#fff;border-radius:6px;"
-            f"padding:1px 7px;font-size:11px;font-weight:600'>"
-            f"P{s['priority']}{arrow}</span>")
+    return _ui_prio_badge(o.priority, o.alarm_direction)
 
 
 def chips(tags, by_tag):
-    if not tags:
-        return "_none_"
-    out = ""
-    for t in tags:
-        c = CATEGORY_COLORS.get(by_tag[t].category if t in by_tag else "other",
-                                "#9aa0a6")
-        out += (f"<span style='background:{c};color:#fff;border-radius:20px;"
-                f"padding:2px 8px;margin:2px;display:inline-block;"
-                f"font-size:12px'>{t}</span> ")
-    return out
+    """Design-system tag chips (delegates to ui.chips)."""
+    return _ui_chips(tags, by_tag)
 
 
 # ---- setup ------------------------------------------------------------------
@@ -124,6 +114,19 @@ else:
 g, by_tag, fmap = M["g"], M["by_tag"], M["fmap"]
 drawings_of = M.get("drawings_of", {})
 
+# ---- designed cause & effect from the SCD (manual CSV, validated) ----------
+CE = validate_ce(load_ce(RAW_DIR.parent / "cause_effect"
+                         if (RAW_DIR.parent / "cause_effect").exists()
+                         else Path("data/cause_effect")), by_tag)
+ce_index = CE["index"]
+if CE["stats"]["rows"]:
+    _s = CE["stats"]
+    st.sidebar.caption(
+        f"C&E fra SCD: {_s['resolved']}/{_s['rows']} rader koblet, "
+        f"{_s['verified']} verifisert"
+        + (f" · ukjente tags: {', '.join(_s['unknown_tags'][:3])}"
+           if _s["unknown_tags"] else ""))
+
 
 def _drw(tag: str) -> str:
     ds = drawings_of.get(tag, [])
@@ -145,6 +148,10 @@ fault_pick = st.sidebar.selectbox("Feilkilde (skjules under kjøring)",
 n_noise = st.sidebar.slider("Støyalarmer", 0, 4, 2,
                             help="Urelaterte alarmer blandet inn i dusjen — "
                                  "gjør øvelsen realistisk.")
+alarm_step = st.sidebar.slider(
+    "Sekunder mellom alarmer", 0.5, 10.0, 2.5, 0.5,
+    help="Hvor raskt kaskaden ruller inn. Lavt = rask demo, høyt = mer tid "
+         "til å lese hver alarm. Gjelder neste scenario du starter.")
 demo_mode = st.sidebar.toggle(
     "🔒 Demo-modus (reproduserbart)",
     help="Fast seed: samme feilkilde gir nøyaktig samme scenario hver gang. "
@@ -155,7 +162,7 @@ if st.sidebar.button("▶ Nytt scenario"):
         else fault_pick
     shower = alarm_shower(g, fault, noise=n_noise,
                           seed=42 if demo_mode else random.randrange(10**6),
-                          by_tag=by_tag)
+                          by_tag=by_tag, step=alarm_step)
     st.session_state["cr"] = {"drawing": choice, "fault": fault,
                               "shower": shower, "chosen": None,
                               "play_start": time.time(), "playing": True}
@@ -271,14 +278,25 @@ with tab_sit:
     # ---- alarm board -------------------------------------------------------------
     with left:
         st.subheader(f"🔔 Alarmtavle — {len(active)} samtidige")
-        st.caption("Sortert etter prioritet (P1 kritisk øverst). "
-                   "Prioritet/retning er utledet fra tag-en — en proxy, ikke "
-                   "konfigurert alarmprioritet.")
-        for a in active_sorted:
+        sort_time = st.toggle(
+            "Sortér etter ankomst (first-up øverst)", value=False,
+            help="Av = prioritet (P1 øverst). På = rekkefølgen alarmene kom "
+                 "inn — first-up-sporet.")
+        st.caption("**+t** = sekunder etter første alarm. Prioritet/retning "
+                   "er utledet fra tag-en — en proxy, ikke konfigurert "
+                   "alarmprioritet.")
+        board = (sorted(active, key=lambda t: (timeline.get(t, 0.0), t))
+                 if sort_time else active_sorted)
+        for a in board:
             cat = by_tag[a].category if a in by_tag else "?"
+            ts = timeline.get(a)
+            t_chip = (f"<span style='font-family:IBM Plex Mono,monospace;"
+                      f"font-size:11px;color:#5c6f7c;background:#f0f2f4;"
+                      f"border-radius:4px;padding:1px 6px'>+{ts:.1f}s</span>"
+                      if ts is not None else "")
             st.markdown(
-                f"🔴 **{a}** &nbsp; {prio_badge(a, by_tag)} &nbsp; "
-                f"<code>{cat}</code>"
+                f"🔴 **{a}** &nbsp; {prio_badge(a, by_tag)} &nbsp; {t_chip} "
+                f"&nbsp; <code>{cat}</code>"
                 + (_drw(a) if plant_mode else ""),
                 unsafe_allow_html=True)
         if not done:
@@ -304,6 +322,13 @@ with tab_sit:
                     st.code(alarm_response_sheet(b["tag"], fmap[b["tag"]],
                                                  by_tag),
                             language="text")
+                _ce = ce_lines_for(b["tag"], ce_index)
+                if _ce:
+                    st.caption("**Designert logikk (SCD C&E)** — hva arket "
+                               "sier skal skje, ikke bare hva som er koblet:")
+                    for line in _ce:
+                        st.markdown(f"&nbsp;&nbsp;⚙️ `{line}`",
+                                    unsafe_allow_html=True)
                 if b.get("group"):
                     st.caption(f"⭕ Strukturelt uatskillelige (samme sykel via "
                                f"tegnings-sømmer): {', '.join(b['group'][:8])}"
@@ -356,6 +381,17 @@ with tab_sit:
                      + ", ".join(d[-14:] for d in drawn)
                      + " — umulig å se fra ett ark, mulig fordi leveransen er "
                        "strukturert og sammensybar.")
+        _dr = designed_response_check(S["fault"], ce_index, active)
+        if _dr:
+            st.write("• **Designert respons (SCD C&E) for feilkilden:**")
+            for d in _dr:
+                mk = "✅ ringte" if d["observed"] else "⬜ ringte ikke i scenariet"
+                uv = "" if d["verified"] else " *(uverifisert rad)*"
+                st.write(f"&nbsp;&nbsp;&nbsp;⚙️ {S['fault']} → {d['effect']}: "
+                         f"{d['function']} — {mk}{uv}")
+            st.caption("Sammenlikner arkets designede aksjoner med alarmene "
+                       "som faktisk kom — samsvar styrker diagnosen, avvik er "
+                       "et funn i seg selv.")
         with st.expander("🧪 Fysisk konsekvens av valget ditt (NeqSim)"):
             st.caption("Kobler beslutningen til fysikk: hva isoleres strukturelt "
                        "hvis komponenten du pekte på faktisk feiler/stenges — og "
@@ -465,6 +501,8 @@ with tab_chat:
                         f"{fm or 'n/a'}; barriers: "
                         f"{', '.join(b['barriers']) or 'none'}; cross-checks: "
                         f"{b['checks']}{grp}")
+                    for ce_line in ce_lines_for(b["tag"], ce_index, 3):
+                        lines.append(f"  DESIGNED C&E (from SCD sheet): {ce_line}")
                 return "\n".join(lines)
 
             # vis historikken som chat
@@ -580,5 +618,7 @@ with tab_chat:
 # selv når vinduet er passert (S["playing"] settes False over), eller når
 # operatøren trykker «Vis alle nå» / bekrefter et valg.
 if playing:
-    time.sleep(1.0)
+    # refresh a bit faster than the alarm spacing so no alarm arrives "late";
+    # clamp to 0.3–1.0 s so slow steps don't burn reruns and fast steps keep up.
+    time.sleep(min(1.0, max(0.3, float(S["shower"].get("step", 2.5)) / 2)))
     st.rerun()
