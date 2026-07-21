@@ -1,0 +1,22 @@
+{
+  "gate_open": {
+    "legend_text": "GATE VALVE, OPEN",
+    "template": "gate_open.png",
+    "size_px": [
+      77,
+      42
+    ],
+    "dpi": 300,
+    "fill": 0.138
+  },
+  "gate_closed": {
+    "legend_text": "GATE VALVE, CLOSE",
+    "template": "gate_closed.png",
+    "size_px": [
+      77,
+      42
+    ],
+    "dpi": 300,
+    "fill": 0.43
+  }
+}

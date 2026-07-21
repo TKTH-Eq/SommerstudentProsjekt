@@ -19,4 +19,5 @@ printFrame(fl)
 
 f = fluid("srk")
 f.addComponent("n-decane", 1.0)
-print("n-decane fungerer")
+#print("n-decane fungerer")
+

@@ -238,7 +238,7 @@
       "category": "input",
       "type_code": "PT",
       "loop": "27-4250",
-      "source": "P&ID",
+      "source": "SCD",
       "id": "27-PT4250A"
     },
     {
