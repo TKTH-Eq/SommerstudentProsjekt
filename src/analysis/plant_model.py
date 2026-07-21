@@ -252,6 +252,233 @@ def metro_svg(model: dict, w: int = 980, h: int = 560) -> str:
     return "".join(parts)
 
 
+_METRO_HTML = (
+    '<div id="metro-__UID__" style="position:relative;width:100%;'
+    'height:__H__px;background:#141820;border-radius:10px;overflow:hidden;'
+    'user-select:none;font-family:sans-serif">'
+    '<svg id="svg-__UID__" width="100%" height="100%" viewBox="0 0 __W__ __H__" '
+    'preserveAspectRatio="xMidYMid meet" style="cursor:grab;display:block">'
+    '<g id="scene-__UID__"><g id="edges-__UID__"></g>'
+    '<g id="nodes-__UID__"></g></g></svg>'
+    '<div id="legend-__UID__" style="position:absolute;left:10px;top:8px;'
+    'font-size:12px;color:#cfd6df;background:#000000aa;padding:6px 9px;'
+    'border-radius:8px;max-width:72%;line-height:1.7"></div>'
+    '<div id="tip-__UID__" style="position:absolute;pointer-events:none;'
+    'opacity:0;font-size:12px;color:#fff;background:#000000e0;padding:5px 8px;'
+    'border-radius:6px;transform:translate(10px,-130%);white-space:nowrap;'
+    'z-index:5;transition:opacity .08s"></div>'
+    '<div style="position:absolute;right:10px;bottom:8px;font-size:11px;'
+    'color:#8a93a0;background:#00000088;padding:3px 8px;border-radius:6px;'
+    'pointer-events:none">scroll = zoom &middot; dra bakgrunn = panorer '
+    '&middot; dra node = flytt &middot; dobbeltklikk = reset</div>'
+    '</div><script>__JS__</script>')
+
+_METRO_JS = r"""
+(function(){
+  var D = /*DATA*/;
+  var U="__UID__";
+  var g=function(id){return document.getElementById(id+"-"+U);};
+  var svg=g("svg"),scene=g("scene"),eG=g("edges"),nG=g("nodes"),
+      wrap=g("metro"),tip=g("tip"),legend=g("legend");
+  var NS="http://www.w3.org/2000/svg";
+  var nodes=D.nodes,edges=D.edges,byId={};
+  nodes.forEach(function(n){byId[n.id]=n;});
+  var nbr={}; nodes.forEach(function(n){nbr[n.id]={};});
+  edges.forEach(function(e){nbr[e.a][e.b]=1;nbr[e.b][e.a]=1;});
+  function clamp(v,a,b){return Math.min(Math.max(v,a),b);}
+
+  var eEl={};
+  edges.forEach(function(e,i){
+    var l=document.createElementNS(NS,"line");
+    l.setAttribute("stroke","#8a93a0");
+    l.setAttribute("stroke-linecap","round");
+    l.style.cursor="pointer";
+    l.addEventListener("mouseenter",function(){showEdge(e);});
+    l.addEventListener("mousemove",moveTip);
+    l.addEventListener("mouseleave",hideTip);
+    eG.appendChild(l); eEl[i]=l;
+  });
+  var nEl={};
+  nodes.forEach(function(n){
+    var gg=document.createElementNS(NS,"g"); gg.style.cursor="grab";
+    var c=document.createElementNS(NS,"circle");
+    c.setAttribute("r","16"); c.setAttribute("fill",n.color);
+    c.setAttribute("stroke","#0c0f14"); c.setAttribute("stroke-width","2");
+    var t1=document.createElementNS(NS,"text");
+    t1.setAttribute("text-anchor","middle"); t1.setAttribute("font-size","11");
+    t1.setAttribute("fill","#e8e8e8"); t1.textContent=n.label;
+    var t2=document.createElementNS(NS,"text");
+    t2.setAttribute("text-anchor","middle"); t2.setAttribute("font-size","10");
+    t2.setAttribute("fill","#fff"); t2.setAttribute("font-weight","bold");
+    t2.textContent=n.sys;
+    gg.appendChild(c); gg.appendChild(t1); gg.appendChild(t2);
+    gg.addEventListener("mouseenter",function(){hoverN=n.id;refresh();showNode(n);});
+    gg.addEventListener("mousemove",moveTip);
+    gg.addEventListener("mouseleave",function(){hoverN=null;refresh();hideTip();});
+    gg.addEventListener("mousedown",function(ev){dragN=n;dragMoved=false;ev.stopPropagation();});
+    gg.addEventListener("click",function(ev){ev.stopPropagation();
+      if(dragMoved){dragMoved=false;return;}
+      pin=(pin===n.id?null:n.id); refresh();});
+    nG.appendChild(gg); nEl[n.id]={g:gg,c:c,t1:t1,t2:t2};
+  });
+
+  function place(n){var e=nEl[n.id];
+    e.c.setAttribute("cx",n.x); e.c.setAttribute("cy",n.y);
+    e.t1.setAttribute("x",n.x); e.t1.setAttribute("y",n.y-22);
+    e.t2.setAttribute("x",n.x); e.t2.setAttribute("y",n.y+4);}
+  function placeEdge(e,i){var A=byId[e.a],B=byId[e.b],l=eEl[i];
+    l.setAttribute("x1",A.x); l.setAttribute("y1",A.y);
+    l.setAttribute("x2",B.x); l.setAttribute("y2",B.y);}
+  nodes.forEach(place); edges.forEach(placeEdge);
+
+  var k=1,tx=0,ty=0;
+  function applyT(){scene.setAttribute("transform","translate("+tx+","+ty+") scale("+k+")");}
+  applyT();
+  function rootPt(ev){var m=svg.getScreenCTM().inverse();var p=svg.createSVGPoint();
+    p.x=ev.clientX;p.y=ev.clientY;return p.matrixTransform(m);}
+  function scenePt(ev){var m=scene.getScreenCTM().inverse();var p=svg.createSVGPoint();
+    p.x=ev.clientX;p.y=ev.clientY;return p.matrixTransform(m);}
+  svg.addEventListener("wheel",function(ev){ev.preventDefault();var r=rootPt(ev);
+    var f=ev.deltaY<0?1.2:0.83,nk=clamp(k*f,0.3,6);
+    tx=r.x-(r.x-tx)*(nk/k);ty=r.y-(r.y-ty)*(nk/k);k=nk;applyT();},{passive:false});
+  var panning=false,sR=null,tx0=0,ty0=0,dragN=null,dragMoved=false;
+  svg.addEventListener("mousedown",function(ev){panning=true;sR=rootPt(ev);
+    tx0=tx;ty0=ty;svg.style.cursor="grabbing";});
+  window.addEventListener("mousemove",function(ev){
+    if(dragN){var s=scenePt(ev);dragN.x=s.x;dragN.y=s.y;dragMoved=true;place(dragN);
+      edges.forEach(function(e,i){if(e.a===dragN.id||e.b===dragN.id)placeEdge(e,i);});return;}
+    if(panning){var c=rootPt(ev);tx=tx0+(c.x-sR.x);ty=ty0+(c.y-sR.y);applyT();}});
+  window.addEventListener("mouseup",function(){panning=false;dragN=null;svg.style.cursor="grab";});
+  svg.addEventListener("dblclick",function(){k=1;tx=0;ty=0;applyT();});
+
+  var hoverN=null,pin=null,activeSys={};
+  function anySys(){for(var s in activeSys)return true;return false;}
+  function refresh(){
+    var focus=(pin!=null?pin:hoverN);
+    nodes.forEach(function(n){
+      var vis=!anySys()||activeSys[n.sys];var op=vis?1:0.12;
+      if(focus!=null && !(n.id===focus||nbr[focus][n.id])) op=Math.min(op,0.14);
+      nEl[n.id].g.setAttribute("opacity",op);});
+    edges.forEach(function(e,i){
+      var A=byId[e.a],B=byId[e.b];
+      var vis=!anySys()||activeSys[A.sys]||activeSys[B.sys];
+      var op=vis?0.75:0.06,w=1+1.4*e.n,col="#8a93a0";
+      if(focus!=null){ if(e.a===focus||e.b===focus){op=0.95;w+=1.6;col="#cfd6df";}
+        else {op=Math.min(op,0.05);} }
+      eEl[i].setAttribute("opacity",op);
+      eEl[i].setAttribute("stroke-width",w.toFixed(1));
+      eEl[i].setAttribute("stroke",col);});
+  }
+
+  function moveTip(ev){var r=wrap.getBoundingClientRect();
+    tip.style.left=(ev.clientX-r.left)+"px";tip.style.top=(ev.clientY-r.top)+"px";}
+  function showNode(n){tip.innerHTML="<b>"+n.label+"</b><br>system "+n.sys+" &middot; "
+    +n.tags+" tags &middot; "+Object.keys(nbr[n.id]).length+" naboer";tip.style.opacity=1;}
+  function showEdge(e){var A=byId[e.a],B=byId[e.b];var x=(e.n>e.lines.length?" \u2026":"");
+    tip.innerHTML="<b>"+A.label+" \u2194 "+B.label+"</b><br>"+e.n
+    +" delt(e) linje(r): "+e.lines.join(", ")+x;tip.style.opacity=1;}
+  function hideTip(){tip.style.opacity=0;}
+
+  var badges=[];
+  D.systems.forEach(function(s){
+    var b=document.createElement("span");
+    b.style.cssText="display:inline-flex;align-items:center;gap:4px;"
+      +"margin:1px 9px 1px 0;cursor:pointer";
+    b.innerHTML='<span style="width:11px;height:11px;border-radius:50%;'
+      +'background:'+s.color+';display:inline-block"></span>'+s.sys;
+    b.addEventListener("click",function(){
+      if(activeSys[s.sys])delete activeSys[s.sys];else activeSys[s.sys]=1;
+      sync();refresh();});
+    legend.appendChild(b);badges.push([s.sys,b]);});
+  var hint=document.createElement("div");
+  hint.style.cssText="color:#8a93a0;margin-top:3px;font-size:11px";
+  hint.textContent="klikk et system for \u00e5 framheve \u00b7 klikk en node for \u00e5 l\u00e5se";
+  legend.appendChild(hint);
+  function sync(){badges.forEach(function(p){
+    p[1].style.opacity=(!anySys()||activeSys[p[0]])?1:0.4;});}
+  refresh();
+})();
+"""
+
+
+def metro_html(model: dict, w: int = 980, h: int = 600) -> str:
+    """Interactive, dependency-free drawing-level metagraph (same inline-JS
+    approach as hazop._zoomable_image): one node per drawing (colour =
+    system), one edge per drawing pair sharing a line number (width =
+    #shared lines). Wheel-zoom, background-pan, node drag, hover-highlight
+    of a node's neighbours, real tooltips, and a clickable system legend.
+
+    Layout is a deterministic networkx spring layout so the map is stable
+    between runs; the interactivity does the rest. Falls back to the static
+    metro_svg only if a caller wants a plain image.
+    """
+    import html as _html  # noqa: F401  (kept for parity; labels are safe)
+    import json
+    import math
+    import secrets
+    from collections import defaultdict
+
+    stitched = defaultdict(list)
+    for line, a, b, _, _ in model["stitches"]:
+        stitched[tuple(sorted((a, b)))].append(line)
+    drawings = sorted(model.get("drawings") or
+                      {d for ds in model["drawings_of"].values() for d in ds})
+    if not drawings:
+        return ("<div style='color:#8a93a0;padding:20px;font-family:sans-serif'>"
+                "Ingen tegninger i modellen.</div>")
+
+    palette = ["#2d7dd2", "#b8442c", "#3a7d44", "#8e5aa8", "#c98a1b",
+               "#5aa8a0", "#a83a5f", "#6b705c", "#3f6d9e", "#9e6b3f"]
+
+    def _sys(d):
+        return d[-14:-12] if len(d) >= 14 else "??"
+
+    systems = sorted({_sys(d) for d in drawings})
+    sys_color = {s: palette[i % len(palette)] for i, s in enumerate(systems)}
+    tag_count = {d: sum(1 for ds in model["drawings_of"].values() if d in ds)
+                 for d in drawings}
+
+    # deterministic layout in viewBox coordinates
+    gr = nx.Graph()
+    gr.add_nodes_from(drawings)
+    for (a, b), lines in stitched.items():
+        gr.add_edge(a, b, weight=len(lines))
+    if len(drawings) > 2 and gr.number_of_edges():
+        raw = nx.spring_layout(gr, seed=7, weight="weight", iterations=200)
+    else:
+        raw = {d: (math.cos(2 * math.pi * i / len(drawings)),
+                   math.sin(2 * math.pi * i / len(drawings)))
+               for i, d in enumerate(drawings)}
+    xs = [p[0] for p in raw.values()]
+    ys = [p[1] for p in raw.values()]
+    x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys)
+    m = 60
+
+    def _sx(x):
+        return m + (x - x0) / ((x1 - x0) or 1) * (w - 2 * m)
+
+    def _sy(y):
+        return m + (y - y0) / ((y1 - y0) or 1) * (h - 2 * m)
+
+    id_of = {d: i for i, d in enumerate(drawings)}
+    nodes = [{"id": id_of[d], "label": d[-14:], "sys": _sys(d),
+              "color": sys_color[_sys(d)], "tags": tag_count[d],
+              "x": round(_sx(raw[d][0]), 1), "y": round(_sy(raw[d][1]), 1)}
+             for d in drawings]
+    edges = [{"a": id_of[a], "b": id_of[b], "n": len(lines), "lines": lines[:20]}
+             for (a, b), lines in sorted(stitched.items())]
+    data = {"nodes": nodes, "edges": edges,
+            "systems": [{"sys": s, "color": sys_color[s]} for s in systems]}
+
+    uid = secrets.token_hex(3)
+    js = (_METRO_JS.replace("__UID__", uid)
+                   .replace("/*DATA*/", json.dumps(data)))
+    return (_METRO_HTML.replace("__UID__", uid)
+                       .replace("__W__", str(w))
+                       .replace("__H__", str(h))
+                       .replace("__JS__", js))
+
+
 def plant_criticality(model: dict, top: int = 10) -> list[dict]:
     """Most structurally connected components across the WHOLE plant —
     the exposure ranking no per-drawing view can produce. Degree counts

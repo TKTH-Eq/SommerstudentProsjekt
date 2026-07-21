@@ -21,6 +21,7 @@ import os
 import random
 import re
 import sys
+import time
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -37,7 +38,8 @@ from analysis.build_dependency_graph import interactive_svg
 from analysis.hazop_dexpi import load_dexpi_model
 from analysis.analyze_scd import failure_map
 from analysis.control_room import (alarm_shower, candidate_brief,
-                                   scenario_order, shower_debrief)
+                                   scenario_order, shower_debrief,
+                                   situation_brief)
 from analysis.alarm_priority import (alarm_semantics, DIR_ARROW,
                                      priority_sort_key)
 from ai.operator_brief import operator_brief, alarm_response_sheet
@@ -155,14 +157,16 @@ if st.sidebar.button("▶ Nytt scenario"):
                           seed=42 if demo_mode else random.randrange(10**6),
                           by_tag=by_tag)
     st.session_state["cr"] = {"drawing": choice, "fault": fault,
-                              "shower": shower, "chosen": None}
+                              "shower": shower, "chosen": None,
+                              "play_start": time.time(), "playing": True}
 
 st.title("🎛️ Kontrollrom-assistent — alarmdusj")
-st.caption("Alle alarmene kommer SAMTIDIG: en skjult feils fulle kaskade, "
-           "stokket sammen med urelaterte støyalarmer. Assistenten gir en "
-           "strukturell brief per kandidat — uten å kåre en vinner. DU veier "
-           "bevisene og bestemmer mest sannsynlig årsak. Syntetisk scenario, "
-           "beslutningsstøtte — ikke en prosessmodell.")
+st.caption("Alarmene kommer inn SOM EN SEKVENS over noen sekunder: en skjult "
+           "feils kaskade i årsaksrekkefølge, blandet med urelaterte "
+           "støyalarmer. Assistenten gir en strukturell brief per kandidat — "
+           "uten å kåre en vinner. DU veier bevisene og bestemmer mest "
+           "sannsynlig årsak. Syntetisk scenario, beslutningsstøtte — ikke en "
+           "prosessmodell.")
 
 S = st.session_state.get("cr")
 if not S or S["drawing"] != choice:
@@ -172,19 +176,33 @@ if not S or S["drawing"] != choice:
                 "sidepanelet. Velg «(tilfeldig)» — da vet heller ikke du "
                 "fasiten. «🏭 Hele anlegget» gir kaskader på tvers av "
                 "tegninger.")
-    s2.markdown("**2 · Vurder** \nAlle alarmene kommer samtidig. Les "
-                "assistentens brief per kandidat og bruk konnektivitets-"
-                "fanen til å se bevisene visuelt.")
+    s2.markdown("**2 · Vurder** \nAlarmene kommer inn i sekvens over noen "
+                "sekunder — merk deg hvilken som kom FØRST. Les assistentens "
+                "brief per kandidat og bruk konnektivitets-fanen til å se "
+                "bevisene visuelt.")
     s3.markdown("**3 · Beslutt** \nPek på mest sannsynlig årsak og bekreft. "
                 "Debriefen forteller om du traff kilden, et symptom eller "
                 "støy — og kan beregne fysisk konsekvens (NeqSim).")
     st.stop()
 
-active = S["shower"]["alarms"]
-active_sorted = sorted(active, key=lambda t: priority_sort_key(t, by_tag))
+all_alarms = S["shower"]["alarms"]
+timeline = S["shower"].get("timeline", {})
+window = float(S["shower"].get("window", 0.0))
 done = S["chosen"] is not None
 
-briefs = candidate_brief(g, by_tag, active)   # beregnes ÉN gang, brukes overalt
+# progressive reveal: show only alarms whose timeline offset has elapsed.
+if S.get("playing") and not done:
+    elapsed = time.time() - S.get("play_start", time.time())
+    if elapsed >= window:                 # sequence finished -> lock to full
+        S["playing"] = False
+        elapsed = window + 1.0
+else:
+    elapsed = window + 1.0
+active = [a for a in all_alarms if timeline.get(a, 0.0) <= elapsed] or all_alarms[:1]
+active_sorted = sorted(active, key=lambda t: priority_sort_key(t, by_tag))
+playing = bool(S.get("playing")) and not done and elapsed < window
+
+briefs = candidate_brief(g, by_tag, active)   # på det som er avslørt så langt
 
 m1, m2, m3, m4 = st.columns(4)
 m1.metric("Samtidige alarmer", len(active),
@@ -208,6 +226,46 @@ tab_sit, tab_graf, tab_chat = st.tabs(
     ["🔔 Situasjon og beslutning", "🕸️ Konnektivitet", "💬 Spør assistenten"])
 
 with tab_sit:
+    if playing:
+        pc1, pc2 = st.columns([4, 1])
+        pc1.caption(f"⏱️ Alarmene kommer inn … **{len(active)}/{len(all_alarms)}** "
+                    f"vist. Første alarm: **{S['shower'].get('first_up', '?')}**.")
+        if pc2.button("⏭ Vis alle nå"):
+            S["playing"] = False
+            st.rerun()
+    # ---- neutral opening situation brief (fault-blind) -------------------------
+    sb = situation_brief(active, briefs, drawings_of if plant_mode else None)
+    st.subheader("🧭 Situasjonsbrief")
+    head = (f"**{sb['n_alarms']} samtidige alarmer** &nbsp;·&nbsp; "
+            f"**{sb['n_candidates']} uavhengige kandidatrøtter**")
+    if plant_mode and sb["n_drawings"]:
+        head += f" &nbsp;·&nbsp; **{sb['n_drawings']} tegninger berørt**"
+    st.markdown(head)
+    st.caption("Rangert etter hvor mange andre aktive alarmer hver kandidat "
+               "ville forklart — det sterkeste strukturelle sporet. "
+               "Assistenten vet IKKE hvilken alarm som er årsaken og kårer "
+               "ingen vinner; å veie bevisene er din jobb.")
+    _fu = S["shower"].get("first_up")
+    if _fu:
+        st.caption(f"⏱️ Første alarm i sekvensen: **{_fu}** — kom først, ofte "
+                   "(men ikke alltid) nærmest roten. Et observerbart spor, "
+                   "ikke fasit.")
+    _cap = 8
+    for i, r in enumerate(sb["ranking"][:_cap], 1):
+        st.markdown(
+            f"**{i}.** {prio_badge(r['tag'], by_tag)} &nbsp; **{r['tag']}** "
+            f"— forklarer **{r['explains_count']}** andre aktive alarmer"
+            + (_drw(r["tag"]) if plant_mode else ""),
+            unsafe_allow_html=True)
+    if len(sb["ranking"]) > _cap:
+        st.caption(f"+ {len(sb['ranking']) - _cap} flere kandidater "
+                   f"(forklarer færre eller ingen).")
+    if sb["any_none"]:
+        st.caption("Kandidater som forklarer 0 kan være uavhengige/isolerte "
+                   "alarmer — eller støy. Grafen viser strukturell nåbarhet, "
+                   "ikke prosessårsak; bekreft mot tegning og driftsmodus.")
+    st.divider()
+
     left, right = st.columns([1, 1.5])
 
     # ---- alarm board -------------------------------------------------------------
@@ -516,3 +574,11 @@ with tab_chat:
     else:
         st.caption("Sett GEMINI_API_KEY for valgfri spørsmål/svar forankret i "
                    "modellfakta — briefen over er deterministisk og komplett uten.")
+
+# ---- playback: mens sekvensen ruller, be om en rerun ~1 s senere ------------
+# Modellen er @st.cache_resource, så en rerun er billig. Løkka stopper av seg
+# selv når vinduet er passert (S["playing"] settes False over), eller når
+# operatøren trykker «Vis alle nå» / bekrefter et valg.
+if playing:
+    time.sleep(1.0)
+    st.rerun()

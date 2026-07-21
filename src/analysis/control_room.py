@@ -108,12 +108,20 @@ def alarm_capable(obj) -> bool:
 
 
 def alarm_shower(graph: nx.DiGraph, fault: str, noise: int = 2,
-                 seed: int | None = None, by_tag=None) -> dict:
-    """A realistic incident picture: the fault's whole cascade fires AT ONCE,
-    mixed (shuffled) with a couple of unrelated 'noise' alarms — chatter from
-    elsewhere in the plant, independent of the fault. The operator's task is
-    to separate root from symptom from noise, which is exactly what a real
-    alarm flood demands.
+                 seed: int | None = None, by_tag=None,
+                 step: float = 2.5) -> dict:
+    """A realistic incident picture: the fault's cascade fires as a SEQUENCE
+    over a few seconds (not all at once), mixed with a couple of unrelated
+    'noise' alarms — chatter from elsewhere in the plant, independent of the
+    fault. The operator's task is to separate root from symptom from noise,
+    which is exactly what a real alarm flood demands.
+
+    Timing (new): each cascade alarm gets a reveal offset in seconds by its
+    position in the causal (BFS) order — the root rings first, downstream
+    alarms follow ~`step` s apart. Noise is scattered AFTER the first
+    cascade alarm, so the 'first-up' alarm is usually — but not always —
+    the root: a strong clue, never a guarantee. Offsets are deterministic
+    for a given seed.
 
     If by_tag is given, the alarm BOARD is filtered to alarm-capable
     components only (see alarm_capable) — everything downstream is still
@@ -131,8 +139,30 @@ def alarm_shower(graph: nx.DiGraph, fault: str, noise: int = 2,
     noise_tags = rng.sample(pool, min(noise, len(pool))) if pool else []
     alarms = board + noise_tags
     rng.shuffle(alarms)
+
+    # reveal timeline: cascade in causal order at ~step s spacing (small
+    # jitter), earliest normalised to t=0; noise scattered strictly after
+    # the first cascade alarm and within the cascade window.
+    step = max(0.1, float(step))
+    timeline: dict[str, float] = {}
+    for i, t in enumerate(board):
+        jitter = rng.uniform(-0.2, 0.2) * step
+        timeline[t] = round(max(0.0, i * step + jitter), 2)
+    if board:
+        base = min(timeline[t] for t in board)
+        for t in board:
+            timeline[t] = round(timeline[t] - base, 2)
+    last = max(timeline.values()) if timeline else 0.0
+    for t in noise_tags:
+        timeline[t] = round(rng.uniform(step, max(last, step * 1.5)), 2)
+    window = round(max(timeline.values()) if timeline else 0.0, 2)
+    order_revealed = sorted(timeline, key=lambda t: (timeline[t], t))
+    first_up = order_revealed[0] if order_revealed else None
+
     return {"alarms": alarms, "cascade": cascade, "noise": noise_tags,
-            "exposed": len(cascade)}
+            "exposed": len(cascade), "timeline": timeline,
+            "order_revealed": order_revealed, "first_up": first_up,
+            "window": window, "step": step}
 
 
 def candidate_brief(graph: nx.DiGraph, by_tag, active: list[str]) -> list[dict]:
@@ -185,6 +215,38 @@ def candidate_brief(graph: nx.DiGraph, by_tag, active: list[str]) -> list[dict]:
     # priority-sorted; the candidate list (likelihood of being the origin) is
     # explains-first — two different questions, two different orders.
     return sorted(out, key=lambda b: (-len(b["explains"]), b["priority"], b["tag"]))
+
+
+def situation_brief(active, briefs, drawings_of=None) -> dict:
+    """Neutral opening synthesis of the alarm picture — FAULT-BLIND.
+
+    Built only from the active alarms and the candidate briefs (which are
+    themselves derived from the graph, never from the hidden fault), so the
+    assistant cannot and does not know which alarm is the true cause. It
+    surfaces the strongest STRUCTURAL signal — how many other active alarms
+    each candidate root would explain — as a transparent ranking, and
+    declares NO winner. Weighing the evidence stays the operator's job.
+
+    briefs is expected already ordered (explains desc, then priority); we
+    keep that order so rank 1 = 'explains the most', not 'is the cause'.
+    """
+    ranking = [
+        {"tag": b["tag"],
+         "priority": b.get("priority", 3),
+         "priority_label": b.get("priority_label", ""),
+         "explains_count": len(b["explains"]),
+         "explains_none": len(b["explains"]) == 0}
+        for b in briefs
+    ]
+    n_drawings = (len({d for t in active for d in drawings_of.get(t, [])})
+                  if drawings_of else 0)
+    return {
+        "n_alarms": len(active),
+        "n_candidates": len(briefs),
+        "n_drawings": n_drawings,
+        "ranking": ranking,
+        "any_none": any(r["explains_none"] for r in ranking),
+    }
 
 
 def audit_answer_tags(text: str, by_tag) -> dict:

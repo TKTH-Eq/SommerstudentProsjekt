@@ -21,7 +21,8 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 from config import PID_DIR
-from analysis.plant_model import build_plant_model, metro_svg, plant_criticality
+from analysis.plant_model import (build_plant_model, metro_svg, metro_html,
+                                  plant_criticality)
 
 RAW_DIR = Path(PID_DIR).parent
 
@@ -49,11 +50,12 @@ c3.metric("Linje-sømmer", S["line_stitches"],
 c4.metric("Koblinger i modellen", S["edges"])
 
 st.subheader("Metrokartet — hvordan arkene henger sammen")
-st.caption("Én node per tegning (farge = system). Tykkere strek = flere "
-           "delte linjer; hold musen over en strek for å se hvilke, og over "
-           "en node for tag-antall.")
-components.html(f"<div style='background:#141820;border-radius:10px;"
-                f"padding:10px'>{metro_svg(M)}</div>", height=610)
+st.caption("Én node per tegning (farge = system), strek = delt linjenummer "
+           "(tykkere = flere delte linjer). Interaktivt: scroll for å zoome, "
+           "dra bakgrunnen for å panorere, dra en node for å flytte den, "
+           "hold musen over en node for å framheve naboene, og klikk et "
+           "system i tegnforklaringen for å isolere det.")
+components.html(metro_html(M), height=640)
 
 left, right = st.columns(2)
 

@@ -48,15 +48,20 @@ def _zoomable_image(png_path: str, height: int = 620, markers=None):
     if markers:
         from PIL import Image
         iw, ih = Image.open(png_path).size
-        for (mx, my, mw, mh, color, label) in markers:
+        for m in markers:
+            # 6-tuple (x, y, w, h, color, label) as before; an optional 7th
+            # element -> dashed border (used for estimated positions).
+            mx, my, mw, mh, color, label = m[:6]
+            dashed = len(m) > 6 and m[6]
             # CSS: left/width i % av BREDDEN, top/height i % av HØYDEN —
             # wrap-diven har nøyaktig bildets proporsjoner (img display:block)
             l, t = 100 * mx / iw, 100 * my / ih
             w_, h_ = 100 * mw / iw, 100 * mh / ih
+            style = "dashed" if dashed else "solid"
             marker_html += (
                 f'<div title="{label}" style="position:absolute;'
                 f'left:{l:.2f}%;top:{t:.2f}%;width:{w_:.2f}%;'
-                f'height:{h_:.2f}%;border:2px solid {color};'
+                f'height:{h_:.2f}%;border:2px {style} {color};'
                 f'border-radius:3px;box-shadow:0 0 6px {color};'
                 f'pointer-events:auto"></div>')
     components.html(f"""
@@ -368,7 +373,20 @@ with tab_funn:
     elif not findings:
         st.success("Ingen funn fra reglene på denne tegningen.")
     else:
-        _SEV = {"høy": "#b8442c", "middels": "#c98a1b", "lav": "#2d7dd2"}
+        # Fargekode etter alvorlighet, to nivåer:
+        #   RØD  = mest sannsynlig et reelt avvik (strukturelt fravær i
+        #          selve modellen — R1/R2, severity "høy").
+        #   GUL  = mulig avvik som MÅ verifiseres mot et dokument (typisk
+        #          SCD-en eller tilstøtende ark — R3–R7, "middels"/"lav").
+        _SEV = {"høy": "#c0392b", "middels": "#e0a800", "lav": "#e0a800"}
+        st.markdown(
+            "<span style='color:#c0392b;font-weight:700'>🔴 Rød</span> = mest "
+            "sannsynlig et reelt avvik (strukturelt fravær i modellen). &nbsp; "
+            "<span style='color:#e0a800;font-weight:700'>🟡 Gul</span> = mulig "
+            "avvik — må verifiseres mot et dokument (SCD-en eller tilstøtende "
+            "ark). &nbsp; <span style='color:#888'>⬚ stiplet boks</span> = "
+            "estimert posisjon på tegningen.",
+            unsafe_allow_html=True)
         rules = sorted({f["rule"] for f in findings})
         pick_rules = st.multiselect("Vis regler", rules, default=rules,
                                     help="R1 avlastning · R2 aksjonsvei · "
@@ -378,7 +396,7 @@ with tab_funn:
         shown = [f for f in findings if f["rule"] in pick_rules]
 
         for f in shown:
-            with st.expander(f"{'🔴' if f['severity']=='høy' else '🔵'} "
+            with st.expander(f"{'🔴' if f['severity']=='høy' else '🟡'} "
                              f"[{f['rule']}] {f['title']} — "
                              f"{', '.join(f['tags'][:3])}"):
                 st.write(f["description"])
@@ -476,15 +494,19 @@ with tab_funn:
                 for f in shown:
                     for t in f["tags"]:
                         for (x, y, w, h) in _fb.get(t, []):
-                            markers.append((x, y, w, h, "#8e5aa8",
-                                            f"[{f['rule']}] {t} — posisjon "
-                                            f"fra DEXPI-geometri (kalibrert)"))
+                            markers.append((x, y, w, h, _SEV[f["severity"]],
+                                            f"[{f['rule']}] {t} — estimert "
+                                            f"posisjon fra DEXPI-geometri "
+                                            f"(stiplet = kan være unøyaktig)",
+                                            True))          # dashed = estimated
                 boxes = {**boxes, **_fb}
         if _fb_info.get("ok"):
-            st.caption(f"🟣 {len([t for t in _missing if t in boxes])} "
-                       f"symbol-only-tags posisjonert fra DEXPI-geometri "
-                       f"(kalibrert mot {_fb_info['anchors']} felles tags, "
-                       f"residual {_fb_info['residual']} px).")
+            st.caption(f"⬚ {len([t for t in _missing if t in boxes])} "
+                       f"symbol-only-tags vist med STIPLET boks — posisjon "
+                       f"estimert fra DEXPI-geometri (kalibrert mot "
+                       f"{_fb_info['anchors']} felles tags, residual "
+                       f"{_fb_info['residual']} px). Fargen betyr fortsatt "
+                       f"alvorlighet (rød/gul).")
         located = sum(1 for f in shown for t in f["tags"] if t in boxes)
         total = sum(len(f["tags"]) for f in shown)
         st.caption(f"📍 {located} av {total} funn-tags lokalisert på "
