@@ -125,6 +125,73 @@ def briefs_for(fmap, objects, use_ai: bool | None = None) -> dict:
             for tag, entry in fmap.items()}
 
 
+# ---------------------------------------------------------------------------
+# Alarm response sheet (point 2): the failure facts assembled into the fixed
+# EEMUA-191 / ISA-18.2 / YA-711 schema an operator response procedure uses —
+# PRIORITY, CAUSE, CONSEQUENCE, CORRECTIVE ACTION, RESPONSE TIME. Every named
+# tag is a REAL extracted tag; the response-time band is generic guidance
+# keyed to the derived priority (labelled as such). Deterministic, offline.
+# ---------------------------------------------------------------------------
+
+def alarm_response_facts(tag, entry, by_tag) -> dict:
+    from analysis.alarm_priority import alarm_semantics, dir_label
+    o = by_tag.get(tag)
+    tc = o.type_code if o else ""
+    sem = alarm_semantics(tc)
+    down = entry["downstream"]
+    return {
+        "tag": tag,
+        "type_name": TYPE_NAMES.get(tc, "component"),
+        "type_code": tc,
+        "priority": sem["priority"],
+        "priority_label": sem["priority_label"],
+        "direction": dir_label(sem["direction"]),
+        "level": {"trip": "trip/nedstengingsnivå", "alarm": "alarmnivå"}
+                 .get(sem["level"], "måling uten H/L-merking"),
+        "response_time": sem["response_time"],
+        "modes": entry["modes"],
+        "upstream": entry["upstream"],
+        "downstream": down,
+        "safety": entry["safety"],
+        "checks": FIRST_CHECKS.get(tc, DEFAULT_CHECKS),
+    }
+
+
+def _template_response(f) -> str:
+    dirn = f" retning {f['direction']}" if f["direction"] else ""
+    cause = "; ".join(f["modes"])
+    if f["upstream"]:
+        up = ", ".join(f["upstream"][:6]) + (" …" if len(f["upstream"]) > 6 else "")
+        cause += f". Mulig opprinnelse oppstrøms: {up}"
+    n_down = len(f["downstream"])
+    cons = (f"når frem til {n_down} nedstrøms funksjon(er)" if n_down
+            else "ingen nedstrøms funksjon i modellen")
+    if f["safety"]:
+        sf = ", ".join(f["safety"][:6]) + (" …" if len(f["safety"]) > 6 else "")
+        cons += f"; sikkerhetsfunksjoner i kjeden: {sf}"
+    action = "; ".join(f["checks"])
+    if f["safety"]:
+        action += "; bekreft status/tilgjengelighet på barrierene nevnt over"
+    return (
+        f"PRIORITET: {f['priority_label']} · {f['level']}{dirn}\n"
+        f"MULIG ÅRSAK: {cause}.\n"
+        f"KONSEKVENS: {cons}.\n"
+        f"KORRIGERENDE HANDLING: {action}.\n"
+        f"FORVENTET RESPONSTID: {f['response_time']} "
+        f"(generell veiledning etter prioritet — reell frist står i "
+        f"alarmfilosofien).\n"
+        f"MERKNAD: Prioritet/retning er utledet fra tag-en (proxy), ikke "
+        f"konfigurert alarmprioritet. Beslutningsstøtte fra AI-uttrekt, "
+        f"løkkebasert data — verifiser mot P&ID/SCD og live-verdier før "
+        f"inngrep."
+    )
+
+
+def alarm_response_sheet(tag, entry, by_tag) -> str:
+    """Deterministic alarm response sheet for one active alarm."""
+    return _template_response(alarm_response_facts(tag, entry, by_tag))
+
+
 if __name__ == "__main__":
     # quick check on the HO27 pair: python src/ai/operator_brief.py 27 27-PT4805
     import sys

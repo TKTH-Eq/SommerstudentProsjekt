@@ -98,7 +98,13 @@ def alarm_capable(obj) -> bool:
     second while the debrief can still report the first."""
     if obj is None:
         return False
-    return obj.category in ("input", "logic") or obj.type_code in SAFETY_TYPES
+    from analysis.alarm_priority import alarm_semantics
+    # measuring/logic, safety-typed, OR anything whose tag carries an explicit
+    # alarm/trip annotation (LAHH, TAHH, PSH, ZSL …) — the last clause makes
+    # sure a dedicated alarm/switch tag rings even if its type sits in "other".
+    return (obj.category in ("input", "logic")
+            or obj.type_code in SAFETY_TYPES
+            or alarm_semantics(obj.type_code)["level"] is not None)
 
 
 def alarm_shower(graph: nx.DiGraph, fault: str, noise: int = 2,
@@ -155,16 +161,30 @@ def candidate_brief(graph: nx.DiGraph, by_tag, active: list[str]) -> list[dict]:
             return sorted(set(nx.descendants(graph, t)) & set(act) - {t})
         rep = max(members, key=lambda t: len(_explains(t)))
         exp = _explains(rep)
+        from analysis.alarm_priority import alarm_semantics
+        o = by_tag.get(rep)
+        sem = alarm_semantics(o.type_code if o else "")
         entry = {
             "tag": rep,
             "explains": exp,
+            "priority": sem["priority"],
+            "priority_label": sem["priority_label"],
+            "direction": sem["direction"],
             "checks": cross_checks(graph, by_tag, rep),
             "barriers": relevant_barriers(graph, by_tag, rep),
         }
         if len(members) > 1:
             entry["group"] = sorted(m for m in members if m != rep)
         out.append(entry)
-    return sorted(out, key=lambda b: b["tag"])
+    # Ranking: the STRUCTURAL root signal leads — the candidate that explains
+    # the most other active alarms — because that is what actually points at
+    # the origin. Priority (severity) is the tiebreaker, so among equally
+    # explanatory roots the more critical one surfaces first. This ordering
+    # deliberately does NOT let a high-priority but independent noise alarm
+    # (explains 0) leapfrog the true cascade root. The board (urgency) is
+    # priority-sorted; the candidate list (likelihood of being the origin) is
+    # explains-first — two different questions, two different orders.
+    return sorted(out, key=lambda b: (-len(b["explains"]), b["priority"], b["tag"]))
 
 
 def audit_answer_tags(text: str, by_tag) -> dict:

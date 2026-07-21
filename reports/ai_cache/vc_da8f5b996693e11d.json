@@ -1,0 +1,10 @@
+{
+ "result": {
+  "ok": true,
+  "seen": false,
+  "evidence": "No pressure relief device (PSV or PSE symbol) is visibly drawn on the sheet connected to or near the anchor area associated with tags 13-2438PT, 13-2445PT, 13-2446PT, 13-2447PT, 13-2448PT, and 13-PI2285.",
+  "tags": "",
+  "verdict": "Vision så det heller ikke — men fravær kan ikke bevises (målt varians), så funnet står som screeningkandidat."
+ },
+ "saved_at": "2026-07-20 15:32"
+}

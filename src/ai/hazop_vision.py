@@ -164,12 +164,19 @@ _BADGE = {"verified": "✅", "verified_loose": "☑️",
           "new_candidate": "🟠", "suspect": "❓"}
 
 
-def to_markdown(excerpt: dict) -> str:
-    """Streamlit-friendly rendering with per-tag verification badges."""
+def to_markdown(excerpt: dict, obs_colors: list[str] | None = None) -> str:
+    """Streamlit-friendly rendering with per-tag verification badges.
+    If obs_colors is given, a coloured bullet is prefixed to each numbered
+    observation — matching frame colours on the drawing viewer, so the eye
+    can jump from a coloured frame to the text explaining it."""
     lines = [f"**Tegningen (modellens lesning):** {excerpt.get('summary', '')}", ""]
     for i, obs in enumerate(excerpt.get("observations", []), 1):
         tags = " ".join(f"{_BADGE[t['status']]}`{t['tag']}`" for t in obs["tags"]) or "—"
-        lines.append(f"{i}. *{obs.get('deviation', '?')}* — "
+        dot = ""
+        if obs_colors and i - 1 < len(obs_colors):
+            dot = (f'<span style="color:{obs_colors[i-1]};font-size:22px;'
+                   f'vertical-align:middle">●</span> ')
+        lines.append(f"{i}. {dot}*{obs.get('deviation', '?')}* — "
                      f"{obs.get('observation', '')}  \n   Tags: {tags}")
     so = excerpt.get("possible_symbol_only", [])
     if so:

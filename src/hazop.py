@@ -618,16 +618,60 @@ with tab_vision:
                            f"for en fersk API-kjøring.")
             png = st.session_state.get(f"vision_png_{system}")
             if png and Path(png).exists():
+                # markører per observasjon (case) med hver sin farge —
+                # slik at operatøren ser på arket hvor hvert HAZOP-punkt
+                # er forankret; ulokaliserte tags nevnes ærlig under.
+                _OBS_COLORS = ["#2d7dd2", "#b8442c", "#3a7d44", "#8e5aa8",
+                               "#c98a1b", "#5aa8a0", "#a83a5f", "#6b705c"]
+                obs_list = ex.get("observations", [])[:8]
+                obs_tags = []
+                for i, o in enumerate(obs_list):
+                    ts_i = sorted({(t["tag"] if isinstance(t, dict) else t)
+                                   for t in o.get("tags", [])})
+                    obs_tags.append(ts_i)
+
+                _labels = [f"Punkt {i+1} — "
+                           f"{(o.get('deviation') or o.get('observation',''))[:40]}"
+                           for i, o in enumerate(obs_list)]
+                _sel = st.multiselect(
+                    "Vis markører for punkt(er)", _labels, default=_labels,
+                    key=f"obsmarks_{system}",
+                    help="Skru enkeltpunkter av/på — nyttig når tegningen "
+                         "blir travel eller når du vil fokusere på ett punkt.")
+                _active_idx = {_labels.index(l) for l in _sel}
+
+                all_o_tags = sorted({t for i, ts_i in enumerate(obs_tags)
+                                     if i in _active_idx for t in ts_i})
+                from extraction.tag_locator import locate_tags
+                _boxes = locate_tags(pid_path, all_o_tags, dpi=200) \
+                    if all_o_tags else {}
+                _markers = []
+                for i, ts_i in enumerate(obs_tags):
+                    if i not in _active_idx:
+                        continue
+                    c = _OBS_COLORS[i % len(_OBS_COLORS)]
+                    for t in ts_i:
+                        for (x, y, w, h) in _boxes.get(t, []):
+                            px, py = max(14, 0.45 * w), max(14, 0.55 * h)
+                            _markers.append((x - px, y - py,
+                                             w + 2 * px, h + 2 * py, c,
+                                             f"Punkt {i+1}: {t}"))
                 img_col, txt_col = st.columns([1, 1])
                 with img_col:
-                    _zoomable_image(str(png))
-                    st.caption("Tegningen slik modellen så den (200 dpi). "
-                               "Zoom inn på tags og noter for å verifisere "
-                               "utdraget direkte.")
+                    _zoomable_image(str(png), markers=_markers)
+                    _hit = sum(1 for i, ts_i in enumerate(obs_tags)
+                               if i in _active_idx for t in ts_i
+                               if t in _boxes)
+                    _tot = sum(len(ts_i) for i, ts_i in enumerate(obs_tags)
+                               if i in _active_idx)
+                    st.caption(f"📍 {_hit} av {_tot} punkt-tags lokalisert "
+                               "på tegningen. Ulokaliserte tags er typisk "
+                               "symbol-only (recall-gapet) eller nevnt "
+                               "utenfor tegningsflaten.")
                 with txt_col:
-                    st.markdown(to_markdown(ex))
+                    st.markdown(to_markdown(ex, obs_colors=_OBS_COLORS), unsafe_allow_html=True)
             else:
-                st.markdown(to_markdown(ex))
+                st.markdown(to_markdown(ex, obs_colors=_OBS_COLORS), unsafe_allow_html=True)
             vx = Path("reports") / f"hazop_vision_system_{system}.xlsx"
             write_vision_xlsx(ex, vx,
                               title=f"Vision HAZOP excerpt — System {system}")

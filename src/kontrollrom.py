@@ -38,7 +38,9 @@ from analysis.hazop_dexpi import load_dexpi_model
 from analysis.analyze_scd import failure_map
 from analysis.control_room import (alarm_shower, candidate_brief,
                                    scenario_order, shower_debrief)
-from ai.operator_brief import operator_brief
+from analysis.alarm_priority import (alarm_semantics, DIR_ARROW,
+                                     priority_sort_key)
+from ai.operator_brief import operator_brief, alarm_response_sheet
 
 RAW_DIR = Path(PID_DIR).parent
 
@@ -57,6 +59,22 @@ def load(xml: str, mtime: float) -> dict:
     allo, g = m["objects"], m["tag_graph"]
     return {"g": g, "by_tag": {o.tag: o for o in allo},
             "fmap": failure_map(g, allo)}
+
+
+PRIO_COLOR = {1: "#c0392b", 2: "#e67e22", 3: "#c9a227", 4: "#7f8c8d"}
+
+
+def prio_badge(tag, by_tag):
+    """Small coloured P1..P4 badge with a high/low arrow for a tag."""
+    o = by_tag.get(tag)
+    if not o:
+        return ""
+    s = alarm_semantics(o.type_code)
+    c = PRIO_COLOR.get(s["priority"], "#7f8c8d")
+    arrow = DIR_ARROW.get(s["direction"], "")
+    return (f"<span style='background:{c};color:#fff;border-radius:6px;"
+            f"padding:1px 7px;font-size:11px;font-weight:600'>"
+            f"P{s['priority']}{arrow}</span>")
 
 
 def chips(tags, by_tag):
@@ -163,6 +181,7 @@ if not S or S["drawing"] != choice:
     st.stop()
 
 active = S["shower"]["alarms"]
+active_sorted = sorted(active, key=lambda t: priority_sort_key(t, by_tag))
 done = S["chosen"] is not None
 
 briefs = candidate_brief(g, by_tag, active)   # beregnes ÉN gang, brukes overalt
@@ -194,13 +213,19 @@ with tab_sit:
     # ---- alarm board -------------------------------------------------------------
     with left:
         st.subheader(f"🔔 Alarmtavle — {len(active)} samtidige")
-        for a in active:
-            st.write(f"🔴 **{a}**  \u2003"
-                     f"`{by_tag[a].category if a in by_tag else '?'}`"
-                     + (_drw(a) if plant_mode else ""))
+        st.caption("Sortert etter prioritet (P1 kritisk øverst). "
+                   "Prioritet/retning er utledet fra tag-en — en proxy, ikke "
+                   "konfigurert alarmprioritet.")
+        for a in active_sorted:
+            cat = by_tag[a].category if a in by_tag else "?"
+            st.markdown(
+                f"🔴 **{a}** &nbsp; {prio_badge(a, by_tag)} &nbsp; "
+                f"<code>{cat}</code>"
+                + (_drw(a) if plant_mode else ""),
+                unsafe_allow_html=True)
         if not done:
             st.divider()
-            pick = st.selectbox("Mest sannsynlig årsak", ["(velg)"] + sorted(active))
+            pick = st.selectbox("Mest sannsynlig årsak", ["(velg)"] + active_sorted)
             if pick != "(velg)" and st.button(f"✅ Bekreft: {pick} er årsaken"):
                 S["chosen"] = pick
                 st.rerun()
@@ -213,10 +238,13 @@ with tab_sit:
                    "å veie dem er din jobb.")
         for b in briefs:
             n_exp = len(b["explains"])
-            with st.expander(f"**{b['tag']}** — ville forklart {n_exp} av de "
-                             f"andre alarmene", expanded=(len(briefs) <= 3)):
+            plab = b.get("priority_label", "")
+            with st.expander(f"**{b['tag']}** · {plab} — ville forklart "
+                             f"{n_exp} av de andre alarmene",
+                             expanded=(len(briefs) <= 3)):
                 if b["tag"] in fmap:
-                    st.code(operator_brief(b["tag"], fmap[b["tag"]], by_tag),
+                    st.code(alarm_response_sheet(b["tag"], fmap[b["tag"]],
+                                                 by_tag),
                             language="text")
                 if b.get("group"):
                     st.caption(f"⭕ Strukturelt uatskillelige (samme sykel via "
@@ -351,17 +379,30 @@ with tab_chat:
             hist = st.session_state.setdefault(hist_key, [])
             st.session_state["qa_hist"] = hist
 
+            def _pa(t: str) -> str:
+                s = alarm_semantics(by_tag[t].type_code) if t in by_tag else {}
+                arr = ("▲" if s.get("direction") == "high"
+                       else "▼" if s.get("direction") == "low" else "")
+                return f"{t}[P{s.get('priority', '?')}{arr}]"
+
             def _qa_context() -> str:
-                lines = [f"ACTIVE ALARMS ({len(active)}): {', '.join(active[:40])}"
+                head = ", ".join(_pa(t) for t in active_sorted[:40])
+                lines = [f"ACTIVE ALARMS ({len(active)}), priority-sorted "
+                         f"(P1 highest, ▲ high / ▼ low): {head}"
                          + (" …" if len(active) > 40 else "")]
                 for b in briefs:
                     fm = "; ".join(fmap.get(b["tag"], {}).get("modes", [])[:3])
+                    sem = (alarm_semantics(by_tag[b["tag"]].type_code)
+                           if b["tag"] in by_tag else {})
                     drw = (f" on drawing {drawings_of.get(b['tag'], ['?'])[0]}"
                            if plant_mode else "")
                     grp = (f"; cycle-group: {', '.join(b['group'][:5])}"
                            if b.get("group") else "")
                     lines.append(
-                        f"- CANDIDATE {b['tag']}{drw}: explains "
+                        f"- CANDIDATE {b['tag']}{drw}: "
+                        f"{b.get('priority_label', 'P?')}, direction "
+                        f"{sem.get('direction') or 'n/a'}, expected response "
+                        f"{sem.get('response_time', 'n/a')}; explains "
                         f"{len(b['explains'])} active alarms; failure modes: "
                         f"{fm or 'n/a'}; barriers: "
                         f"{', '.join(b['barriers']) or 'none'}; cross-checks: "
@@ -407,6 +448,10 @@ with tab_chat:
                     "alarm flood. Answer in NORWEGIAN. Use ONLY the facts and "
                     "tags below — NEVER invent a tag; general process knowledge "
                     "may be used if marked '(generelt)'.\n"
+                    "Weight candidates and actions by the PRIORITY shown "
+                    "(P1 = critical/trip highest … P4 lowest; ▲ high, ▼ low). "
+                    "Priority is DERIVED FROM THE TAG, not the configured alarm "
+                    "priority — treat it as a proxy and say so if it matters.\n"
                     "Your job is to turn the evidence into ACTION, not to "
                     "restate it. Structure the answer as:\n"
                     "1. BEVISVEIING — which candidate the structural evidence "
@@ -456,6 +501,9 @@ with tab_chat:
                 "alarm flood. Answer in NORWEGIAN. Use ONLY the facts and "
                 "tags below — NEVER invent a tag; general process knowledge "
                 "may be used if marked '(generelt)'.\n"
+                "Weight candidates and actions by the PRIORITY shown "
+                "(P1 highest … P4 lowest; ▲ high, ▼ low) — a tag-derived "
+                "proxy.\n"
                 "1. BEVISVEIING — which candidate the structural evidence "
                 "favours and WHY …\n"
                 "2. VERIFISERINGSPLAN — 3-5 numbered steps tied to REAL "
