@@ -9,9 +9,15 @@ Redundant instruments are often written with a combined suffix, e.g.
 "27-PT4250A/B" (two physical devices in one label). These are expanded so BOTH
 legs (…A and …B, or …A/B/C) are captured, not just the first.
 
+If the text passes yield almost nothing (image-only drawing) and
+HULDRA_VISION=1 is set, a Gemini vision pass on the rendered page is used as a
+reserve (pass c). The reserve never raises: any failure logs and falls back to
+whatever the text passes found.
+
 Extraction is approximate. It is a first pass for engineer review, not truth.
 """
 from __future__ import annotations
+import os
 import re
 from pathlib import Path
 from config import ALL_TYPES
@@ -26,6 +32,14 @@ NUM_COMBINED = re.compile(r"^(\d{2,4})([A-Z](?:/[A-Z])+)$")
 # (a3) number-first valve/line tags, e.g. "27-4510PV", "27-4454PL", "43-4505VF"
 INLINE_NUMFIRST = re.compile(r"\b(\d{2}-\d{3,4}[A-Z]{2,3})\b")
 
+# (c) vision reserve: below this many text-pass tags, the drawing is considered
+# tag-poor (image-only) and the reserve may run. HO11 yields 0 and triggers;
+# every other scored drawing yields 15+ and never touches the reserve.
+VISION_MIN_TAGS = 3
+# vision output without a system prefix, e.g. "PT4805" -> prefixed with the
+# drawing's system code as well, so validation matches either written form
+_UNPREFIXED = re.compile(r"^[A-Z]{1,4}\d{2,5}[A-Z]?$")
+
 
 def _system_of(pdf_path: Path) -> str:
     """Guess the drawing's system code from the filename (…-HO27-… -> 27)."""
@@ -36,6 +50,24 @@ def _system_of(pdf_path: Path) -> str:
 def _legs(base: str, suffix: str) -> set[str]:
     """'A/B' -> {base+'A', base+'B'};  'A/B/C' -> three legs."""
     return {base + leg for leg in suffix.split("/")}
+
+
+def _vision_reserve(pdf_path: Path, system: str, text_tags: set[str]) -> set[str]:
+    """Pass (c): Gemini reads the rendered page. Opt-in, never raises."""
+    try:
+        from extraction.vision_extract import extract_tags_vision
+        vtags = extract_tags_vision(pdf_path)
+    except Exception as e:                     # never let the reserve sink the run
+        print(f"[vision] {pdf_path.name}: reserve failed ({e})")
+        return set()
+    out: set[str] = set()
+    for vt in vtags:
+        out.add(vt)
+        if _UNPREFIXED.match(vt):              # "PT4805" -> also "27-PT4805"
+            out.add(f"{system}-{vt}")
+    print(f"[vision] {pdf_path.name}: text layer gave {len(text_tags)} tag(s), "
+          f"vision added {len(out)}")
+    return out
 
 
 def extract_tags(pdf_path: str | Path) -> set[str]:
@@ -65,10 +97,15 @@ def extract_tags(pdf_path: str | Path) -> set[str]:
         if cand:
             num = min(cand)[1]
             m = NUM_COMBINED.match(num)
-            if m:                                    # bubble holds a combined A/B number
+            if m:                              # bubble holds a combined A/B number
                 tags |= _legs(f"{system}-{ty}{m.group(1)}", m.group(2))
             else:
                 tags.add(f"{system}-{ty}{num}")
+
+    # (c) vision reserve for image-only drawings, opt-in via HULDRA_VISION=1
+    if len(tags) < VISION_MIN_TAGS and os.getenv("HULDRA_VISION") == "1":
+        tags |= _vision_reserve(pdf_path, system, tags)
+
     return tags
 
 

@@ -21,9 +21,9 @@ Extraction strategy (validated against the system-27 drawings):
     Joined tags are caught by regex on all documents. Split bubbles are
     recombined from word coordinates -- P&IDs only, because SCDs already
     write their tags joined.
-  * Google Vision is only needed for scanned drawings that have NO text
-    layer. That fallback is optional (see ocr_pages_with_vision) and is
-    triggered automatically when a PDF yields no extractable text.
+  * Drawings with NO text layer are handled by the shared Gemini vision
+    reserve (extraction.vision_extract), which reads tags off the rendered
+    page. Optional via --vision; requires GEMINI_API_KEY in .env.
 
 Usage:
     python build_tag_register.py --raw data/raw --out reports
@@ -185,13 +185,12 @@ def extract_tags(path: Path, system: str, doc_type: str,
     """Extract normalised tags from one drawing."""
     text, words = read_words(path)
 
-    # Scanned drawing with no text layer -> optionally OCR with Vision.
+    # Scanned drawing with no text layer -> optionally read tags with the
+    # shared Gemini vision reserve (returns tags directly, not text).
     if len(text.strip()) < 20:
         if use_vision:
-            text = ocr_pages_with_vision(path)
-            words = []  # OCR gives no reliable coordinates for recombination
-        else:
-            return set()
+            return vision_tags(path, system)
+        return set()
 
     tags: set[str] = set()
 
@@ -227,34 +226,29 @@ def split_tag(tag: str):
 
 
 # --------------------------------------------------------------------------
-# Optional Google Vision OCR fallback (scanned drawings only)
+# Optional Gemini vision fallback (scanned drawings only)
 # --------------------------------------------------------------------------
 
-def ocr_pages_with_vision(path: Path, dpi: int = 200) -> str:
+def vision_tags(path: Path, system: str) -> set[str]:
+    """Read tags off a scanned drawing with the shared Gemini vision reserve.
+
+    Same channel as pass (c) in extraction.tag_extractor: returns normalised
+    tag strings directly. Imported lazily; any failure returns an empty set
+    so the main pipeline keeps going.
     """
-    OCR a scanned PDF with Google Cloud Vision (document text detection).
-
-    Only needed for drawings that have NO text layer. Requires:
-        pip install google-cloud-vision pymupdf
-        set GOOGLE_APPLICATION_CREDENTIALS=path\\to\\service-account.json
-
-    Rasterises each page with PyMuPDF and sends it to Vision. Imported
-    lazily so the main pipeline runs without these packages installed.
-    """
-    import fitz  # PyMuPDF, for rasterising pages
-    from google.cloud import vision
-
-    client = vision.ImageAnnotatorClient()
-    out = []
-    doc = fitz.open(path)
-    for page in doc:
-        pix = page.get_pixmap(dpi=dpi)
-        image = vision.Image(content=pix.tobytes("png"))
-        resp = client.document_text_detection(image=image)
-        if resp.error.message:
-            raise RuntimeError(resp.error.message)
-        out.append(resp.full_text_annotation.text)
-    return "\n".join(out)
+    try:
+        from extraction.vision_extract import extract_tags_vision
+        vtags = extract_tags_vision(path)
+    except Exception as e:  # noqa: BLE001
+        print(f"  [vision] {path.name}: reserve failed ({e})")
+        return set()
+    out: set[str] = set()
+    for vt in vtags:
+        out.add(vt)
+        if re.match(r"^[A-Z]{1,4}\d{2,5}[A-Z]?$", vt):   # "PT4805" -> "27-PT4805"
+            out.add(f"{system}-{vt}")
+    print(f"  [vision] {path.name}: vision read {len(out)} tag(s)")
+    return out
 
 
 # --------------------------------------------------------------------------

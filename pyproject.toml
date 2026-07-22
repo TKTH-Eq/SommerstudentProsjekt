@@ -24,4 +24,4 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-ocr = ["google-cloud-vision>=3.7"]
+ocr = []
