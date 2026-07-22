@@ -1,0 +1,113 @@
+[
+  {
+    "cls": "butterfly_valve",
+    "conf": 0.607,
+    "tier": "mulig",
+    "bbox_orig": [
+      2420,
+      177,
+      2459,
+      196
+    ],
+    "verifier_conf": 0.772,
+    "verifier_threshold": 0.475
+  },
+  {
+    "cls": "gate_closed",
+    "conf": 0.794,
+    "tier": "mulig",
+    "bbox_orig": [
+      3643,
+      1802,
+      3681,
+      1824
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.76,
+    "tier": "sikker",
+    "bbox_orig": [
+      2108,
+      704,
+      2130,
+      742
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.632,
+    "tier": "mulig",
+    "bbox_orig": [
+      2478,
+      770,
+      2506,
+      820
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.612,
+    "tier": "mulig",
+    "bbox_orig": [
+      3234,
+      2141,
+      3256,
+      2180
+    ],
+    "verifier_conf": 0.639,
+    "verifier_threshold": 0.445
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.992,
+    "tier": "sikker",
+    "bbox_orig": [
+      1984,
+      1573,
+      2023,
+      1606
+    ],
+    "verifier_conf": 0.996,
+    "verifier_threshold": 0.445
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.989,
+    "tier": "sikker",
+    "bbox_orig": [
+      2801,
+      2147,
+      2834,
+      2186
+    ],
+    "verifier_conf": 0.905,
+    "verifier_threshold": 0.445
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.981,
+    "tier": "sikker",
+    "bbox_orig": [
+      3701,
+      1496,
+      3739,
+      1529
+    ],
+    "verifier_conf": 0.554,
+    "verifier_threshold": 0.445
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.964,
+    "tier": "sikker",
+    "bbox_orig": [
+      3701,
+      1888,
+      3739,
+      1921
+    ],
+    "verifier_conf": 0.603,
+    "verifier_threshold": 0.445
+  }
+]

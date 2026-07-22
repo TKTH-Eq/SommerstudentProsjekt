@@ -1,0 +1,1252 @@
+[
+  {
+    "cls": "ball_valve",
+    "conf": 0.741,
+    "bbox_orig": [
+      4159,
+      2591,
+      4197,
+      2669
+    ]
+  },
+  {
+    "cls": "ball_valve",
+    "conf": 0.978,
+    "bbox_orig": [
+      3667,
+      999,
+      3709,
+      1049
+    ]
+  },
+  {
+    "cls": "ball_valve",
+    "conf": 0.733,
+    "bbox_orig": [
+      2522,
+      2864,
+      2572,
+      2964
+    ]
+  },
+  {
+    "cls": "ball_valve",
+    "conf": 0.805,
+    "bbox_orig": [
+      853,
+      1377,
+      894,
+      1427
+    ]
+  },
+  {
+    "cls": "ball_valve",
+    "conf": 0.6,
+    "bbox_orig": [
+      3830,
+      657,
+      3861,
+      717
+    ]
+  },
+  {
+    "cls": "ball_valve",
+    "conf": 0.689,
+    "bbox_orig": [
+      4454,
+      386,
+      4484,
+      447
+    ]
+  },
+  {
+    "cls": "ball_valve",
+    "conf": 0.863,
+    "bbox_orig": [
+      3289,
+      980,
+      3317,
+      1029
+    ]
+  },
+  {
+    "cls": "ball_valve",
+    "conf": 0.925,
+    "bbox_orig": [
+      1636,
+      1835,
+      1664,
+      1885
+    ]
+  },
+  {
+    "cls": "butterfly_valve",
+    "conf": 0.577,
+    "bbox_orig": [
+      3640,
+      3013,
+      3662,
+      3052
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.583,
+    "bbox_orig": [
+      4299,
+      1131,
+      4319,
+      1170
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.918,
+    "bbox_orig": [
+      4771,
+      1278,
+      4796,
+      1327
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.907,
+    "bbox_orig": [
+      4744,
+      1336,
+      4769,
+      1385
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.898,
+    "bbox_orig": [
+      3383,
+      2451,
+      3408,
+      2500
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.71,
+    "bbox_orig": [
+      4697,
+      1407,
+      4735,
+      1429
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.757,
+    "bbox_orig": [
+      3753,
+      1016,
+      3792,
+      1038
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.956,
+    "bbox_orig": [
+      2674,
+      3248,
+      2735,
+      3278
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.882,
+    "bbox_orig": [
+      2486,
+      3157,
+      2547,
+      3187
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.565,
+    "bbox_orig": [
+      1435,
+      1874,
+      1474,
+      1896
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.724,
+    "bbox_orig": [
+      4117,
+      974,
+      4178,
+      1004
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.584,
+    "bbox_orig": [
+      3701,
+      1934,
+      3739,
+      1957
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.71,
+    "bbox_orig": [
+      4727,
+      1407,
+      4766,
+      1429
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.748,
+    "bbox_orig": [
+      3905,
+      676,
+      3927,
+      715
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.671,
+    "bbox_orig": [
+      2387,
+      1739,
+      2409,
+      1777
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.615,
+    "bbox_orig": [
+      2357,
+      1736,
+      2379,
+      1774
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.859,
+    "bbox_orig": [
+      2417,
+      1739,
+      2439,
+      1777
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.957,
+    "bbox_orig": [
+      2710,
+      3461,
+      2749,
+      3538
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.671,
+    "bbox_orig": [
+      2324,
+      1739,
+      2346,
+      1777
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.582,
+    "bbox_orig": [
+      2404,
+      1736,
+      2426,
+      1774
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.752,
+    "bbox_orig": [
+      2370,
+      1739,
+      2393,
+      1777
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.804,
+    "bbox_orig": [
+      1686,
+      1882,
+      1708,
+      1921
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.859,
+    "bbox_orig": [
+      2340,
+      1736,
+      2362,
+      1774
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.936,
+    "bbox_orig": [
+      4727,
+      1380,
+      4749,
+      1418
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.58,
+    "bbox_orig": [
+      4821,
+      684,
+      4871,
+      712
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.702,
+    "bbox_orig": [
+      4170,
+      3714,
+      4208,
+      3736
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.89,
+    "bbox_orig": [
+      2310,
+      1736,
+      2332,
+      1774
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.873,
+    "bbox_orig": [
+      3207,
+      1769,
+      3229,
+      1808
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.843,
+    "bbox_orig": [
+      3182,
+      1772,
+      3209,
+      1821
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.939,
+    "bbox_orig": [
+      4782,
+      1253,
+      4810,
+      1303
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.963,
+    "bbox_orig": [
+      4758,
+      1303,
+      4785,
+      1352
+    ]
+  },
+  {
+    "cls": "gate_closed",
+    "conf": 0.909,
+    "bbox_orig": [
+      3444,
+      3828,
+      3477,
+      3888
+    ]
+  },
+  {
+    "cls": "gate_closed",
+    "conf": 0.996,
+    "bbox_orig": [
+      3982,
+      2282,
+      4043,
+      2315
+    ]
+  },
+  {
+    "cls": "gate_closed",
+    "conf": 0.994,
+    "bbox_orig": [
+      3096,
+      1595,
+      3118,
+      1634
+    ]
+  },
+  {
+    "cls": "gate_closed",
+    "conf": 0.997,
+    "bbox_orig": [
+      4388,
+      2572,
+      4410,
+      2611
+    ]
+  },
+  {
+    "cls": "gate_closed",
+    "conf": 0.997,
+    "bbox_orig": [
+      4388,
+      1565,
+      4410,
+      1603
+    ]
+  },
+  {
+    "cls": "gate_closed",
+    "conf": 0.848,
+    "bbox_orig": [
+      2263,
+      3278,
+      2296,
+      3339
+    ]
+  },
+  {
+    "cls": "gate_closed",
+    "conf": 0.848,
+    "bbox_orig": [
+      2704,
+      2845,
+      2738,
+      2906
+    ]
+  },
+  {
+    "cls": "gate_closed",
+    "conf": 0.816,
+    "bbox_orig": [
+      2136,
+      2845,
+      2169,
+      2906
+    ]
+  },
+  {
+    "cls": "gate_closed",
+    "conf": 0.692,
+    "bbox_orig": [
+      2569,
+      2845,
+      2602,
+      2906
+    ]
+  },
+  {
+    "cls": "gate_closed",
+    "conf": 0.849,
+    "bbox_orig": [
+      3358,
+      3466,
+      3392,
+      3527
+    ]
+  },
+  {
+    "cls": "gate_closed",
+    "conf": 0.938,
+    "bbox_orig": [
+      1910,
+      2845,
+      1943,
+      2906
+    ]
+  },
+  {
+    "cls": "gate_closed",
+    "conf": 0.663,
+    "bbox_orig": [
+      2823,
+      3140,
+      2862,
+      3162
+    ]
+  },
+  {
+    "cls": "gate_closed",
+    "conf": 0.783,
+    "bbox_orig": [
+      1184,
+      1468,
+      1222,
+      1490
+    ]
+  },
+  {
+    "cls": "gate_closed",
+    "conf": 0.582,
+    "bbox_orig": [
+      4015,
+      3902,
+      4054,
+      3924
+    ]
+  },
+  {
+    "cls": "gate_closed",
+    "conf": 0.595,
+    "bbox_orig": [
+      2898,
+      3265,
+      2936,
+      3287
+    ]
+  },
+  {
+    "cls": "gate_closed",
+    "conf": 0.599,
+    "bbox_orig": [
+      1788,
+      2887,
+      1810,
+      2925
+    ]
+  },
+  {
+    "cls": "gate_closed",
+    "conf": 0.703,
+    "bbox_orig": [
+      4186,
+      2600,
+      4247,
+      2630
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.908,
+    "bbox_orig": [
+      4653,
+      684,
+      4713,
+      717
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.844,
+    "bbox_orig": [
+      2139,
+      693,
+      2199,
+      726
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.935,
+    "bbox_orig": [
+      2674,
+      3579,
+      2735,
+      3612
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.63,
+    "bbox_orig": [
+      1562,
+      1129,
+      1581,
+      1167
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.993,
+    "bbox_orig": [
+      2136,
+      795,
+      2175,
+      814
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.999,
+    "bbox_orig": [
+      2020,
+      963,
+      2053,
+      1024
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.592,
+    "bbox_orig": [
+      4614,
+      690,
+      4653,
+      712
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.727,
+    "bbox_orig": [
+      2481,
+      1253,
+      2519,
+      1275
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.554,
+    "bbox_orig": [
+      1667,
+      1874,
+      1705,
+      1896
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.552,
+    "bbox_orig": [
+      4305,
+      684,
+      4366,
+      717
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.59,
+    "bbox_orig": [
+      1355,
+      1123,
+      1394,
+      1145
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.553,
+    "bbox_orig": [
+      2233,
+      1256,
+      2271,
+      1278
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.67,
+    "bbox_orig": [
+      3621,
+      3140,
+      3681,
+      3174
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.947,
+    "bbox_orig": [
+      1565,
+      924,
+      1595,
+      985
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.959,
+    "bbox_orig": [
+      2155,
+      1079,
+      2194,
+      1101
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.986,
+    "bbox_orig": [
+      3502,
+      974,
+      3541,
+      996
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.677,
+    "bbox_orig": [
+      2205,
+      2997,
+      2266,
+      3030
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.988,
+    "bbox_orig": [
+      3648,
+      3116,
+      3687,
+      3154
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.973,
+    "bbox_orig": [
+      3127,
+      3022,
+      3149,
+      3060
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.873,
+    "bbox_orig": [
+      2039,
+      508,
+      2078,
+      541
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.63,
+    "bbox_orig": [
+      3118,
+      599,
+      3146,
+      649
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.998,
+    "bbox_orig": [
+      2150,
+      809,
+      2191,
+      858
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.865,
+    "bbox_orig": [
+      2586,
+      2936,
+      2646,
+      2969
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.851,
+    "bbox_orig": [
+      2655,
+      599,
+      2682,
+      649
+    ]
+  },
+  {
+    "cls": "globe_valve",
+    "conf": 0.985,
+    "bbox_orig": [
+      4426,
+      3033,
+      4459,
+      3093
+    ]
+  },
+  {
+    "cls": "globe_valve",
+    "conf": 0.82,
+    "bbox_orig": [
+      4437,
+      767,
+      4471,
+      828
+    ]
+  },
+  {
+    "cls": "globe_valve",
+    "conf": 0.807,
+    "bbox_orig": [
+      4346,
+      3223,
+      4379,
+      3284
+    ]
+  },
+  {
+    "cls": "globe_valve",
+    "conf": 0.952,
+    "bbox_orig": [
+      3935,
+      1087,
+      3968,
+      1148
+    ]
+  },
+  {
+    "cls": "globe_valve",
+    "conf": 0.878,
+    "bbox_orig": [
+      3474,
+      2401,
+      3513,
+      2420
+    ]
+  },
+  {
+    "cls": "globe_valve",
+    "conf": 0.939,
+    "bbox_orig": [
+      2768,
+      3135,
+      2829,
+      3168
+    ]
+  },
+  {
+    "cls": "globe_valve",
+    "conf": 0.893,
+    "bbox_orig": [
+      4942,
+      1402,
+      5003,
+      1435
+    ]
+  },
+  {
+    "cls": "other_valve",
+    "conf": 0.949,
+    "bbox_orig": [
+      2856,
+      3132,
+      2917,
+      3165
+    ]
+  },
+  {
+    "cls": "other_valve",
+    "conf": 0.854,
+    "bbox_orig": [
+      3974,
+      3748,
+      4035,
+      3781
+    ]
+  },
+  {
+    "cls": "other_valve",
+    "conf": 0.937,
+    "bbox_orig": [
+      2026,
+      522,
+      2048,
+      560
+    ]
+  },
+  {
+    "cls": "other_valve",
+    "conf": 0.624,
+    "bbox_orig": [
+      1578,
+      753,
+      1617,
+      775
+    ]
+  },
+  {
+    "cls": "other_valve",
+    "conf": 0.931,
+    "bbox_orig": [
+      3634,
+      2939,
+      3665,
+      3000
+    ]
+  },
+  {
+    "cls": "other_valve",
+    "conf": 0.599,
+    "bbox_orig": [
+      5216,
+      1874,
+      5238,
+      1912
+    ]
+  },
+  {
+    "cls": "other_valve",
+    "conf": 0.563,
+    "bbox_orig": [
+      2812,
+      2492,
+      2834,
+      2531
+    ]
+  },
+  {
+    "cls": "other_valve",
+    "conf": 0.704,
+    "bbox_orig": [
+      4319,
+      436,
+      4349,
+      497
+    ]
+  },
+  {
+    "cls": "other_valve",
+    "conf": 0.631,
+    "bbox_orig": [
+      3676,
+      751,
+      3706,
+      811
+    ]
+  },
+  {
+    "cls": "other_valve",
+    "conf": 0.788,
+    "bbox_orig": [
+      2326,
+      1333,
+      2365,
+      1355
+    ]
+  },
+  {
+    "cls": "other_valve",
+    "conf": 0.876,
+    "bbox_orig": [
+      2666,
+      2462,
+      2699,
+      2500
+    ]
+  },
+  {
+    "cls": "other_valve",
+    "conf": 0.699,
+    "bbox_orig": [
+      2097,
+      2462,
+      2130,
+      2500
+    ]
+  },
+  {
+    "cls": "other_valve",
+    "conf": 0.858,
+    "bbox_orig": [
+      2169,
+      2462,
+      2202,
+      2500
+    ]
+  },
+  {
+    "cls": "other_valve",
+    "conf": 0.832,
+    "bbox_orig": [
+      2735,
+      2462,
+      2768,
+      2500
+    ]
+  },
+  {
+    "cls": "other_valve",
+    "conf": 0.747,
+    "bbox_orig": [
+      2806,
+      2462,
+      2840,
+      2500
+    ]
+  },
+  {
+    "cls": "other_valve",
+    "conf": 0.682,
+    "bbox_orig": [
+      2594,
+      2462,
+      2627,
+      2500
+    ]
+  },
+  {
+    "cls": "other_valve",
+    "conf": 0.699,
+    "bbox_orig": [
+      2028,
+      2462,
+      2061,
+      2500
+    ]
+  },
+  {
+    "cls": "other_valve",
+    "conf": 0.582,
+    "bbox_orig": [
+      2034,
+      2489,
+      2056,
+      2528
+    ]
+  },
+  {
+    "cls": "other_valve",
+    "conf": 0.902,
+    "bbox_orig": [
+      2417,
+      1269,
+      2439,
+      1308
+    ]
+  },
+  {
+    "cls": "other_valve",
+    "conf": 0.989,
+    "bbox_orig": [
+      3055,
+      2514,
+      3093,
+      2536
+    ]
+  },
+  {
+    "cls": "other_valve",
+    "conf": 0.608,
+    "bbox_orig": [
+      1479,
+      1076,
+      1512,
+      1115
+    ]
+  },
+  {
+    "cls": "other_valve",
+    "conf": 0.982,
+    "bbox_orig": [
+      4926,
+      698,
+      4948,
+      737
+    ]
+  },
+  {
+    "cls": "other_valve",
+    "conf": 0.933,
+    "bbox_orig": [
+      2246,
+      2967,
+      2285,
+      3000
+    ]
+  },
+  {
+    "cls": "other_valve",
+    "conf": 0.961,
+    "bbox_orig": [
+      2437,
+      1272,
+      2459,
+      1311
+    ]
+  },
+  {
+    "cls": "other_valve",
+    "conf": 0.827,
+    "bbox_orig": [
+      3736,
+      2224,
+      3775,
+      2257
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.663,
+    "bbox_orig": [
+      2219,
+      698,
+      2257,
+      720
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.596,
+    "bbox_orig": [
+      2108,
+      2313,
+      2147,
+      2335
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.824,
+    "bbox_orig": [
+      715,
+      1391,
+      753,
+      1413
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.995,
+    "bbox_orig": [
+      1402,
+      1865,
+      1441,
+      1899
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.995,
+    "bbox_orig": [
+      1910,
+      2958,
+      1943,
+      2997
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.967,
+    "bbox_orig": [
+      1165,
+      1385,
+      1203,
+      1418
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.994,
+    "bbox_orig": [
+      2412,
+      2958,
+      2445,
+      2997
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.989,
+    "bbox_orig": [
+      2704,
+      2729,
+      2738,
+      2768
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.976,
+    "bbox_orig": [
+      3058,
+      2682,
+      3091,
+      2721
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.965,
+    "bbox_orig": [
+      1860,
+      1628,
+      1893,
+      1667
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.746,
+    "bbox_orig": [
+      2152,
+      2732,
+      2175,
+      2771
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.885,
+    "bbox_orig": [
+      4200,
+      2724,
+      4233,
+      2762
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.945,
+    "bbox_orig": [
+      3419,
+      3157,
+      3441,
+      3196
+    ]
+  }
+]

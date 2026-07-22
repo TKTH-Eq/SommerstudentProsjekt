@@ -25,3 +25,12 @@ Thumbs.db
 
 #API keys and secrets
 .env
+
+# Gatevalve AI specific
+gatevalve-ai/dataset/
+gatevalve-ai/synth/
+*.joblib
+*.pt
+*_proof.png
+*_verdict.json
+__pycache__/

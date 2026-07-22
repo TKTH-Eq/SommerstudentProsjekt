@@ -1,0 +1,296 @@
+[
+  {
+    "cls": "gate_closed",
+    "conf": 0.991,
+    "bbox_orig": [
+      4782,
+      3113,
+      4832,
+      3140
+    ]
+  },
+  {
+    "cls": "gate_closed",
+    "conf": 0.994,
+    "bbox_orig": [
+      1879,
+      2702,
+      1940,
+      2735
+    ]
+  },
+  {
+    "cls": "gate_closed",
+    "conf": 0.963,
+    "bbox_orig": [
+      1890,
+      2533,
+      1929,
+      2555
+    ]
+  },
+  {
+    "cls": "gate_closed",
+    "conf": 0.874,
+    "bbox_orig": [
+      4330,
+      2779,
+      4390,
+      2812
+    ]
+  },
+  {
+    "cls": "gate_closed",
+    "conf": 0.579,
+    "bbox_orig": [
+      3902,
+      2779,
+      3963,
+      2812
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.847,
+    "bbox_orig": [
+      3513,
+      2779,
+      3574,
+      2812
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.925,
+    "bbox_orig": [
+      3516,
+      2379,
+      3576,
+      2412
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.907,
+    "bbox_orig": [
+      935,
+      1609,
+      996,
+      1642
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.831,
+    "bbox_orig": [
+      4341,
+      2161,
+      4360,
+      2199
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.775,
+    "bbox_orig": [
+      3899,
+      2376,
+      3960,
+      2406
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.998,
+    "bbox_orig": [
+      3093,
+      2376,
+      3154,
+      2409
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.97,
+    "bbox_orig": [
+      4448,
+      2812,
+      4471,
+      2851
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.614,
+    "bbox_orig": [
+      6090,
+      403,
+      6112,
+      442
+    ]
+  },
+  {
+    "cls": "globe_valve",
+    "conf": 0.99,
+    "bbox_orig": [
+      3797,
+      2862,
+      3830,
+      2922
+    ],
+    "verifier_conf": 0.999,
+    "verifier_threshold": 0.851
+  },
+  {
+    "cls": "globe_valve",
+    "conf": 0.927,
+    "bbox_orig": [
+      1060,
+      1692,
+      1093,
+      1752
+    ],
+    "verifier_conf": 0.998,
+    "verifier_threshold": 0.851
+  },
+  {
+    "cls": "globe_valve",
+    "conf": 0.853,
+    "bbox_orig": [
+      3160,
+      2285,
+      3193,
+      2346
+    ],
+    "verifier_conf": 0.998,
+    "verifier_threshold": 0.851
+  },
+  {
+    "cls": "globe_valve",
+    "conf": 0.906,
+    "bbox_orig": [
+      759,
+      1504,
+      792,
+      1565
+    ],
+    "verifier_conf": 0.993,
+    "verifier_threshold": 0.851
+  },
+  {
+    "cls": "globe_valve",
+    "conf": 0.952,
+    "bbox_orig": [
+      3615,
+      2470,
+      3648,
+      2531
+    ],
+    "verifier_conf": 0.998,
+    "verifier_threshold": 0.851
+  },
+  {
+    "cls": "globe_valve",
+    "conf": 0.853,
+    "bbox_orig": [
+      723,
+      1692,
+      756,
+      1752
+    ],
+    "verifier_conf": 0.998,
+    "verifier_threshold": 0.851
+  },
+  {
+    "cls": "globe_valve",
+    "conf": 0.995,
+    "bbox_orig": [
+      2426,
+      1888,
+      2486,
+      1921
+    ],
+    "verifier_conf": 0.999,
+    "verifier_threshold": 0.851
+  },
+  {
+    "cls": "other_valve",
+    "conf": 0.861,
+    "bbox_orig": [
+      2141,
+      2064,
+      2180,
+      2083
+    ]
+  },
+  {
+    "cls": "other_valve",
+    "conf": 0.991,
+    "bbox_orig": [
+      4327,
+      2569,
+      4388,
+      2600
+    ]
+  },
+  {
+    "cls": "other_valve",
+    "conf": 0.782,
+    "bbox_orig": [
+      4385,
+      2130,
+      4424,
+      2164
+    ]
+  },
+  {
+    "cls": "other_valve",
+    "conf": 0.894,
+    "bbox_orig": [
+      4137,
+      2760,
+      4175,
+      2798
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.818,
+    "bbox_orig": [
+      1211,
+      2473,
+      1250,
+      2492
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.972,
+    "bbox_orig": [
+      3367,
+      2379,
+      3405,
+      2412
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.759,
+    "bbox_orig": [
+      1744,
+      2575,
+      1766,
+      2613
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.637,
+    "bbox_orig": [
+      1681,
+      2577,
+      1703,
+      2616
+    ]
+  }
+]
