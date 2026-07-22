@@ -12,7 +12,10 @@ legs (…A and …B, or …A/B/C) are captured, not just the first.
 If the text passes yield almost nothing (image-only drawing) and
 HULDRA_VISION=1 is set, a Gemini vision pass on the rendered page is used as a
 reserve (pass c). The reserve never raises: any failure logs and falls back to
-whatever the text passes found.
+whatever the text passes found. It runs on page 1 only.
+
+extract_tags defaults to page 1 (index 0) — the validated behaviour. The
+register build passes higher page indices for the handful of multi-page SCDs.
 
 Extraction is approximate. It is a first pass for engineer review, not truth.
 """
@@ -70,10 +73,10 @@ def _vision_reserve(pdf_path: Path, system: str, text_tags: set[str]) -> set[str
     return out
 
 
-def extract_tags(pdf_path: str | Path) -> set[str]:
+def extract_tags(pdf_path: str | Path, page: int = 0) -> set[str]:
     pdf_path = Path(pdf_path)
     system = _system_of(pdf_path)
-    words = extract_words(pdf_path)
+    words = extract_words(pdf_path, page=page)
     text = " ".join(t for (t, _, _) in words)
     tags: set[str] = set()
 
@@ -102,8 +105,10 @@ def extract_tags(pdf_path: str | Path) -> set[str]:
             else:
                 tags.add(f"{system}-{ty}{num}")
 
-    # (c) vision reserve for image-only drawings, opt-in via HULDRA_VISION=1
-    if len(tags) < VISION_MIN_TAGS and os.getenv("HULDRA_VISION") == "1":
+    # (c) vision reserve for image-only drawings, opt-in via HULDRA_VISION=1.
+    # Page 1 only: the reserve renders page 1, and must not fire on a sparse
+    # later page of a multi-page SCD.
+    if page == 0 and len(tags) < VISION_MIN_TAGS and os.getenv("HULDRA_VISION") == "1":
         tags |= _vision_reserve(pdf_path, system, tags)
 
     return tags

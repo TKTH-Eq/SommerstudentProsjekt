@@ -9,6 +9,12 @@ pick a system, the pipeline runs (cached), pick nodes, get a pre-filled
 HAZOP worksheet grounded in the extracted tags. Optional AI rewriting per
 node when ANTHROPIC_API_KEY is set; the deterministic worksheet is always
 the fallback and the source of truth.
+
+Worksheet edits persist across sessions: the master is autosaved to
+reports/hazop_store/ (analysis/hazop_store.py) on every edit, and reloaded
+on the next visit. A stored worksheet is a snapshot of the extraction it was
+built from; the reset button discards it and rebuilds from the current
+extraction.
 """
 from __future__ import annotations
 import os
@@ -28,6 +34,8 @@ from extraction.tag_extractor import extract_tags, create_objects
 from analysis.build_dependency_graph import build_graph
 from analysis.hazop_prep import build_worksheet, hazop_nodes, write_worksheet_csv, ai_enrich_node
 from analysis.hazop_export import write_worksheet_xlsx, write_vision_xlsx
+from analysis.hazop_store import (load_worksheet, save_worksheet,
+                                  list_worksheets, delete_worksheet)
 from utils.discovery import find_systems  # reuse discovery — one source of truth
 
 
@@ -108,6 +116,15 @@ if not systems:
 system = st.sidebar.selectbox("System", list(systems), format_func=lambda s: f"System {s}")
 pid_path, scd_path = systems[system]
 
+# lagrede arbeidsark på tvers av systemer — synlig bevis på at arbeidet
+# overlever økten (og hvilke systemer som har påbegynt HAZOP-forberedelse)
+_stored_all = list_worksheets()
+if _stored_all:
+    with st.sidebar.expander(f"💾 Lagrede arbeidsark ({len(_stored_all)})"):
+        for w in _stored_all:
+            st.caption(f"**{w['key']}** — sist {str(w['saved_at'])[:16]} "
+                       f"({w['n_saves']} lagringer)")
+
 
 @st.cache_resource(show_spinner="Building worksheet…")
 def load(system: str, pid: str, scd: str):
@@ -143,9 +160,37 @@ if not nodes:
                "prosessparameter — ingenting å foreslå.")
     st.stop()
 
-# nøkkeltall for hele systemet (master om den finnes, ellers råforslagene)
-_state_key = f"hazop_master_{system}"
-_df_all = st.session_state.get(_state_key, pd.DataFrame(all_rows))
+# ---- master worksheet: load stored (survives sessions) or build fresh ------
+# The master lives in session state during the session and in
+# reports/hazop_store/system_<N>.json between sessions. A stored worksheet
+# is a SNAPSHOT of the extraction it was built from; the reset button at the
+# bottom of the ark tab discards it and rebuilds from the current extraction.
+KEY = ["node", "parameter", "deviation"]
+_COLS = list(all_rows[0].keys())
+state_key = f"hazop_master_{system}"
+_store_key = f"system_{system}"
+if state_key not in st.session_state:
+    _stored = load_worksheet(_store_key)
+    if _stored and _stored.get("data"):
+        _df = pd.DataFrame(_stored["data"])
+        if set(_COLS) <= set(_df.columns):          # kolonner intakte
+            st.session_state[state_key] = _df[_COLS]
+            st.session_state[f"hazop_meta_{system}"] = _stored.get("meta", {})
+        else:                                        # gammelt format -> nytt ark
+            st.session_state[state_key] = pd.DataFrame(all_rows)
+    else:
+        st.session_state[state_key] = pd.DataFrame(all_rows)
+_meta = st.session_state.get(f"hazop_meta_{system}")
+if _meta:
+    st.caption(f"💾 Lastet lagret arbeidsark — sist lagret "
+               f"{str(_meta.get('saved_at', '?'))[:16]} "
+               f"({_meta.get('n_saves', '?')} lagringer). Et lagret ark er et "
+               f"øyeblikksbilde av uttrekket det ble bygget fra; "
+               f"«Tilbakestill»-knappen nederst bygger nytt fra dagens "
+               f"uttrekk.")
+
+# nøkkeltall for hele systemet (master — lagret ark om det finnes)
+_df_all = st.session_state[state_key]
 _n_rows = len(_df_all)
 _with_sg = int((~_df_all["safeguards"].str.startswith("(none")).sum())
 _done = int((_df_all["status"] != "proposed").sum())
@@ -198,11 +243,8 @@ with tab_ark:
 # ---- editable worksheet with review status ---------------------------------
 # Master copy lives in session state (per system) so edits survive reruns and
 # node-filter changes; the editor shows a filtered view and edits are merged
-# back by the stable row key (node, parameter, deviation).
-KEY = ["node", "parameter", "deviation"]
-state_key = f"hazop_master_{system}"
-if state_key not in st.session_state:
-    st.session_state[state_key] = pd.DataFrame(all_rows)
+# back by the stable row key (node, parameter, deviation). Every change is
+# autosaved to reports/hazop_store/ so it also survives closing the tab.
 master: pd.DataFrame = st.session_state[state_key]
 
 view = master[master["node"].isin(set(picked))] if picked else master.iloc[0:0]
@@ -214,8 +256,9 @@ if not view.empty and status_f:
 with tab_ark:
  if not view.empty:
     st.caption("Redigerbart: juster tekst, fyll inn anbefaling/ansvarlig og "
-               "sett status per rad. Endringer huskes i økten og følger med "
-               "i eksporten — også for rader som er filtrert bort akkurat nå.")
+               "sett status per rad. Endringer autolagres til disk og "
+               "overlever at fanen lukkes — også for rader som er filtrert "
+               "bort akkurat nå.")
     edited = st.data_editor(
         view[["node", "parameter", "deviation", "causes", "consequences",
               "safeguards", "recommendation", "action_party", "status"]],
@@ -247,15 +290,29 @@ with tab_ark:
         },
         key=f"editor_{system}")
 
-    # merge the edited view back into the master by row key
+    # merge the edited view back into the master by row key, and autosave
+    # to disk only when something actually changed (a plain rerun is a no-op)
     m = master.set_index(KEY)
     m.update(edited.set_index(KEY))
-    st.session_state[state_key] = m.reset_index()[master.columns]
+    merged = m.reset_index()[master.columns]
+    if not merged.equals(st.session_state[state_key]):
+        st.session_state[state_key] = merged
+        save_worksheet(_store_key, merged.to_dict("records"),
+                       meta={"system": system,
+                             "pid": Path(pid_path).name,
+                             "scd": Path(scd_path).name})
+        st.session_state[f"hazop_meta_{system}"] = \
+            (load_worksheet(_store_key) or {}).get("meta", {})
     rows_out = st.session_state[state_key].to_dict("records")
 
     c = st.session_state[state_key]["status"].value_counts().to_dict()
     st.caption(f"Status hele systemet: {c.get('proposed', 0)} proposed · "
                f"{c.get('reviewed', 0)} reviewed · {c.get('rejected', 0)} rejected")
+    _meta_now = st.session_state.get(f"hazop_meta_{system}")
+    if _meta_now:
+        st.caption(f"💾 Autolagret til reports/hazop_store/ — sist "
+                   f"{str(_meta_now.get('saved_at', '?'))[:16]} "
+                   f"({_meta_now.get('n_saves', 0)} lagringer).")
 
     # ---- exports (full worksheet incl. edits, all nodes) -------------------
     out_dir = Path("reports"); out_dir.mkdir(exist_ok=True)
@@ -271,8 +328,11 @@ with tab_ark:
                             ".spreadsheetml.sheet")
     d2.download_button("Last ned CSV (rå)", csv_path.read_bytes(),
                        file_name=f"hazop_system_{system}.csv", mime="text/csv")
-    if st.button("Tilbakestill redigeringer for systemet"):
-        del st.session_state[state_key]
+    if st.button("Tilbakestill: forkast redigeringer og lagret ark, bygg "
+                 "nytt fra dagens uttrekk"):
+        delete_worksheet(_store_key)                # ellers lastes arket rett inn igjen
+        st.session_state.pop(state_key, None)
+        st.session_state.pop(f"hazop_meta_{system}", None)
         st.rerun()
 
     # ---- nodegrenser på tegningen (HAZOP-pakkens tegningsvedlegg) ----------
@@ -321,8 +381,8 @@ with tab_ark:
         npng = st.session_state.get(f"vision_png_{system}")
         if not (npng and Path(npng).exists()):
             try:
-                from extraction.vision_extract import _render_png
-                npng = _render_png(Path(pid_path), 200)
+                from extraction.vision_extract import render_png
+                npng = render_png(Path(pid_path), 200)
                 st.session_state[f"vision_png_{system}"] = npng
             except Exception as e:  # noqa: BLE001
                 npng = None
@@ -513,8 +573,8 @@ with tab_funn:
         png = st.session_state.get(f"vision_png_{system}")
         if not (png and Path(png).exists()):
             try:
-                from extraction.vision_extract import _render_png
-                png = _render_png(Path(pid_path), 200)
+                from extraction.vision_extract import render_png
+                png = render_png(Path(pid_path), 200)
                 st.session_state[f"vision_png_{system}"] = png
             except Exception as e:  # noqa: BLE001
                 png = None
@@ -613,8 +673,8 @@ with tab_vision:
                     st.session_state[f"vision_{system}"] = vision_hazop_excerpt(
                         Path(pid_path), register, focus=focus)
                     # gjenbruk rasteret til visning ved siden av utdraget
-                    from extraction.vision_extract import _render_png
-                    st.session_state[f"vision_png_{system}"] = _render_png(
+                    from extraction.vision_extract import render_png
+                    st.session_state[f"vision_png_{system}"] = render_png(
                         Path(pid_path), 200)
                     st.session_state[f"vision_ts_{system}"] = "nå (live)"
                     save_vision(Path(pid_path).stem,
@@ -635,13 +695,13 @@ with tab_vision:
             if ts:
                 st.caption(f"🗂️ Resultat generert: {ts} — bruk knappen over "
                            f"for en fersk API-kjøring.")
+            _OBS_COLORS = ["#2d7dd2", "#b8442c", "#3a7d44", "#8e5aa8",
+                           "#c98a1b", "#5aa8a0", "#a83a5f", "#6b705c"]
             png = st.session_state.get(f"vision_png_{system}")
             if png and Path(png).exists():
                 # markører per observasjon (case) med hver sin farge —
                 # slik at operatøren ser på arket hvor hvert HAZOP-punkt
                 # er forankret; ulokaliserte tags nevnes ærlig under.
-                _OBS_COLORS = ["#2d7dd2", "#b8442c", "#3a7d44", "#8e5aa8",
-                               "#c98a1b", "#5aa8a0", "#a83a5f", "#6b705c"]
                 obs_list = ex.get("observations", [])[:8]
                 obs_tags = []
                 for i, o in enumerate(obs_list):

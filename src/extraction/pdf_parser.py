@@ -43,15 +43,17 @@ def extract_text(pdf_path: str | Path) -> str:
         return pdf.pages[0].extract_text() or ""
 
 
-def extract_words(pdf_path: str | Path) -> list[tuple[str, float, float]]:
-    """Return (text, x_center, y_center) for each word on page 1.
+def extract_words(pdf_path: str | Path, page: int = 0) -> list[tuple[str, float, float]]:
+    """Return (text, x_center, y_center) for each word on the given page.
 
+    Defaults to page 1 (index 0), which is the validated behaviour. A handful
+    of multi-page SCDs pass higher page indices from the register build.
     Text layer only. Image-only drawings yield few or no words; the vision
     reserve in extraction.tag_extractor handles those.
     """
     pdf_path = Path(pdf_path)
     with pdfplumber.open(pdf_path) as pdf:
-        p = pdf.pages[0]
+        p = pdf.pages[page]
         return [(w["text"].strip(),
                  (w["x0"] + w["x1"]) / 2, (w["top"] + w["bottom"]) / 2)
                 for w in p.extract_words()]

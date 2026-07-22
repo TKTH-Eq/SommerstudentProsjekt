@@ -19,14 +19,18 @@ beskrives: alt under er kjørbar kode på ekte tegninger, og alle AI-uttrekk er
 
 | | Presisjon | Recall | F1 |
 |---|---:|---:|---:|
-| PDF-tekstuttrekk målt mot DEXPI-fasit (16 tegninger) | 87 % | 55 % | 67 % |
+| PDF-tekstuttrekk + vision-reserve, målt mot DEXPI-fasit (16 tegninger) | 87 % | 55 % | 67 % |
+| Samme, med nozzler ekskludert fra fasiten | 87 % | 65 % | — |
 
 Recall er begrenset oppad av kildematerialet: tags tegnet som **symboler**
-fremfor tekst kan tekstuttrekk aldri fange. Full oppdeling av gapet — reell
-uttreksfeil vs. metodens tekstlags-tak — står i [`Results.md`](Results.md),
-sammen med historien om hvordan validering-drevet iterasjon løftet recall fra
-26 % til 55 %. Dette tallparet er også prosjektets sentrale **formatargument**:
-det kvantifiserer hva PDF-leveranser koster, og hva DEXPI/AML-krav løser.
+fremfor tekst kan tekstuttrekk aldri fange. Dette taket er nå **målt**: av de
+bommede valve-/linje-taggene finnes bare 40 % som tekst i PDF-en overhodet, og
+det realistiske taket for tekstmetoden er ~74 % recall (eks. nozzler). Full
+oppdeling av gapet — reell uttreksfeil vs. metodens tekstlags-tak — står i
+[`Results.md`](Results.md), sammen med historien om hvordan validering-drevet
+iterasjon løftet recall fra 26 % til 55 %. Dette tallparet er også prosjektets
+sentrale **formatargument**: det kvantifiserer hva PDF-leveranser koster, og
+hva DEXPI/AML-krav løser.
 
 ## Demonstrasjonene (Streamlit-appen)
 
@@ -40,7 +44,7 @@ nøkkelspørsmål i oppgaven hver side svarer på.
 | 🏷️ Tag-oversikt | Tag-register på tvers av systemer og kilder | Datauttrekk og strukturering |
 | 🔗 DEXPI-topologi | Ekte FromID→ToID-topologi fra DEXPI-filene | Data/LCI |
 | 🆚 DEXPI vs PDF (demo) | Interaktiv side-om-side: samme tegning rekonstruert fra begge kilder («tags er tekst; topologi er det ikke») — ligger også frittstående i `demos/DEXPI_VS_PDF.html` | PDF vs DEXPI-sammenligningen |
-| ⚠️ HAZOP-forberedelse | Deterministisk arbeidsark (noder → avvik → årsaker → konsekvenser → barrierer) forankret i uttrekte tags; redigerbart med review-status; Excel-eksport i møteformat; valgfri AI-omskriving og **vision-utdrag** der Gemini leser selve tegningen og hvert tag-forslag verifiseres mot registeret | Prosjektfase: HAZID/HAZOP-støtte |
+| ⚠️ HAZOP-forberedelse | Deterministisk arbeidsark (noder → avvik → årsaker → konsekvenser → barrierer) forankret i uttrekte tags; redigerbart med review-status og **autolagring mellom møter**; Excel-eksport i møteformat; valgfri AI-omskriving og **vision-utdrag** der Gemini leser selve tegningen og hvert tag-forslag verifiseres mot registeret | Prosjektfase: HAZID/HAZOP-støtte |
 | ⚖️ HAZOP: PDF vs DEXPI | Samme arbeidsark-maskineri på samme tegning, to inputformater — barriere-andelen tallfester sikkerhetsargumentet for DEXPI | PDF vs DEXPI + HAZOP |
 | 🎛️ Kontrollrom-assistent | Alarmdusj-scenario: skjult feil + støyalarmer fyres samtidig; assistenten gir strukturell brief per kandidat (uten å kåre vinner), operatøren beslutter, debrief skiller rot/symptom/støy; graf med opp-/nedstrøms-markering; valgfri forankret Gemini-Q&A | Drift: beslutningsstøtte i kontrollrom, alarm-rotårsak |
 
@@ -72,17 +76,21 @@ streamlit run src/app.py
 Alt deterministisk (uttrekk, avstemming, graf, HAZOP-ark, kontrollrom-brief)
 virker **uten** nøkkel; AI-lagene (omskriving, vision, Q&A) er tillegg oppå.
 
-### Valgfritt: OCR-reserve (Google Vision)
+### Valgfritt: vision-reserve for bilde-tegninger
 
-Kun for skannede/bilde-baserte tegninger. Krever `uv sync --extra ocr`,
-rasterisering (pypdfium2, følger med) og Google-legitimasjon:
+Noen få tegninger har et tekstlag som bare inneholder tittelfelt og rutenett,
+mens innholdet er grafikk. For disse finnes en Gemini-basert vision-reserve som
+leser tags direkte fra tegningsbildet (rasterisert med pypdfium2 — ren
+pip-avhengighet, ingen systeminstallasjon). Samme `GEMINI_API_KEY` som resten
+av AI-laget; ingen andre legitimasjoner trengs.
 
 ```bash
-set GOOGLE_APPLICATION_CREDENTIALS=C:\sti\til\service-account.json
 set HULDRA_VISION=1              # skru på reserven (av som standard)
 ```
 
-OCR utløses automatisk kun på tag-fattige sider.
+Reserven utløses automatisk kun på tag-fattige tegninger (< 3 tekst-tags), og
+modellsvaret filtreres mot et tag-mønster før noe slippes inn i uttrekket. I
+praksis: 2 Gemini-kall for en full valideringskjøring over 16 tegninger.
 
 ## Eksempel-arbeidsflyt
 
@@ -93,45 +101,14 @@ python src/validate_against_dexpi.py --raw data/raw --out reports
 # 2) bryt ned hvor recall tapes (per klasse, per tegning, null-tegninger)
 python src/analyze_validation_diffs.py --out reports
 
-# 3) generer HAZOP-arbeidsark for et system fra kommandolinjen
+# 3) tallfest recall-taket: nozzle-ekskludering + symbol-vs-tekst-splitt
+python src/analyze_recall_ceiling.py --reports reports --raw data/raw
+
+# 4) generer HAZOP-arbeidsark for et system fra kommandolinjen
 python src/analysis/hazop_prep.py 27
 
-# 4) DEXPI-baserte HAZOP-noder (utstyrsforankrede seksjoner) for én tegning
+# 5) DEXPI-baserte HAZOP-noder (utstyrsforankrede seksjoner) for én tegning
 python src/analysis/hazop_dexpi.py "data/raw/Semantum Huldra P&IDS/.../C025-V-HO27-P-_E-002-01.DGN.xml"
-
-# 5) vision-utdrag med tag-verifisering for en P&ID (krever GEMINI_API_KEY)
-python src/ai/hazop_vision.py "data/raw/P&ID/C025-V-HO27-P-_E-002-01.PDF"
-```
-
-Utdata i `reports/`: valideringsrapporter (CSV), kvalitetsrapport,
-HAZOP-arbeidsark (CSV/XLSX per system), vision-utdrag (XLSX) og figurer.
-
-## Mappestruktur
-
-```
-data/raw/
-  P&ID/  SCD/                   tegninger (PDF)
-  SCD Legend/  Symbols/         referansemateriale
-  Semantum Huldra P&IDS/        DEXPI XML — fasit + strukturert kilde
-src/
-  app.py                        Streamlit-inngang (st.navigation, 8 sider)
-  system_analysis[_dexpi].py    analysesidene (PDF- og DEXPI-matet)
-  hazop.py / hazop_compare.py   HAZOP-sidene
-  kontrollrom.py                kontrollrom-assistenten
-  dexpi_graph.py / dexpi_vs_pdf.py / tag_oversikt.py
-  config.py                     stier, tag-typer, kategorier, sikkerhetstyper
-  models/engineering_object.py  datamodellen (tag → system/type/løkke/kategori)
-  extraction/                   pdf_parser, tag_extractor, dexpi_parser, vision
-  analysis/                     graf, konsistens, KPI, root_cause, signal_sim,
-                                hazop_prep/_dexpi/_export, control_room
-  ai/                           gemini_client (delt klient), operator_brief,
-                                hazop_vision, explain_system
-  neqsim_tools/                 hydratkurver + blowdown-animasjon (NeqSim)
-  validate_against_dexpi.py     validering mot fasit
-  analyze_validation_diffs.py   recall-tap-nedbryting
-demos/DEXPI_VS_PDF.html         frittstående interaktiv formatdemo
-reports/                        genererte rapporter og eksporter
-Results.md                      valideringsmetode, tall og iterasjonshistorie
 ```
 
 ## Gjenbrukbare prompts, agenter og mønstre
@@ -140,8 +117,9 @@ Oppgaven etterspør gjenbrukbare artefakter. De viktigste, med plassering:
 
 - **HAZOP-omskriving** — `HAZOP_PROMPT` i `src/analysis/hazop_prep.py`:
   omskriv/utvid et arbeidsark, kun tags fra gitt liste, generisk merkes.
-- **Vision-lesing av tegning** — `PROMPT` i `src/ai/hazop_vision.py`:
-  strukturert JSON, transkriber kun leselige tags, skill symboler fra tekst.
+- **Vision-lesing av tegning** — `PROMPT` i `src/ai/hazop_vision.py` og
+  `src/extraction/vision_extract.py`: strukturert JSON, transkriber kun
+  leselige tags, aldri finn opp — kombinert med mønsterfilter på svaret.
 - **Forankret operatør-Q&A** — prompten i `src/kontrollrom.py`: svar kun fra
   gitte fakta, aldri finn opp tags, ikke avslør fasit i treningsmodus.
 - **Tag-verifiseringsmønsteret** — `verify_tags`/`_type_number` i
@@ -156,11 +134,11 @@ Oppgaven etterspør gjenbrukbare artefakter. De viktigste, med plassering:
 ## Verktøy, lisenser og utviklingsoppsett (erfart)
 
 - **Kjernestack (åpen kildekode, ingen lisenskost):** Python 3.12, Streamlit,
-  networkx, PyMuPDF, pdfplumber, pandas/scipy/scikit-learn, openpyxl,
-  matplotlib. NeqSim (Apache 2.0, krever Java) for termodynamikk.
-- **AI-tjenester:** Google Gemini (gratis tier holdt til all utvikling og demo;
-  merk rate-grenser — generer demo-resultater på forhånd). Google Cloud Vision
-  som valgfri OCR-reserve (betalt per kall, kun bilde-tegninger).
+  networkx, PyMuPDF, pdfplumber, pypdfium2, pandas/scipy/scikit-learn,
+  openpyxl, matplotlib. NeqSim (Apache 2.0, krever Java) for termodynamikk.
+- **AI-tjenester:** Google Gemini — én tjeneste, én nøkkel, for hele AI-laget
+  inkludert vision-reserven (gratis tier holdt til all utvikling og demo;
+  merk rate-grenser — generer demo-resultater på forhånd).
 - **Strukturert fasit:** Semantum Model Broker-produserte DEXPI-filer
   (kommersielt verktøy; filene var levert som del av datasettet).
 - **Agentiske kodeverktøy** ble brukt gjennom hele utviklingen og var
@@ -177,13 +155,22 @@ i demonstrasjonene er syntetiske.
 
 ## Kjente begrensninger (kortversjon)
 
-- Recall-taket på 55 % er i hovedsak **metodens tak** (symbol-only-innhold),
-  ikke en feil som kan fikses i tekstuttrekk — det er selve DEXPI-argumentet.
+- Recall-taket er i hovedsak **metodens tak**, ikke en feil som kan fikses i
+  tekstuttrekk — og det er nå målt: 60 % av valve-/linje-bommene er
+  symbol-only, og taket for tekstmetoden er ~74 % recall (eks. nozzler).
+  Det er selve DEXPI-argumentet, i tall.
 - PDF-avhengighetsgrafen er løkke-basert (koblinger *innen* løkker antas);
   ekte kryss-løkke-topologi krever DEXPI, som DEXPI-sidene viser.
 - DEXPI HAZOP-seksjoner er grafbaserte tilnærminger til en HAZOP-leders
   nodekutt; tegninger med utagget utstyr gir grove seksjoner (→ minimumskrav).
-- Redigeringer i HAZOP-arket lever per økt (session state), ikke i database.
+- Redigeringer i HAZOP-arket autolagres til `reports/hazop_store/` (én
+  lesbar JSON per system) og overlever økten — arbeidsark kan tas opp igjen
+  møte for møte. Et lagret ark er et øyeblikksbilde av uttrekket det ble
+  bygget fra; en egen knapp bygger nytt fra dagens uttrekk.
+- Tag-registeret bygges på den validerte ekstraktoren, så valideringstallene
+  gjelder hele kjeden. Registerbyggingen avdekket at rundt to tredjedeler av
+  SCD-ene mangler lesbart tekstlag helt — enda et argument for strukturerte
+  leveranser.
 - Kontrollrom-assistenten viser strukturell nåbarhet, ikke prosesskonsekvens;
   scenariene er syntetiske. Motoren (`analysis/control_room.py`) er
   datakilde-agnostisk — bytt scenariegeneratoren med en alarmfeed, så er

@@ -12,18 +12,16 @@ SCD drawing, normalises them to a canonical form, and produces:
     reports/reconciliation.csv        per-system P&ID<->SCD comparison
     reports/reconciliation_summary.csv  counts per system
 
-Extraction strategy (validated against the system-27 drawings):
-  * PDFs are MicroStation CAD exports WITH a real text layer, so a plain
-    text scraper (pdfplumber) is primary -- free, fast, exact.
-  * Tags appear in two forms:
-        joined  ->  "27-PT4805"          (labels, notes, line tags)
-        split   ->  "PT" / "4805" / "27" (instrument bubbles on P&IDs)
-    Joined tags are caught by regex on all documents. Split bubbles are
-    recombined from word coordinates -- P&IDs only, because SCDs already
-    write their tags joined.
-  * Drawings with NO text layer are handled by the shared Gemini vision
-    reserve (extraction.vision_extract), which reads tags off the rendered
-    page. Optional via --vision; requires GEMINI_API_KEY in .env.
+Extraction (unified with the validated pipeline):
+  * Tags are extracted by extraction.tag_extractor.extract_tags -- the SAME
+    code path that is validated against the DEXPI ground truth in
+    validate_against_dexpi.py (precision/recall figures in Results.md apply
+    to this register directly).
+  * Multi-page drawings (a handful of SCDs) are handled by running the same
+    passes on every page and unioning the results.
+  * Image-only drawings are handled by the shared Gemini vision reserve
+    (pass c in the extractor), enabled with --vision / HULDRA_VISION=1.
+    Requires GEMINI_API_KEY in .env; no other credentials.
 
 Usage:
     python build_tag_register.py --raw data/raw --out reports
@@ -36,7 +34,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-import math
+import os
 import re
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -44,27 +42,12 @@ from pathlib import Path
 
 import pdfplumber
 
+from extraction.tag_extractor import extract_tags as _validated_extract_tags
+
 
 # --------------------------------------------------------------------------
 # Configuration
 # --------------------------------------------------------------------------
-
-# ISA / instrument function codes used on the Huldra drawings. Curated so
-# that stray words and signal labels (e.g. PSD) are NOT read as instruments.
-INSTRUMENT_TYPES = {
-    "PT", "TT", "FT", "LT", "PDT",                       # transmitters
-    "PI", "TI", "FI", "LI", "PDI",                       # indicators
-    "PIC", "FIC", "TIC", "LIC",                          # controllers
-    "PV", "FV", "XV", "LV", "TV",                        # valves
-    "PY", "FY", "XY", "TY", "ZY",                        # relays / computing
-    "ZS", "ZL",                                          # position switch / lamp
-    "HS", "HV",                                          # hand switch / valve
-    "PSV", "PSE",                                        # safety valve / element
-    "FE", "FO",                                          # flow element / restriction orifice
-    "SI",                                                # speed / vibration
-    "FSH", "PSH", "PSL", "PAH", "PAL",                   # switches / alarms
-    "KA",                                               # machine (compressor)
-}
 
 # Human-readable category, for the register (extend as needed).
 TYPE_CATEGORY = {
@@ -92,9 +75,7 @@ SKIP_NAME_SUBSTRINGS = {
     "license", "licence",          # e.g. "Equinor open data sharing license"
 }
 
-JOINED_TAG = re.compile(r"\b(\d{2})-([A-Z]{1,4})(\d{2,4})([A-Z])?\b")
-LOOP_NUMBER = re.compile(r"^\d{4}[A-Z]?$")      # instrument loop numbers are 4-digit
-SYSTEM_TOKEN = re.compile(r"^HO(\d{1,3})", re.IGNORECASE)
+SYSTEM_TOKEN = re.compile(r"^H[A-Z](\d{1,3})", re.IGNORECASE)
 
 
 # --------------------------------------------------------------------------
@@ -164,91 +145,37 @@ def discover_drawings(raw_dir: Path) -> list[Drawing]:
 
 
 # --------------------------------------------------------------------------
-# Text + tag extraction
+# Tag extraction -- delegates to the validated pipeline
 # --------------------------------------------------------------------------
-
-def read_words(path: Path):
-    """Return (text, words) where words is [(text, cx, cy), ...]."""
-    words = []
-    with pdfplumber.open(path) as pdf:
-        for page in pdf.pages:
-            for w in page.extract_words(use_text_flow=False):
-                cx = (w["x0"] + w["x1"]) / 2
-                cy = (w["top"] + w["bottom"]) / 2
-                words.append((w["text"], cx, cy))
-    text = " ".join(w[0] for w in words)
-    return text, words
-
 
 def extract_tags(path: Path, system: str, doc_type: str,
                  use_vision: bool = False) -> set[str]:
-    """Extract normalised tags from one drawing."""
-    text, words = read_words(path)
+    """Extract tags from one drawing via the validated extractor.
 
-    # Scanned drawing with no text layer -> optionally read tags with the
-    # shared Gemini vision reserve (returns tags directly, not text).
-    if len(text.strip()) < 20:
-        if use_vision:
-            return vision_tags(path, system)
-        return set()
-
+    Runs the validated page-1 extraction, plus the same passes on any
+    additional pages (a handful of SCDs are multi-page). system and doc_type
+    are kept in the signature for register bookkeeping; the extractor derives
+    the system itself from the filename. The vision reserve is controlled
+    globally via HULDRA_VISION (set in main() from --vision) and runs on
+    page 1 only.
+    """
+    with pdfplumber.open(path) as pdf:
+        n_pages = len(pdf.pages)
     tags: set[str] = set()
-
-    # 1) Joined tags (both P&ID and SCD, incl. cross-system tie-ins).
-    for m in JOINED_TAG.finditer(text):
-        s, d, n, suf = m.groups()
-        tags.add(f"{s}-{d}{n}{suf or ''}")
-
-    # 2) Split instrument bubbles -- P&IDs only, using the drawing's own
-    #    system number and a tight coordinate pairing.
-    if doc_type == "PID" and words:
-        types = [(t, x, y) for t, x, y in words if t in INSTRUMENT_TYPES]
-        nums = [(t, x, y) for t, x, y in words if LOOP_NUMBER.match(t)]
-        for t, x, y in types:
-            best, best_d = None, 45.0
-            for nt, nx, ny in nums:
-                if abs(nx - x) < 22 and (ny - y) > -5:      # centred, at/below
-                    d = math.hypot(nx - x, ny - y)
-                    if d < best_d:
-                        best_d, best = d, nt
-            if best:
-                tags.add(f"{system}-{t}{best}")
-
+    for page in range(n_pages):
+        tags |= _validated_extract_tags(path, page=page)
     return tags
 
 
 def split_tag(tag: str):
-    """'27-PT4805A' -> ('27', 'PT', '4805A')."""
-    m = re.match(r"(\d{2})-([A-Z]{1,4})(\d.*)$", tag)
-    if not m:
-        return ("?", "?", tag)
-    return m.group(1), m.group(2), m.group(3)
-
-
-# --------------------------------------------------------------------------
-# Optional Gemini vision fallback (scanned drawings only)
-# --------------------------------------------------------------------------
-
-def vision_tags(path: Path, system: str) -> set[str]:
-    """Read tags off a scanned drawing with the shared Gemini vision reserve.
-
-    Same channel as pass (c) in extraction.tag_extractor: returns normalised
-    tag strings directly. Imported lazily; any failure returns an empty set
-    so the main pipeline keeps going.
-    """
-    try:
-        from extraction.vision_extract import extract_tags_vision
-        vtags = extract_tags_vision(path)
-    except Exception as e:  # noqa: BLE001
-        print(f"  [vision] {path.name}: reserve failed ({e})")
-        return set()
-    out: set[str] = set()
-    for vt in vtags:
-        out.add(vt)
-        if re.match(r"^[A-Z]{1,4}\d{2,5}[A-Z]?$", vt):   # "PT4805" -> "27-PT4805"
-            out.add(f"{system}-{vt}")
-    print(f"  [vision] {path.name}: vision read {len(out)} tag(s)")
-    return out
+    """'27-PT4805A' -> ('27', 'PT', '4805A');  '27-4510PV' -> ('27', 'PV', '4510')."""
+    m = re.match(r"(\d{2})-([A-Z]{1,4})(\d.*)$", tag)          # type-first
+    if m:
+        return m.group(1), m.group(2), m.group(3)
+    m = re.match(r"(\d{2})-(\d{2,5})([A-Z]{1,3})$", tag)        # number-first
+    if m:
+        return m.group(1), m.group(3), m.group(2)
+    return ("?", "?", tag)
 
 
 # --------------------------------------------------------------------------
@@ -362,8 +289,11 @@ def main():
     ap.add_argument("--system", default=None,
                     help="limit outputs to one system, e.g. 27")
     ap.add_argument("--vision", action="store_true",
-                    help="enable Google Vision OCR fallback for scanned PDFs")
+                    help="enable the Gemini vision reserve for image-only drawings")
     args = ap.parse_args()
+
+    if args.vision:
+        os.environ["HULDRA_VISION"] = "1"
 
     print(f"Scanning {args.raw} ...")
     drawings = discover_drawings(args.raw)
