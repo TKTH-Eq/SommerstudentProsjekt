@@ -12,6 +12,7 @@ from pathlib import Path
 import streamlit as st
 
 from nav_pages import PAGES
+from ui import page_header, MOSS
 
 _EVAL_JSON = Path(__file__).resolve().parents[1] / "reports" / "eval_root_cause.json"
 
@@ -34,9 +35,30 @@ def _go(page, label: str, key: str):
     if st.button(label, key=key, use_container_width=True):
         st.switch_page(page)
 
-st.title("AI-muligheter for P&ID og SCD")
-st.caption("Sommerstudentprosjekt · Huldra-data (offentlige) · prototype "
-           "bygget som beslutningsunderlag for Wisting-digitaliseringen")
+_ev = _load_eval()
+
+
+def _cond(name):
+    if not (_ev and _ev.get("conditions")):
+        return None
+    return next((c for c in _ev["conditions"] if c["name"] == name), None)
+
+
+_drop20 = _cond("20 % tapte alarmer")
+_ideal = _cond("ideal")
+_hard = _cond("dobbel feil + 20 % tap") or _cond("dobbel feil")
+
+_kpis = [("PRESISJON (PDF)", "87 %"), ("RECALL (PDF)", "55 %"),
+         ("TEGNINGER", "17"), ("TAGS", "885")]
+_kpi_colors: dict[int, str] = {}
+if _drop20:
+    _kpis.append(("ROTÅRSAK PÅ PLASS 1", f"{_drop20['hit1_pct']:.0f} %"))
+    _kpi_colors[len(_kpis) - 1] = MOSS
+
+page_header("AI-muligheter for P&ID og SCD",
+            "Sommerstudentprosjekt · Huldra-data (offentlige) · "
+            "beslutningsunderlag for Wisting-digitaliseringen",
+            kpis=_kpis, kpi_colors=_kpi_colors)
 
 st.markdown(
     "P&ID-er og SCD-er konsumeres i dag som tegninger og dokumenter. Denne "
@@ -45,46 +67,26 @@ st.markdown(
     "HAZOP-forberedelse, og beslutningsstøtte i kontrollrom — på ekte "
     "tegninger, med målt nøyaktighet.")
 
-c1, c2, c3, c4 = st.columns(4)
-c1.metric("Presisjon (PDF-uttrekk)", "87 %", help="Målt mot uavhengig "
-          "DEXPI-fasit over 16 tegninger. Se Results.md for metode.")
-c2.metric("Recall (PDF-uttrekk)", "55 %", help="Resten er i hovedsak tags "
-          "tegnet som symboler — informasjon tekstuttrekk aldri kan nå. "
-          "Det er selve argumentet for maskinlesbare leveranser.")
-c3.metric("Tegninger i anleggsmodellen", "17", help="Alle DEXPI-filene sydd "
-          "sammen til én graf via delte linjenummer.")
-c4.metric("Tags i anleggsmodellen", "885")
-
-_ev = _load_eval()
-if _ev and _ev.get("conditions"):
-    def _cond(name):
-        return next((c for c in _ev["conditions"] if c["name"] == name), None)
-    ideal = _cond("ideal")
-    drop20 = _cond("20 % tapte alarmer")
-    hard = _cond("dobbel feil + 20 % tap") or _cond("dobbel feil")
-    e1, e2, e3, e4 = st.columns(4)
-    if drop20:
-        e1.metric("Rotårsak på plass 1", f"{drop20['hit1_pct']:.0f} %",
-                  help=f"Målt med 20 % tapte alarmer over "
-                       f"{drop20['scenarios']} syntetiske feilscenarioer i "
-                       f"den ekte Huldra-topologien (kjørt {_ev['date']}, "
-                       f"reproduserbart med eval/eval_root_cause.py). "
-                       f"Under ideelle forhold (én feil, alle alarmer "
-                       f"ringer) er treffraten "
-                       f"{ideal['hit1_pct']:.0f} % — forventet av "
-                       f"konstruksjon; tallet her er den reelle testen.")
-        e2.metric("Rotårsak i topp 3", f"{drop20['hit3_pct']:.0f} %",
-                  help="Samme betingelse (20 % tapte alarmer): andel "
-                       "scenarioer der roten er blant de tre øverste "
-                       "kandidatene.")
-    if hard:
-        e3.metric("Hardeste betingelse", f"{hard['hit1_pct']:.0f} %",
-                  help=f"«{hard['name']}»: {hard['desc']}. "
-                       f"hit3: {hard['hit3_pct']:.0f} %.")
-    e4.metric("Scenarioer målt",
-              f"{sum(c['scenarios'] for c in _ev['conditions'])}",
-              help="Totalt over alle betingelser: ideal, 20/40 % tapte "
-                   "alarmer, dobbel feil, dobbel feil + tap.")
+with st.expander("📐 Slik er tallene målt"):
+    st.markdown(
+        "- **Presisjon 87 % / recall 55 % (PDF-uttrekk):** målt mot "
+        "uavhengig DEXPI-fasit over 16 tegninger; se Results.md for metode. "
+        "Recall-gapet er i hovedsak tags tegnet som symboler — informasjon "
+        "tekstuttrekk aldri kan nå. Det er selve argumentet for "
+        "maskinlesbare leveranser.\n"
+        "- **Tegninger/tags:** alle DEXPI-filene sydd sammen til én graf "
+        "via delte linjenummer.")
+    if _drop20:
+        st.markdown(
+            f"- **Rotårsak på plass 1: {_drop20['hit1_pct']:.0f} %** — målt "
+            f"med 20 % tapte alarmer over {_drop20['scenarios']} syntetiske "
+            f"feilscenarioer i den ekte Huldra-topologien (kjørt "
+            f"{_ev['date']}, reproduserbart med eval/eval_root_cause.py). "
+            f"Topp 3: {_drop20['hit3_pct']:.0f} %. Under ideelle forhold er "
+            f"treffraten {_ideal['hit1_pct']:.0f} % — forventet av "
+            f"konstruksjon; 20 %-tap-tallet er den reelle testen."
+            + (f" Hardeste betingelse («{_hard['name']}»): "
+               f"{_hard['hit1_pct']:.0f} %." if _hard else ""))
 
 st.info("**Lesenøkkel:** All AI-output i appen er førsteutkast med målt "
         "feilrate — aldri en fasit. Hver AI-generert påstand verifiseres "

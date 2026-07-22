@@ -65,7 +65,7 @@ def load(xml: str, mtime: float) -> dict:
             "fmap": failure_map(g, allo)}
 
 
-from ui import prio_badge as _ui_prio_badge, chips as _ui_chips
+from ui import prio_badge as _ui_prio_badge, chips as _ui_chips, page_header
 
 
 def prio_badge(tag, by_tag):
@@ -167,13 +167,14 @@ if st.sidebar.button("▶ Nytt scenario"):
                               "shower": shower, "chosen": None,
                               "play_start": time.time(), "playing": True}
 
-st.title("🎛️ Kontrollrom-assistent — alarmdusj")
+page_header("Kontrollrom-assistent — alarmdusj",
+            f"kilde: {'hele anlegget (17 tegninger)' if plant_mode else choice}"
+            f" · syntetisk scenario · beslutningsstøtte, ikke prosessmodell")
 st.caption("Alarmene kommer inn SOM EN SEKVENS over noen sekunder: en skjult "
            "feils kaskade i årsaksrekkefølge, blandet med urelaterte "
            "støyalarmer. Assistenten gir en strukturell brief per kandidat — "
            "uten å kåre en vinner. DU veier bevisene og bestemmer mest "
-           "sannsynlig årsak. Syntetisk scenario, beslutningsstøtte — ikke en "
-           "prosessmodell.")
+           "sannsynlig årsak.")
 
 S = st.session_state.get("cr")
 if not S or S["drawing"] != choice:

@@ -21,6 +21,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 from config import PID_DIR
+from ui import page_header
 from analysis.plant_model import (build_plant_model, metro_svg, metro_html,
                                   plant_criticality)
 
@@ -35,19 +36,16 @@ def load() -> dict:
 M = load()
 S = M["stats"]
 
-st.title("🏭 Anleggsoversikt")
-st.caption("Alle DEXPI-tegningene sydd sammen til én modell. Sømmene er "
-           "delte linjenummer: samme rørlinje-tag på to ark ER samme fysiske "
-           "linje. Dette kartet er umulig å lage fra PDF-ene — og trivielt "
-           "fra strukturerte leveranser.")
-
-c1, c2, c3, c4 = st.columns(4)
-c1.metric("Tegninger", S["drawings"])
-c2.metric("Tags totalt", S["tags"])
-c3.metric("Linje-sømmer", S["line_stitches"],
-          help="Linjenummer som opptrer på to tegninger og dermed beviser "
-               "fysisk kobling mellom arkene.")
-c4.metric("Koblinger i modellen", S["edges"])
+page_header("Anleggsoversikt",
+            f"{S['drawings']} DEXPI-tegninger sydd sammen til én modell",
+            kpis=[("TEGNINGER", str(S["drawings"])),
+                  ("TAGS", str(S["tags"])),
+                  ("LINJE-SØMMER", str(S["line_stitches"])),
+                  ("KOBLINGER", str(S["edges"]))])
+st.caption("Sømmene er delte linjenummer: samme rørlinje-tag på to ark ER "
+           "samme fysiske linje — det beviser koblingen mellom arkene. "
+           "Dette kartet er umulig å lage fra PDF-ene — og trivielt fra "
+           "strukturerte leveranser.")
 
 st.subheader("Metrokartet — hvordan arkene henger sammen")
 st.caption("Én node per tegning (farge = system), strek = delt linjenummer "

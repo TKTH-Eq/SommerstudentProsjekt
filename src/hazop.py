@@ -119,21 +119,18 @@ def load(system: str, pid: str, scd: str):
 
 objs, g, all_rows = load(system, str(pid_path), str(scd_path))
 
-from config import CATEGORY_COLORS, PID_DIR
+from config import PID_DIR
+from ui import chips as _ui_chips, page_header
 
 
 def _chips(tags):
     by = {o.tag: o for o in objs}
-    out = ""
-    for t in tags:
-        c = CATEGORY_COLORS.get(by[t].category if t in by else "other", "#9aa0a6")
-        out += (f"<span style='background:{c};color:#fff;border-radius:20px;"
-                f"padding:2px 8px;margin:2px;display:inline-block;"
-                f"font-size:12px'>{t}</span> ")
-    return out or "_ingen_"
+    return _ui_chips(tags, by)
 
 
-st.title(f"⚠️ System {system} — HAZOP-forberedelse")
+page_header(f"System {system} — HAZOP-forberedelse",
+            f"P&ID {Path(pid_path).stem[-14:]} · SCD "
+            f"{Path(scd_path).stem[-14:]} · {len(objs)} tags i uttrekket")
 st.caption("Ferdig utfylt arbeidsark fra AI-uttrukket P&ID/SCD-data. Noder er "
            "funksjonelle løkker (ekte HAZOP-noder er prosessseksjoner — det "
            "krever DEXPI, se ⚖️-siden). Hver tag som refereres finnes i "
