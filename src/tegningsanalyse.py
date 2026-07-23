@@ -1,17 +1,17 @@
 """
 src/tegningsanalyse.py
 =====================================================================
-Streamlit-side: velg en P&ID, la symbolmodellen (gatevalve-ai) lese den,
-og se hvilke komponenter tegningen inneholder — med symbolbilder så
-brukeren laerer symbolene, og proof-bildet som viser HVOR funnene er.
+Streamlit page: select a P&ID, let the symbol model (gatevalve-ai) read it,
+and see which components the drawing contains — with symbol images so
+the user learns the symbols, and the proof image showing WHERE the findings are.
 
-Ligger i src/ ved siden av app.py og registreres av st.navigation der
-(IKKE i en pages/-mappe). Legg til i app.py:
+Located in src/ next to app.py and registered by st.navigation there
+(NOT in a pages/ folder). Add to app.py:
 
-    st.Page("tegningsanalyse.py", title="Tegningsanalyse", icon="🔍"),
+    st.Page("tegningsanalyse.py", title="Drawing analysis", icon="🔍"),
 
-Kjorer gatevalve-ai/classify_drawing.py som subprocess; modell og maler
-hentes fra gatevalve-ai/-mappen i prosjektroten.
+Runs gatevalve-ai/classify_drawing.py as a subprocess; model and templates
+are fetched from the gatevalve-ai/ folder in the project root.
 """
 from __future__ import annotations
 
@@ -34,26 +34,26 @@ DEFAULT_MODEL = "model_cnn.pt"
 
 try:
     from config import PID_DIR
-except Exception:                                  # noqa: BLE001
+except Exception:                                                  # noqa: BLE001
     PID_DIR = ROOT / "data" / "raw" / "P&ID"
 
-# klasse -> (visningsnavn, symbolfil i gatevalve-ai, farge i proof-bildet)
+# class -> (display name, symbol file in gatevalve-ai, color in the proof image)
 CLASS_INFO = {
-    "gate_open":       ("Gate valve, apen",   "gate_open.png",      "gronn"),
-    "gate_closed":     ("Gate valve, lukket", "gate_closed.png",    "rod"),
-    "ball_valve":      ("Ball valve",         "cand_ball.png",      "oransje"),
-    "globe_valve":     ("Globe valve",        "cand_globe.png",     "lilla"),
-    "check_valve":     ("Check valve",        "cand_check.png",     "turkis"),
-    "butterfly_valve": ("Butterfly valve",    "cand_butterfly.png", "rosa"),
-    "reducer":         ("Reducer",            "cand_reducer.png",   "brun"),
-    "other_valve":     ("Andre ventiler",     None,                 "bla"),
+    "gate_open":       ("Gate valve, open",   "gate_open.png",      "green"),
+    "gate_closed":     ("Gate valve, closed", "gate_closed.png",    "red"),
+    "ball_valve":      ("Ball valve",         "cand_ball.png",      "orange"),
+    "globe_valve":     ("Globe valve",        "cand_globe.png",     "purple"),
+    "check_valve":     ("Check valve",        "cand_check.png",     "turquoise"),
+    "butterfly_valve": ("Butterfly valve",    "cand_butterfly.png", "pink"),
+    "reducer":         ("Reducer",            "cand_reducer.png",   "brown"),
+    "other_valve":     ("Other valves",       None,                 "blue"),
 }
-FARGEFORKLARING = ("gronn = gate apen · rod = gate lukket · oransje = ball · "
-                   "lilla = globe · turkis = check · rosa = butterfly · "
-                   "brun = reducer · bla = andre ventiler")
+COLOR_LEGEND = ("green = gate open · red = gate closed · orange = ball · "
+                "purple = globe · turquoise = check · pink = butterfly · "
+                "brown = reducer · blue = other valves")
 
 
-# ------------------------------------------------------------ helpers (UI-fri)
+# ------------------------------------------------------------ helpers (UI-free)
 def list_drawings(root: Path) -> list[Path]:
     return sorted(p for p in Path(root).rglob("*") if p.suffix.lower() == ".pdf")
 
@@ -101,7 +101,7 @@ def symbol_image(symfile: str | None, height: int = 56):
     p = GATEVALVE_DIR / symfile
     if not p.exists():
         return None
-    arr = 255 - np.array(Image.open(p).convert("L"))   # svart pa hvitt
+    arr = 255 - np.array(Image.open(p).convert("L"))   # black on white
     im = Image.fromarray(arr)
     w = max(int(im.width * height / im.height), 1)
     im = im.resize((w, height), Image.NEAREST)
@@ -110,59 +110,58 @@ def symbol_image(symfile: str | None, height: int = 56):
     return canvas
 
 
-# ------------------------------------------------------------------- side
+# ------------------------------------------------------------------- page
 from ui import page_header
 page_header("Drawing analysis",
             "The symbol model (gatevalve-ai) reads the P&ID")
-st.caption("Velg en P&ID, la symbolmodellen lese den, og se hvilke "
-           "komponenter den inneholder — og hvor. Et utkast for "
-           "ingeniorgjennomgang, ikke en autoritativ kilde.")
+st.caption("Select a P&ID, let the symbol model read it, and see which "
+           "components it contains — and where. A draft for "
+           "engineering review, not an authoritative source.")
 
 if not GATEVALVE_DIR.exists():
-    st.error(f"Fant ikke gatevalve-ai/ i prosjektroten ({GATEVALVE_DIR}).")
+    st.error(f"Could not find gatevalve-ai/ in the project root ({GATEVALVE_DIR}).")
     st.stop()
 drawings = list_drawings(PID_DIR)
 if not drawings:
-    st.error(f"Fant ingen PDF-er under {PID_DIR}.")
+    st.error(f"Found no PDFs under {PID_DIR}.")
     st.stop()
 
 c1, c2, c3 = st.columns([3, 1, 1])
 with c1:
-    choice = st.selectbox("Tegning", drawings,
+    choice = st.selectbox("Drawing", drawings,
                           format_func=lambda p: p.name)
 with c2:
     dpi = st.number_input("DPI", 100, 300, 200, step=50)
 with c3:
-    only_gates = st.checkbox("Kun gate valves", value=False)
-reuse = st.checkbox("Bruk forrige resultat hvis det finnes", value=True)
+    only_gates = st.checkbox("Only gate valves", value=False)
+reuse = st.checkbox("Use previous result if it exists", value=True)
 
 verdict_p, proof_p, det_p = result_paths(choice)
 have_cached = verdict_p.exists() and proof_p.exists()
 
-if st.button("Analyser tegning", type="primary"):
+if st.button("Analyze drawing", type="primary"):
     if reuse and have_cached:
-        st.info("Bruker eksisterende resultat (fjern haken over for a "
-                "kjore pa nytt).")
+        st.info("Using existing result (uncheck above to rerun).")
     else:
-        with st.spinner("Modellen leser tegningen … (~1 minutt)"):
+        with st.spinner("The model is reading the drawing … (~1 minute)"):
             try:
                 ok, log = run_classifier(choice, DEFAULT_MODEL, int(dpi),
                                          only_gates)
             except subprocess.TimeoutExpired:
-                st.error("Tidsavbrudd — prov lavere DPI.")
+                st.error("Timeout — try a lower DPI.")
                 st.stop()
-        with st.expander("Kjoringslogg"):
-            st.code(log or "(tom)")
+        with st.expander("Execution log"):
+            st.code(log or "(empty)")
         if not ok or not verdict_p.exists():
-            st.error("Klassifiseringen feilet — se loggen over.")
+            st.error("Classification failed — see log above.")
             st.stop()
     st.session_state["analyzed"] = str(choice)
 
 if st.session_state.get("analyzed") == str(choice) and verdict_p.exists():
     rows = load_verdict(verdict_p)
-    st.subheader("Tegningen inneholder")
+    st.subheader("The drawing contains")
     if not rows:
-        st.write("Ingen komponenter funnet over tersklene.")
+        st.write("No components found above thresholds.")
     for r in rows:
         ci, ct = st.columns([1, 5])
         with ci:
@@ -170,29 +169,29 @@ if st.session_state.get("analyzed") == str(choice) and verdict_p.exists():
             if im is not None:
                 st.image(im)
         with ct:
-            extra = f" + {r['possible']} mulige" if r["possible"] else ""
+            extra = f" + {r['possible']} possible" if r["possible"] else ""
             st.markdown(
-                f"**{r['name']}** — {r['confident']} sikre{extra}  \n"
-                f"<span style='color:gray'>beste konfidens {r['best']:.2f} "
-                f"· vises i {r['color']} pa tegningen</span>",
+                f"**{r['name']}** — {r['confident']} confident{extra}  \n"
+                f"<span style='color:gray'>best confidence {r['best']:.2f} "
+                f"· shown in {r['color']} on the drawing</span>",
                 unsafe_allow_html=True)
-    st.caption("«Sikre» = over modellens kalibrerte terskel (tykk boks). "
-               "«Mulige» = 0,55–terskel (tynn boks) — sjekkliste for mennesket.")
+    st.caption("«Confident» = above the model's calibrated threshold (thick box). "
+               "«Possible» = 0.55 threshold (thin box) — checklist for humans.")
 
-    st.subheader("Hvor pa tegningen?")
+    st.subheader("Where on the drawing?")
     st.image(str(proof_p), use_container_width=True)
-    st.caption("Fargekode: " + FARGEFORKLARING)
+    st.caption("Color legend: " + COLOR_LEGEND)
 
     if det_p.exists():
-        with st.expander("Alle funn (tabell)"):
+        with st.expander("All findings (table)"):
             dets = json.loads(det_p.read_text(encoding="utf-8"))
             st.dataframe(
-                [{"klasse": CLASS_INFO.get(d["cls"], (d["cls"],))[0],
-                  "konfidens": d.get("conf"),
-                  "lag": d.get("tier", "sikker"),
+                [{"Class": CLASS_INFO.get(d["cls"], (d["cls"],))[0],
+                  "Confidence": d.get("conf"),
+                  "Tier": d.get("tier", "confident"),
                   "x": d["bbox_orig"][0], "y": d["bbox_orig"][1]}
                  for d in dets],
                 use_container_width=True)
 elif have_cached:
-    st.caption("Det finnes et tidligere resultat for denne tegningen — "
-               "trykk «Analyser tegning» for a vise det.")
+    st.caption("A previous result exists for this drawing — "
+               "press «Analyze drawing» to show it.")
