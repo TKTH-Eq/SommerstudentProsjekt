@@ -86,9 +86,9 @@ st.sidebar.caption(f"SCD:  {scd_path.name}")
 R = run_pipeline(system, str(pid_path), str(scd_path))
 kpis, cons, by_tag = R["kpis"], R["cons"], R["by_tag"]
 
-st.title(f"System {system} — drawing analysis")
-st.caption("Extracted automatically from legacy PDFs — a draft for engineer review, "
-           "not an authoritative source.")
+from ui import page_header
+page_header(f"System {system} — system analysis (PDF)",
+            "Extracted automatically from legacy PDFs · a draft for engineer review, not truth")
 
 c1, c2, c3, c4 = st.columns(4)
 c1.metric("Components", kpis["components"])
@@ -102,7 +102,7 @@ a.markdown(f"**On both — {len(cons['both'])}**", unsafe_allow_html=True)
 a.markdown(chips(cons["both"], by_tag), unsafe_allow_html=True)
 b.markdown(f"**P&ID only — {len(cons['pid_only'])}**  \nusually expected")
 b.markdown(chips(cons["pid_only"], by_tag), unsafe_allow_html=True)
-c.markdown(f"**SCD only — {len(cons['scd_only'])}**  \nlogic refs not on P&ID — verify")
+c.markdown(f"**SCD only — {len(cons['scd_only'])}**  \nlogic refs not on the P&ID — verify")
 c.markdown(chips(cons["scd_only"], by_tag), unsafe_allow_html=True)
 
 if R["flags"]:
@@ -131,10 +131,10 @@ y.caption("all downstream"); y.markdown(chips(entry["downstream"], by_tag), unsa
 z.markdown("**Possible cause of a symptom here**")
 z.caption("upstream candidates"); z.markdown(chips(entry["upstream"], by_tag), unsafe_allow_html=True)
 
-st.subheader("Alarm root-cause (simulated)")
+st.subheader("Alarm root cause (simulated)")
 st.caption("Pick the tags that are 'in alarm' to simulate an alarm shower. The graph "
            "separates the probable root cause from downstream consequences — the core of "
-           "root-cause analysis. Wire this to the live alarm feed to make it operational.")
+           "root-cause analysis. Wire this to a live alarm feed and it is operational.")
 alarms = st.multiselect("Active alarms", sorted(R["fmap"]))
 if alarms:
     res = root_cause(R["g"], alarms)
@@ -158,7 +158,7 @@ if alarms:
     st.caption("Decision support on the loop-based graph — proposes a likely origin for an "
                "engineer to confirm, not a diagnosis.")
 
-st.subheader("Live sensor → threshold → alarm → root-cause")
+st.subheader("Live sensor → threshold → alarm → root cause")
 st.caption("Fictional sensor data fluctuates and drifts until it crosses a set point, "
            "raising an alarm that cascades through the loop — then the tool identifies the "
            "root cause. The full control-room chain on synthetic data: not a process model, "
@@ -170,7 +170,7 @@ inputs_down = inputs_down or [n for n in R["g"].nodes
                               if list(nx.descendants(R["g"], n)) and not list(nx.ancestors(R["g"], n))]
 
 if not inputs_down:
-    st.info("No input tag with downstream in this system to simulate.")
+    st.info("No input tag with downstream links in this system to simulate.")
 else:
     s1, s2, s3 = st.columns(3)
     sensor = s1.selectbox("Drifting sensor", sorted(inputs_down))
@@ -209,7 +209,7 @@ else:
                     f"— explains {len(res['explains'][primary])} downstream alarm(s)",
                     unsafe_allow_html=True)
             time.sleep(speed)
-        st.success(f"Complete — {sensor} breach propagated; root cause identified as {order[0]}.")
+        st.success(f"Complete — the {sensor} breach propagated; root cause identified as {order[0]}.")
 
 st.subheader("Dependency graph")
 st.caption("Loop-based (input → logic → output), not traced piping. Search a tag below, "
@@ -226,5 +226,5 @@ if hl_tag:
         f"<span style='color:#b8442c'>■ downstream (consequence)</span> &nbsp; "
         f"<span style='color:#2d7dd2'>■ upstream (cause)</span>", unsafe_allow_html=True)
 components.html(
-    f"<div style='font-family:sans-serif'>{interactive_svg(R['g'], highlight=highlight)}</div>",
+    f"<div style='font-family:Inter,sans-serif'>{interactive_svg(R['g'], highlight=highlight)}</div>",
     height=640, scrolling=False)

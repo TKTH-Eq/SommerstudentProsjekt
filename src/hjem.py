@@ -48,74 +48,75 @@ _drop20 = _cond("20 % tapte alarmer")
 _ideal = _cond("ideal")
 _hard = _cond("dobbel feil + 20 % tap") or _cond("dobbel feil")
 
-_kpis = [("PRESISJON (PDF)", "87 %"), ("RECALL (PDF)", "55 %"),
-         ("TEGNINGER", "17"), ("TAGS", "885")]
+_kpis = [("PRECISION (PDF)", "87 %"), ("RECALL (PDF)", "55 %"),
+         ("DRAWINGS", "17"), ("TAGS", "885")]
 _kpi_colors: dict[int, str] = {}
 if _drop20:
-    _kpis.append(("ROTÅRSAK PÅ PLASS 1", f"{_drop20['hit1_pct']:.0f} %"))
+    _kpis.append(("ROOT CAUSE RANKED #1", f"{_drop20['hit1_pct']:.0f} %"))
     _kpi_colors[len(_kpis) - 1] = MOSS
 
-page_header("AI-muligheter for P&ID og SCD",
-            "Sommerstudentprosjekt · Huldra-data (offentlige) · "
-            "beslutningsunderlag for Wisting-digitaliseringen",
+page_header("AI opportunities for P&IDs and SCDs",
+            "Summer-student project · Huldra data (public) · "
+            "decision input for the Wisting digitalisation",
             kpis=_kpis, kpi_colors=_kpi_colors)
 
 st.markdown(
-    "P&ID-er og SCD-er konsumeres i dag som tegninger og dokumenter. Denne "
-    "appen demonstrerer hva som blir mulig når de i stedet behandles som "
-    "**strukturert ingeniørdata**: automatisk uttrekk, konsistenssjekk, "
-    "HAZOP-forberedelse, og beslutningsstøtte i kontrollrom — på ekte "
-    "tegninger, med målt nøyaktighet.")
+    "P&IDs and SCDs are still consumed as drawings and documents. This "
+    "app demonstrates what becomes possible when they are treated as "
+    "**structured engineering information** instead: automatic extraction, "
+    "consistency checking, HAZOP preparation, and control-room decision "
+    "support — on real drawings, with measured accuracy.")
 
-with st.expander("📐 Slik er tallene målt"):
+with st.expander("📐 How the numbers are measured"):
     st.markdown(
-        "- **Presisjon 87 % / recall 55 % (PDF-uttrekk):** målt mot "
-        "uavhengig DEXPI-fasit over 16 tegninger; se Results.md for metode. "
-        "Recall-gapet er i hovedsak tags tegnet som symboler — informasjon "
-        "tekstuttrekk aldri kan nå. Det er selve argumentet for "
-        "maskinlesbare leveranser.\n"
-        "- **Tegninger/tags:** alle DEXPI-filene sydd sammen til én graf "
-        "via delte linjenummer.")
+        "- **Precision 87 % / recall 55 % (PDF extraction):** measured against "
+        "independent DEXPI ground truth over 16 drawings; see Results.md "
+        "for method. The recall gap is mostly tags drawn as symbols — "
+        "information text extraction can never reach. That is the argument "
+        "for machine-readable deliverables.\n"
+        "- **Drawings/tags:** all DEXPI files stitched into one graph "
+        "via shared line numbers.")
     if _drop20:
         st.markdown(
-            f"- **Rotårsak på plass 1: {_drop20['hit1_pct']:.0f} %** — målt "
-            f"med 20 % tapte alarmer over {_drop20['scenarios']} syntetiske "
-            f"feilscenarioer i den ekte Huldra-topologien (kjørt "
-            f"{_ev['date']}, reproduserbart med eval/eval_root_cause.py). "
-            f"Topp 3: {_drop20['hit3_pct']:.0f} %. Under ideelle forhold er "
-            f"treffraten {_ideal['hit1_pct']:.0f} % — forventet av "
-            f"konstruksjon; 20 %-tap-tallet er den reelle testen."
-            + (f" Hardeste betingelse («{_hard['name']}»): "
+            f"- **Root cause ranked #1: {_drop20['hit1_pct']:.0f} %** — measured "
+            f"with 20 % lost alarms over {_drop20['scenarios']} synthetic "
+            f"failure scenarios in the real Huldra topology (run "
+            f"{_ev['date']}, reproducible via eval/eval_root_cause.py). "
+            f"Top 3: {_drop20['hit3_pct']:.0f} %. Under ideal conditions the "
+            f"hit rate is {_ideal['hit1_pct']:.0f} % — expected by "
+            f"construction; the 20 %-loss figure is the real test."
+            + (f" Hardest condition (\u2018{_hard['name']}\u2019): "
                f"{_hard['hit1_pct']:.0f} %." if _hard else ""))
 
-st.info("**Lesenøkkel:** All AI-output i appen er førsteutkast med målt "
-        "feilrate — aldri en fasit. Hver AI-generert påstand verifiseres "
-        "mot det strukturerte tag-registeret, og alt deterministisk "
-        "(uttrekk, grafer, arbeidsark) fungerer uten AI-nøkkel.")
+st.info("**How to read this app:** every AI output is a first draft with a "
+        "measured error rate — never ground truth. Each AI-generated claim "
+        "is verified against the structured tag register, and everything "
+        "deterministic (extraction, graphs, worksheets) works without an "
+        "AI key.")
 
-st.subheader("Tre stier inn")
+st.subheader("Three ways in")
 a, b, c = st.columns(3)
 with a:
-    st.markdown("**🆚 Formatargumentet på to minutter**  \n"
-                "Samme tegning fra PDF og fra DEXPI, side om side: tags er "
-                "tekst — topologi er det ikke.")
-    _go(PAGES["dexpi_vs_pdf"], "🆚 Åpne DEXPI vs PDF", "go_dexpi")
+    st.markdown("**🆚 The format argument in two minutes**  \n"
+                "The same drawing from PDF and from DEXPI, side by side: "
+                "tags are text — topology is not.")
+    _go(PAGES["dexpi_vs_pdf"], "🆚 Open DEXPI vs PDF", "go_dexpi")
 with b:
-    st.markdown("**⚠️ AI-assistert HAZOP**  \n"
-                "Ferdig utfylt arbeidsark forankret i uttrekte tags, "
-                "vision-lesing av selve tegningen, redigering og "
-                "Excel-eksport.")
-    _go(PAGES["hazop"], "⚠️ Åpne HAZOP-forberedelse", "go_hazop")
+    st.markdown("**⚠️ AI-assisted HAZOP**  \n"
+                "A pre-filled worksheet grounded in extracted tags, vision "
+                "reading of the drawing itself, editing and "
+                "Excel export.")
+    _go(PAGES["hazop"], "⚠️ Open HAZOP preparation", "go_hazop")
 with c:
-    st.markdown("**🎛️ Alarmdusj i kontrollrommet**  \n"
-                "En skjult feil gir 100+ samtidige alarmer på tvers av "
-                "tegninger — finn kilden med assistentens hjelp.")
-    _go(PAGES["kontrollrom"], "🎛️ Åpne kontrollrom-scenariet", "go_kr")
+    st.markdown("**🎛️ Alarm shower in the control room**  \n"
+                "A hidden failure raises 100+ simultaneous alarms across "
+                "drawings — find the source with the assistant's help.")
+    _go(PAGES["kontrollrom"], "🎛️ Open the control-room scenario", "go_kr")
 
-st.markdown("Gjennomgående mønster: *samme verktøy, bedre data, bedre svar* "
-            "— og *AI foreslår, strukturert register verifiserer*.")
+st.markdown("Recurring pattern: *same tools, better data, better answers* "
+            "— and *AI proposes, the structured register verifies*.")
 
-with st.expander("🩺 Demo-beredskap (sjekk før presentasjon)"):
+with st.expander("🩺 Demo readiness (check before presenting)"):
     import os
     from pathlib import Path as _P
     from config import PID_DIR
@@ -125,28 +126,28 @@ with st.expander("🩺 Demo-beredskap (sjekk før presentasjon)"):
 
     _raw = _P(PID_DIR).parent
     _dexpi = list(_raw.rglob("*.DGN.xml"))
-    _row(len(_dexpi) >= 1, f"DEXPI-filer funnet: {len(_dexpi)}",
-         "legg XML-ene under data/raw/")
+    _row(len(_dexpi) >= 1, f"DEXPI files found: {len(_dexpi)}",
+         "put the XMLs under data/raw/")
     _pdfs = list(_P(PID_DIR).glob("*.PDF")) + list(_P(PID_DIR).glob("*.pdf"))
-    _row(len(_pdfs) >= 1, f"P&ID-PDF-er funnet: {len(_pdfs)}",
-         "legg PDF-ene i data/raw/P&ID/")
-    _row(bool(os.getenv("GEMINI_API_KEY")), "GEMINI_API_KEY satt",
-         "AI-flatene vises ikke uten; alt deterministisk virker likevel")
+    _row(len(_pdfs) >= 1, f"P&ID PDFs found: {len(_pdfs)}",
+         "put the PDFs in data/raw/P&ID/")
+    _row(bool(os.getenv("GEMINI_API_KEY")), "GEMINI_API_KEY set",
+         "AI surfaces are hidden without it; everything deterministic still works")
     try:
         import pypdfium2  # noqa: F401
-        _row(True, "pypdfium2 (rasterisering) installert", "")
+        _row(True, "pypdfium2 (rasterisation) installed", "")
     except Exception:  # noqa: BLE001
-        _row(False, "pypdfium2 mangler", "vision/markører trenger den: uv sync")
+        _row(False, "pypdfium2 missing", "vision/markers need it: uv sync")
     _vc = list(_P("reports/vision_cache").glob("*.json"))
-    _row(len(_vc) >= 1, f"Vision-cache: {len(_vc)} tegning(er) varme",
-         "kjør python src/ai/warm_vision_cache.py <pdf> kvelden før")
+    _row(len(_vc) >= 1, f"Vision cache: {len(_vc)} drawing(s) warm",
+         "run python src/ai/warm_vision_cache.py <pdf> the evening before")
     _ac = list(_P("reports/ai_cache").glob("*.json"))
-    _row(len(_ac) >= 1, f"AI-cache (omskrivinger/Q&A): {len(_ac)} innslag",
-         "generer i appen med demo-modus på, så er demoen offline-trygg")
+    _row(len(_ac) >= 1, f"AI cache (rewrites/Q&A): {len(_ac)} entries",
+         "generate in the app with demo mode on, and the demo is offline-safe")
     _pc = _P("data/processed/dexpi_tags.csv")
-    _row(_pc.exists(), "data/processed generert (NeqSim-koblingen)",
-         "kjør analysis/parse_dexpi_data.py")
+    _row(_pc.exists(), "data/processed generated (the NeqSim link)",
+         "run analysis/parse_dexpi_data.py")
 
-st.caption("Kun offentlig publiserte Huldra-data og syntetiske "
-           "alarmer/sensorverdier. Prototype — se README og rapport for "
-           "begrensninger, metode og pilotforslag.")
+st.caption("Public Huldra data and synthetic alarms/sensor values only. "
+           "Prototype — see the README and report for limitations, method "
+           "and pilot proposal.")

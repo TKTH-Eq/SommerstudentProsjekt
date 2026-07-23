@@ -131,7 +131,7 @@ def save_html(g: nx.DiGraph, path: Path, title="System dependency graph"):
     edges = [{"from": a, "to": b} for a, b in g.edges]
     html = f"""<!doctype html><html><head><meta charset="utf-8"><title>{title}</title>
 <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-<style>#net{{width:100%;height:90vh;border:1px solid #ddd}}body{{font-family:sans-serif}}</style>
+<style>#net{{width:100%;height:90vh;border:1px solid #e3e8ec;border-radius:10px;background:#fff}}body{{font-family:Inter,sans-serif;color:#243746}}</style>
 </head><body><h3>{title}</h3><div id="net"></div><script>
 const nodes=new vis.DataSet({json.dumps(nodes)});
 const edges=new vis.DataSet({json.dumps(edges)});

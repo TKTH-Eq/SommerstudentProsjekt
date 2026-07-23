@@ -2,7 +2,7 @@
 src/system_analysis_dexpi.py  —  the system-analysis page, fed from DEXPI
 
 Registered by src/app.py via st.navigation:
-    st.Page("system_analysis_dexpi.py", title="System-analyse (DEXPI)", icon="🧭"),
+    st.Page("system_analysis_dexpi.py", title="System Analysis (DEXPI)", icon="🧭"),
 
 Deliberately a mirror of system_analysis.py — same KPIs, failure explorer,
 operator brief, alarm root-cause, live simulation and interactive graph,
@@ -66,7 +66,7 @@ def matching_pdf(xml_path: Path) -> Path | None:
     return None
 
 
-@st.cache_resource(show_spinner="Leser DEXPI-modell…")
+@st.cache_resource(show_spinner="Reading DEXPI model…")
 def run_pipeline(xml: str, mtime: float) -> dict:
     m = load_dexpi_model(Path(xml))
     allo, g = m["objects"], m["tag_graph"]
@@ -79,12 +79,12 @@ def run_pipeline(xml: str, mtime: float) -> dict:
     }
 
 
-@st.cache_resource(show_spinner="Sammenligner med PDF-tekstlaget…")
+@st.cache_resource(show_spinner="Comparing with the PDF text layer…")
 def pdf_reconciliation(pdf: str, dexpi_tags: tuple) -> dict | None:
     try:
         from extraction.tag_extractor import extract_tags, create_objects
         pdf_tags = {o.tag for o in create_objects(extract_tags(pdf), "P&ID")}
-    except Exception:                                   # noqa: BLE001
+    except Exception:                                                   # noqa: BLE001
         return None
     dx = set(dexpi_tags)
     return {"both": sorted(dx & pdf_tags),
@@ -109,57 +109,59 @@ def chips(tags, by_tag):
 files = find_dexpi()
 st.sidebar.title("Huldra drawing analysis — DEXPI")
 if not files:
-    st.error("Fant ingen DEXPI-XML under data/raw/ (Semantum-mappen).")
+    st.error("Found no DEXPI XML under data/raw/ (Semantum folder).")
     st.stop()
 
-choice = st.sidebar.selectbox("Tegning (system · dokument)", list(files))
+choice = st.sidebar.selectbox("Drawing (system · document)", list(files))
 xml_path = files[choice]
 st.sidebar.caption(f"DEXPI: {xml_path.name}")
 
 R = run_pipeline(str(xml_path), xml_path.stat().st_mtime)
 kpis, by_tag = R["kpis"], R["by_tag"]
 
-st.title(f"{choice.split(' · ')[0]} — system analysis (DEXPI)")
-st.caption("Samme analyser som PDF-siden, men matet fra den strukturerte "
-           "DEXPI-modellen: koblingene under er OPPGITT i fila "
-           "(FromID→ToID), ikke gjettet fra løkkenummer. Konsekvenser og "
-           "rotårsaker kan derfor krysse løkkegrenser.")
+from ui import page_header
+page_header(f"{choice.split(' · ')[0]} — system analysis (DEXPI)",
+            "Connectivity STATED in DEXPI (FromID→ToID) — not guessed from loop numbers")
+st.caption("Same analyses as the PDF page, but fed from the structured "
+           "DEXPI model: the connections below are STATED in the file "
+           "(FromID→ToID), not guessed from loop numbers. Consequences and "
+           "root causes can therefore cross loop boundaries.")
 
 c1, c2, c3, c4 = st.columns(4)
-c1.metric("Komponenter", kpis["components"])
-c2.metric("Ekte koblinger", R["stats"]["tag_edges"])
-c3.metric("Sikkerhetstags", len(R["safety"]))
-c4.metric("Utstyrsseksjoner", R["stats"]["sections"])
+c1.metric("Components", kpis["components"])
+c2.metric("Real connections", R["stats"]["tag_edges"])
+c3.metric("Safety tags", len(R["safety"]))
+c4.metric("Equipment sections", R["stats"]["sections"])
 
 if kpis.get("most_connected"):
-    st.caption("Mest koblede komponenter (kompleksitetsindikator): "
+    st.caption("Most connected components (complexity indicator): "
                + ", ".join(kpis["most_connected"]))
 
 # ---- DEXPI ↔ PDF reconciliation (replaces P&ID↔SCD on this page) -----------
 pdf = matching_pdf(xml_path)
-st.subheader("DEXPI ↔ PDF-tekstlag")
+st.subheader("DEXPI ↔ PDF text layer")
 if pdf is None:
-    st.caption("Ingen matchende PDF i data/raw/P&ID for denne tegningen — "
-               "avstemmingen vises når begge formater finnes.")
+    st.caption("No matching PDF in data/raw/P&ID for this drawing — "
+               "reconciliation is shown when both formats exist.")
 else:
     rec = pdf_reconciliation(str(pdf), tuple(sorted(o.tag for o in R["allo"])))
     if rec is None:
-        st.caption("PDF-uttrekket feilet (mangler PyMuPDF?) — hopper over "
-                   "avstemmingen.")
+        st.caption("PDF extraction failed (missing PyMuPDF?) — skipping "
+                   "reconciliation.")
     else:
         a, b, c = st.columns(3)
-        a.markdown(f"**På begge — {len(rec['both'])}**")
+        a.markdown(f"**On both — {len(rec['both'])}**")
         a.markdown(chips(rec["both"], by_tag), unsafe_allow_html=True)
-        b.markdown(f"**Kun DEXPI — {len(rec['dexpi_only'])}**  \n"
-                   f"≈ tekstlagets recall-gap på denne tegningen")
+        b.markdown(f"**DEXPI only — {len(rec['dexpi_only'])}**  \n"
+                   f"≈ the text layer's recall gap on this drawing")
         b.markdown(chips(rec["dexpi_only"], by_tag), unsafe_allow_html=True)
-        c.markdown(f"**Kun PDF — {len(rec['pdf_only'])}**  \n"
-                   f"uttrekksstøy eller tekst utenfor modellen — verifiser")
+        c.markdown(f"**PDF only — {len(rec['pdf_only'])}**  \n"
+                   f"extraction noise or text outside the model — verify")
         c.markdown(chips(rec["pdf_only"], by_tag), unsafe_allow_html=True)
 
-st.subheader("Utstyrsforankrede seksjoner")
+st.subheader("Equipment-anchored sections")
 for name, ms in R["sections"].items():
-    with st.expander(f"{name} — {len(ms)} medlemmer"):
+    with st.expander(f"{name} — {len(ms)} members"):
         st.markdown(chips(sorted(o.tag for o in ms), by_tag),
                     unsafe_allow_html=True)
 
@@ -168,9 +170,9 @@ st.markdown(chips(R["safety"], by_tag), unsafe_allow_html=True)
 
 # ---- failure explorer (identical mechanics, real topology) ------------------
 st.subheader("Failure explorer")
-st.caption("Velg en tag og se hva som kan gå galt, hva den påvirker og hvor "
-           "et symptom kan komme fra — nå langs OPPGITTE koblinger, så "
-           "kjedene krysser løkkegrenser.")
+st.caption("Select a tag and see what can go wrong, what it affects, and where "
+           "a symptom might come from — now along STATED connections, so "
+           "the chains cross loop boundaries.")
 tag = st.selectbox("Tag", sorted(R["fmap"]))
 entry = R["fmap"][tag]
 
@@ -188,8 +190,8 @@ z.caption("upstream candidates"); z.markdown(chips(entry["upstream"], by_tag), u
 
 # ---- alarm root cause --------------------------------------------------------
 st.subheader("Alarm root-cause (simulated)")
-st.caption("Samme mekanikk som PDF-siden — men her følger kaskaden ekte "
-           "prosess-/signalkoblinger fra DEXPI-fila.")
+st.caption("Same mechanics as the PDF page — but here the cascade follows real "
+           "process/signal connections from the DEXPI file.")
 alarms = st.multiselect("Active alarms", sorted(R["fmap"]))
 if alarms:
     res = root_cause(R["g"], alarms)
@@ -213,9 +215,9 @@ if alarms:
 
 # ---- live simulation ---------------------------------------------------------
 st.subheader("Live sensor → threshold → alarm → root-cause")
-st.caption("Syntetiske sensordata driver mot settpunkt; alarmen kaskaderer "
-           "langs DEXPI-topologien og verktøyet peker på rotårsaken. "
-           "Ikke en prosessmodell, ikke live data.")
+st.caption("Synthetic sensor data drifts towards setpoint; the alarm cascades "
+           "along the DEXPI topology and the tool points to the root cause. "
+           "Not a process model, not live data.")
 
 inputs_down = [n for n in R["g"].nodes
                if by_tag[n].category == "input" and list(nx.descendants(R["g"], n))]
@@ -223,7 +225,7 @@ inputs_down = inputs_down or [n for n in R["g"].nodes
                               if list(nx.descendants(R["g"], n)) and not list(nx.ancestors(R["g"], n))]
 
 if not inputs_down:
-    st.info("Ingen input-tag med nedstrøms koblinger å simulere på denne tegningen.")
+    st.info("No input tag with downstream connections to simulate on this drawing.")
 else:
     s1, s2, s3 = st.columns(3)
     sensor = s1.selectbox("Drifting sensor", sorted(inputs_down))
@@ -265,9 +267,9 @@ else:
 
 # ---- graph -------------------------------------------------------------------
 st.subheader("Dependency graph — stated connectivity")
-st.caption("Kantene er FromID→ToID fra DEXPI-fila (prosess- og "
-           "signalretning), ikke løkke-antakelser. Søk en tag for å "
-           "markere den og kjedene dens.")
+st.caption("Edges are FromID→ToID from the DEXPI file (process and "
+           "signal direction), not loop assumptions. Search for a tag to "
+           "highlight it and its chains.")
 search = st.selectbox("🔍 Search a tag to highlight on the graph",
                       [""] + sorted(R["fmap"]), key="dx_graph_search")
 hl_tag = search or tag

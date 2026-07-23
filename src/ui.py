@@ -170,7 +170,7 @@ def chip(tag: str, category: str = "other") -> str:
 def chips(tags, by_tag) -> str:
     """Drop-in replacement for the chips() helpers in the pages."""
     if not tags:
-        return f"<i style='color:{FAINT};font-size:13px'>ingen</i>"
+        return f"<i style='color:{FAINT};font-size:13px'>none</i>"
     return " ".join(chip(t, getattr(by_tag.get(t), "category", "other")
                          if hasattr(by_tag, "get") else "other") for t in tags)
 

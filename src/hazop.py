@@ -108,7 +108,7 @@ vp.addEventListener("dblclick",()=>{{s=1;tx=0;ty=0;apply();}});
 
 
 systems = find_systems()
-st.sidebar.title("HAZOP-forberedelse")
+st.sidebar.title("HAZOP preparation")
 if not systems:
     st.error("No system found with both a P&ID and an SCD in data/raw/.")
     st.stop()
@@ -120,10 +120,10 @@ pid_path, scd_path = systems[system]
 # overlever økten (og hvilke systemer som har påbegynt HAZOP-forberedelse)
 _stored_all = list_worksheets()
 if _stored_all:
-    with st.sidebar.expander(f"💾 Lagrede arbeidsark ({len(_stored_all)})"):
+    with st.sidebar.expander(f"💾 Saved worksheets ({len(_stored_all)})"):
         for w in _stored_all:
-            st.caption(f"**{w['key']}** — sist {str(w['saved_at'])[:16]} "
-                       f"({w['n_saves']} lagringer)")
+            st.caption(f"**{w['key']}** — last {str(w['saved_at'])[:16]} "
+                       f"({w['n_saves']} save(s))")
 
 
 @st.cache_resource(show_spinner="Building worksheet…")
@@ -145,19 +145,19 @@ def _chips(tags):
     return _ui_chips(tags, by)
 
 
-page_header(f"System {system} — HAZOP-forberedelse",
+page_header(f"System {system} — HAZOP preparation",
             f"P&ID {Path(pid_path).stem[-14:]} · SCD "
-            f"{Path(scd_path).stem[-14:]} · {len(objs)} tags i uttrekket")
-st.caption("Ferdig utfylt arbeidsark fra AI-uttrukket P&ID/SCD-data. Noder er "
-           "funksjonelle løkker (ekte HAZOP-noder er prosessseksjoner — det "
-           "krever DEXPI, se ⚖️-siden). Hver tag som refereres finnes i "
-           "uttrekket; ingenting er funnet på. For HAZOP-team-gjennomgang — "
-           "ikke en fullført studie.")
+            f"{Path(scd_path).stem[-14:]} · {len(objs)} tags in the extraction")
+st.caption("Pre-filled worksheet from AI-extracted P&ID/SCD data. Nodes are "
+           "functional loops (real HAZOP nodes are process sections — that "
+           "requires DEXPI, see the ⚖️ page). Every referenced tag exists in "
+           "the extraction; nothing is invented. For HAZOP-team review — "
+           "not a completed study.")
 
 nodes = sorted({r["node"] for r in all_rows})
 if not nodes:
-    st.warning("Ingen løkke i systemet har instrumenter som gir en "
-               "prosessparameter — ingenting å foreslå.")
+    st.warning("No loop in this system has instruments yielding a process "
+               "parameter — nothing to propose.")
     st.stop()
 
 # ---- master worksheet: load stored (survives sessions) or build fresh ------
@@ -182,12 +182,12 @@ if state_key not in st.session_state:
         st.session_state[state_key] = pd.DataFrame(all_rows)
 _meta = st.session_state.get(f"hazop_meta_{system}")
 if _meta:
-    st.caption(f"💾 Lastet lagret arbeidsark — sist lagret "
+    st.caption(f"💾 Loaded saved worksheet — last saved "
                f"{str(_meta.get('saved_at', '?'))[:16]} "
-               f"({_meta.get('n_saves', '?')} lagringer). Et lagret ark er et "
-               f"øyeblikksbilde av uttrekket det ble bygget fra; "
-               f"«Tilbakestill»-knappen nederst bygger nytt fra dagens "
-               f"uttrekk.")
+               f"({_meta.get('n_saves', '?')} save(s)). A saved worksheet is a "
+               f"snapshot of the extraction it was built from; the reset "
+               f"button at the bottom rebuilds from the current "
+               f"extraction.")
 
 # nøkkeltall for hele systemet (master — lagret ark om det finnes)
 _df_all = st.session_state[state_key]
@@ -195,44 +195,44 @@ _n_rows = len(_df_all)
 _with_sg = int((~_df_all["safeguards"].str.startswith("(none")).sum())
 _done = int((_df_all["status"] != "proposed").sum())
 m1, m2, m3, m4 = st.columns(4)
-m1.metric("Noder", len(nodes),
-          help="Funksjonelle løkker med minst én prosessparameter.")
-m2.metric("Avviksrader", _n_rows,
-          help="Én rad per (node, guideword-avvik).")
-m3.metric("Rader med funnet barriere", f"{_with_sg}/{_n_rows}",
-          help="Avviksrader der minst én ekte, uttrukket safeguard-tag ble "
-               "identifisert. Gapet er der forberedelsesarbeidet ligger — "
-               "og der recall-taket på 55 % koster (se ⚖️-siden).")
-m4.metric("Gjennomgått", f"{_done}/{_n_rows}",
-          help="Rader satt til reviewed eller rejected i arbeidsarket.")
+m1.metric("Nodes", len(nodes),
+          help="Functional loops with at least one process parameter.")
+m2.metric("Deviation rows", _n_rows,
+          help="One row per (node, guideword deviation).")
+m3.metric("Rows with a found safeguard", f"{_with_sg}/{_n_rows}",
+          help="Deviation rows where at least one real, extracted safeguard "
+               "tag was identified. The gap is where the preparation work "
+               "lies — and where the 55 % recall ceiling costs (see ⚖️).")
+m4.metric("Reviewed", f"{_done}/{_n_rows}",
+          help="Rows set to reviewed or rejected in the worksheet.")
 st.progress(_done / _n_rows if _n_rows else 0.0)
 
 tab_ark, tab_vision, tab_funn, tab_ai = st.tabs(
-    ["📋 Arbeidsark", "👁️ Vision-utdrag", "📐 Regelfunn på tegningen",
-     "🤖 AI-utkast per node"])
+    ["📋 Worksheet", "👁️ Vision excerpt", "📐 Rule findings on the drawing",
+     "🤖 AI draft per node"])
 
 with tab_ark:
     f1, f2 = st.columns([2, 1])
     with f1:
-        sel_all = st.checkbox(f"Velg alle noder i systemet ({len(nodes)})")
+        sel_all = st.checkbox(f"Select every node in the system ({len(nodes)})")
         if sel_all:
             picked = nodes
-            st.multiselect("Noder (funksjonelle løkker)", nodes, default=nodes,
+            st.multiselect("Nodes (functional loops)", nodes, default=nodes,
                            disabled=True,
-                           help="Alle noder valgt — fjern haken for manuelt valg.")
+                           help="All nodes selected — untick for manual choice.")
         else:
-            picked = st.multiselect("Noder (funksjonelle løkker)", nodes,
+            picked = st.multiselect("Nodes (functional loops)", nodes,
                                     default=nodes[:3])
     with f2:
-        only_gap = st.toggle("Kun rader uten funnet barriere",
-                             help="Filtrer til avvikene som mangler en "
-                                  "identifisert safeguard — det er disse et "
-                                  "HAZOP-team må bruke tid på.")
+        only_gap = st.toggle("Only rows without a found safeguard",
+                             help="Filter to the deviations that lack an "
+                                  "identified safeguard — these are the ones "
+                                  "a HAZOP team must spend time on.")
         status_f = st.multiselect("Status", ["proposed", "reviewed", "rejected"],
                                   default=["proposed", "reviewed", "rejected"])
 
     if picked:
-        with st.expander("Komponentene i valgte noder"):
+        with st.expander("Components in the selected nodes"):
             by_node_rows = pd.DataFrame(all_rows)
             for nd in picked:
                 mem = by_node_rows[by_node_rows["node"] == nd]["node_members"]
@@ -255,10 +255,10 @@ if not view.empty and status_f:
 
 with tab_ark:
  if not view.empty:
-    st.caption("Redigerbart: juster tekst, fyll inn anbefaling/ansvarlig og "
-               "sett status per rad. Endringer autolagres til disk og "
-               "overlever at fanen lukkes — også for rader som er filtrert "
-               "bort akkurat nå.")
+    st.caption("Editable: adjust text, fill in recommendation/action party and "
+               "set status per row. Changes autosave to disk and survive "
+               "closing the tab — including rows that are currently "
+               "filtered out.")
     edited = st.data_editor(
         view[["node", "parameter", "deviation", "causes", "consequences",
               "safeguards", "recommendation", "action_party", "status"]],
@@ -268,21 +268,21 @@ with tab_ark:
             "node": st.column_config.TextColumn("node", width="small"),
             "parameter": st.column_config.TextColumn("param.", width="small"),
             "deviation": st.column_config.TextColumn(
-                "avvik", width="small",
-                help="Guideword-avvik (High/Low/No/Reverse …)"),
+                "deviation", width="small",
+                help="Guideword deviation (High/Low/No/Reverse …)"),
             "causes": st.column_config.TextColumn(
-                "årsaker", width="large",
-                help="Feilmodi fra løkkas reguleringselementer (ekte tags) + "
-                     "generiske prosessårsaker merket (generic)."),
+                "causes", width="large",
+                help="Failure modes of the loop's control elements (real tags) "
+                     "+ generic process causes marked (generic)."),
             "consequences": st.column_config.TextColumn(
-                "konsekvenser", width="large"),
+                "consequences", width="large"),
             "safeguards": st.column_config.TextColumn(
-                "barrierer", width="medium",
-                help="Kun tags som faktisk finnes i uttrekket. «(none found)» "
-                     "betyr: ikke funnet i tekstlaget — sjekk tegningen."),
-            "recommendation": st.column_config.TextColumn("anbefaling",
+                "safeguards", width="medium",
+                help="Only tags that actually exist in the extraction. "
+                     "\u00ab(none found)\u00bb means: not in the text layer — check the drawing."),
+            "recommendation": st.column_config.TextColumn("recommendation",
                                                           width="medium"),
-            "action_party": st.column_config.TextColumn("ansvarlig",
+            "action_party": st.column_config.TextColumn("action party",
                                                         width="small"),
             "status": st.column_config.SelectboxColumn(
                 "status", options=["proposed", "reviewed", "rejected"],
@@ -306,13 +306,13 @@ with tab_ark:
     rows_out = st.session_state[state_key].to_dict("records")
 
     c = st.session_state[state_key]["status"].value_counts().to_dict()
-    st.caption(f"Status hele systemet: {c.get('proposed', 0)} proposed · "
+    st.caption(f"Status, whole system: {c.get('proposed', 0)} proposed · "
                f"{c.get('reviewed', 0)} reviewed · {c.get('rejected', 0)} rejected")
     _meta_now = st.session_state.get(f"hazop_meta_{system}")
     if _meta_now:
-        st.caption(f"💾 Autolagret til reports/hazop_store/ — sist "
+        st.caption(f"💾 Autosaved to reports/hazop_store/ — last "
                    f"{str(_meta_now.get('saved_at', '?'))[:16]} "
-                   f"({_meta_now.get('n_saves', 0)} lagringer).")
+                   f"({_meta_now.get('n_saves', 0)} save(s)).")
 
     # ---- exports (full worksheet incl. edits, all nodes) -------------------
     out_dir = Path("reports"); out_dir.mkdir(exist_ok=True)
@@ -322,14 +322,14 @@ with tab_ark:
     write_worksheet_xlsx(rows_out, xlsx_path,
                          title=f"HAZOP preparation — System {system}")
     d1, d2 = st.columns(2)
-    d1.download_button("Last ned Excel-arbeidsark (per node)",
+    d1.download_button("Download Excel worksheet (per node)",
                        xlsx_path.read_bytes(), file_name=xlsx_path.name,
                        mime="application/vnd.openxmlformats-officedocument"
                             ".spreadsheetml.sheet")
-    d2.download_button("Last ned CSV (rå)", csv_path.read_bytes(),
+    d2.download_button("Download CSV (raw)", csv_path.read_bytes(),
                        file_name=f"hazop_system_{system}.csv", mime="text/csv")
-    if st.button("Tilbakestill: forkast redigeringer og lagret ark, bygg "
-                 "nytt fra dagens uttrekk"):
+    if st.button("Reset: discard edits and the saved worksheet, rebuild "
+                 "from the current extraction"):
         delete_worksheet(_store_key)                # ellers lastes arket rett inn igjen
         st.session_state.pop(state_key, None)
         st.session_state.pop(f"hazop_meta_{system}", None)
@@ -337,17 +337,18 @@ with tab_ark:
 
     # ---- nodegrenser på tegningen (HAZOP-pakkens tegningsvedlegg) ----------
     st.divider()
-    st.subheader("🗺️ Noder markert på tegningen")
-    st.caption("Standard HAZOP-forberedelse markerer nodegrensene på "
-               "tegningspakken — her gjøres det automatisk: hver valgt "
-               "nodes medlemmer rammes inn i nodens farge. Medlemmer uten "
-               "ramme er enten symbol-only på P&ID-en (recall-gapet) eller "
-               "finnes kun på SCD-en — begge deler ærlig fravær, ikke feil.")
+    st.subheader("🗺️ Nodes marked on the drawing")
+    st.caption("Standard HAZOP preparation marks node boundaries on the "
+               "drawing package — here it happens automatically: each "
+               "selected node's members are boxed in the node's colour. "
+               "Members without a box are either symbol-only on the P&ID "
+               "(the recall gap) or exist only on the SCD — honest absence, "
+               "not an error.")
     _NODE_COLORS = ["#2d7dd2", "#b8442c", "#3a7d44", "#8e5aa8",
                     "#c98a1b", "#5aa8a0", "#a83a5f", "#6b705c"]
     node_map_pick = picked[:8]
     if len(picked) > 8:
-        st.caption("Viser de 8 første valgte nodene (flere blir uleselig).")
+        st.caption("Showing the first 8 selected nodes (more becomes unreadable).")
     if node_map_pick:
         _rows_df = pd.DataFrame(all_rows)
         members_of = {}
@@ -377,7 +378,7 @@ with tab_ark:
                                      c, f"{nd}: {t}"))
         loc = sum(1 for ms in members_of.values() for t in ms if t in nboxes)
         tot = sum(len(ms) for ms in members_of.values())
-        st.caption(f"📍 {loc} av {tot} nodemedlemmer lokalisert på tegningen.")
+        st.caption(f"📍 {loc} of {tot} node members located on the drawing.")
         npng = st.session_state.get(f"vision_png_{system}")
         if not (npng and Path(npng).exists()):
             try:
@@ -386,19 +387,19 @@ with tab_ark:
                 st.session_state[f"vision_png_{system}"] = npng
             except Exception as e:  # noqa: BLE001
                 npng = None
-                st.caption(f"Kunne ikke rasterisere tegningen: {e}")
+                st.caption(f"Could not rasterise the drawing: {e}")
         if npng and nmarkers:
             _zoomable_image(str(npng), markers=nmarkers)
 
 with tab_funn:
-    st.caption("Regelbasert screening av DEXPI-modellen: funn som handler om "
-               "det som ser ut til å MANGLE (avlastning, aksjonsvei, "
-               "overvåking) — en kapabilitet som beviselig krever "
-               "strukturert data, siden fravær ikke kan skilles fra "
-               "uttrekkstap i en PDF. Standardreferansene er VEILEDENDE: "
-               "fagingeniør må bekrefte både funn og klausul. Markørene "
-               "viser hvor på tegningen funnets tags står (kun tags "
-               "tekstlaget kan lese får boks).")
+    st.caption("Rule-based screening of the DEXPI model: findings about what "
+               "appears to be MISSING (relief, action path, monitoring) — a "
+               "capability that demonstrably requires structured data, since "
+               "absence cannot be told apart from extraction loss in a PDF. "
+               "Standard references are INDICATIVE: a discipline engineer "
+               "must confirm both finding and clause. Markers show where the "
+               "finding's tags sit on the drawing (only tags the text layer "
+               "can read get a box).")
 
     @st.cache_resource(show_spinner="Screener DEXPI-modellen…")
     def _screen_drawing(pid_stem: str):
@@ -425,10 +426,10 @@ with tab_funn:
     findings = (findings or []) + coverage if (findings or coverage) \
         else findings
     if findings is None:
-        st.info("Tegningen mangler DEXPI-XML — regelscreening krever "
-                "strukturert data (det er selve poenget).")
+        st.info("This drawing has no DEXPI XML — rule screening requires "
+                "structured data (which is the point).")
     elif not findings:
-        st.success("Ingen funn fra reglene på denne tegningen.")
+        st.success("No findings from the rules on this drawing.")
     else:
         # Fargekode etter alvorlighet, to nivåer:
         #   RØD  = mest sannsynlig et reelt avvik (strukturelt fravær i
@@ -437,19 +438,19 @@ with tab_funn:
         #          SCD-en eller tilstøtende ark — R3–R7, "middels"/"lav").
         _SEV = {"høy": "#c0392b", "middels": "#e0a800", "lav": "#e0a800"}
         st.markdown(
-            "<span style='color:#c0392b;font-weight:700'>🔴 Rød</span> = mest "
-            "sannsynlig et reelt avvik (strukturelt fravær i modellen). &nbsp; "
-            "<span style='color:#e0a800;font-weight:700'>🟡 Gul</span> = mulig "
-            "avvik — må verifiseres mot et dokument (SCD-en eller tilstøtende "
-            "ark). &nbsp; <span style='color:#888'>⬚ stiplet boks</span> = "
-            "estimert posisjon på tegningen.",
+            "<span style='color:#c0392b;font-weight:700'>🔴 Red</span> = most "
+            "likely a real deviation (structural absence in the model). &nbsp; "
+            "<span style='color:#e0a800;font-weight:700'>🟡 Amber</span> = possible "
+            "deviation — must be verified against a document (the SCD or an "
+            "adjacent sheet). &nbsp; <span style='color:#888'>⬚ dashed box</span> = "
+            "estimated position on the drawing.",
             unsafe_allow_html=True)
         rules = sorted({f["rule"] for f in findings})
-        pick_rules = st.multiselect("Vis regler", rules, default=rules,
-                                    help="R1 avlastning · R2 aksjonsvei · "
-                                         "R3 trykkovervåking · R4-R7 "
-                                         "I-005 Annex B-dekning P&ID↔SCD "
-                                         "(verifiserte klausuler)")
+        pick_rules = st.multiselect("Show rules", rules, default=rules,
+                                    help="R1 relief · R2 action path · "
+                                         "R3 pressure monitoring · R4-R7 "
+                                         "I-005 Annex B coverage P&ID↔SCD "
+                                         "(verified clauses)")
         shown = [f for f in findings if f["rule"] in pick_rules]
 
         for f in shown:
@@ -457,7 +458,7 @@ with tab_funn:
                              f"[{f['rule']}] {f['title']} — "
                              f"{', '.join(f['tags'][:3])}"):
                 st.write(f["description"])
-                st.write("**Anbefalt oppfølging:** " + f["recommendation"])
+                st.write("**Recommended follow-up:** " + f["recommendation"])
                 st.caption("📖 " + f["standard"])
                 if f["rule"] in ("R1", "R2", "R3") and _dx:
                     from analysis.rule_screening import (fluids_for_tags,
@@ -465,17 +466,17 @@ with tab_funn:
                     if True:
                         _fc = fluids_for_tags(_dx[0], f["tags"])
                         if _fc:
-                            st.caption("🧪 Fluid på tilknyttede linjer "
-                                       "(fra linjetags, antatt betydning): "
+                            st.caption("🧪 Fluid on connected lines "
+                                       "(from line tags, assumed meaning): "
                                        + " · ".join(
-                                           f"{c} = {FLUID_MEANINGS.get(c, 'ukjent')}"
+                                           f"{c} = {FLUID_MEANINGS.get(c, 'unknown')}"
                                            for c in _fc))
                 if os.getenv("GEMINI_API_KEY"):
                     ck = f"vcheck_{f['rule']}_{'_'.join(f['tags'][:2])}"
                     target_pdf = scd_path if f["rule"] in ("R4", "R5", "R6", "R7") \
                         else pid_path
-                    if st.button("👁️ Andre-opinion fra vision "
-                                 f"({'SCD' if f['rule'] in ('R4','R5','R6') else 'P&ID'}-arket)",
+                    if st.button("👁️ Second opinion from vision "
+                                 f"(the {'SCD' if f['rule'] in ('R4','R5','R6') else 'P&ID'} sheet)",
                                  key=ck):
                         from ai.ai_cache import load_vcheck, save_vcheck
                         vkey = (f"{Path(target_pdf).stem}|{f['rule']}|"
@@ -487,7 +488,7 @@ with tab_funn:
                             st.session_state[ck + "_r"] = r
                         else:
                             from ai.hazop_vision import vision_check_finding
-                            with st.spinner("Ser på tegningen…"):
+                            with st.spinner("Looking at the drawing…"):
                                 try:
                                     r = vision_check_finding(
                                         Path(target_pdf), f,
@@ -498,20 +499,20 @@ with tab_funn:
                                 except Exception as e:  # noqa: BLE001
                                     st.session_state[ck + "_r"] = \
                                         {"ok": False,
-                                         "verdict": f"Feilet: {e}"}
+                                         "verdict": f"Failed: {e}"}
                     vr = st.session_state.get(ck + "_r")
                     if vr:
                         if vr.get("cached_at"):
-                            st.caption(f"🗂️ Cachet svar fra {vr['cached_at']} "
-                                       "— slett reports/ai_cache/vc_*.json "
-                                       "for ny kjøring.")
+                            st.caption(f"🗂️ Cached answer from {vr['cached_at']} "
+                                       "— delete reports/ai_cache/vc_*.json "
+                                       "for a fresh run.")
                         st.write(vr["verdict"])
                         if vr.get("evidence"):
-                            st.caption(f"Modellens observasjon: {vr['evidence']}")
+                            st.caption(f"Model's observation: {vr['evidence']}")
                         if vr.get("tags"):
-                            st.caption(f"Nevnte tags: {vr['tags']}")
-                        st.caption("Kun frikjennende: et syn kan svekke "
-                                   "funnet; fravær styrker det aldri.")
+                            st.caption(f"Mentioned tags: {vr['tags']}")
+                        st.caption("Exculpatory only: a sighting can weaken "
+                                   "the finding; absence never strengthens it.")
 
         _exp = pd.DataFrame([{
             "rule": f["rule"], "severity": f["severity"],
@@ -519,9 +520,9 @@ with tab_funn:
             "tags": ", ".join(f["tags"]), "description": f["description"],
             "recommendation": f["recommendation"], "standard": f["standard"],
         } for f in shown])
-        st.download_button("⬇️ Last ned funnene (CSV)",
+        st.download_button("⬇️ Download the findings (CSV)",
                            _exp.to_csv(index=False).encode("utf-8-sig"),
-                           file_name=f"regelfunn_system_{system}.csv",
+                           file_name=f"rule_findings_system_{system}.csv",
                            mime="text/csv")
 
         # markører: funn-tags -> bokser fra det posisjonerte tekstlaget
@@ -552,24 +553,24 @@ with tab_funn:
                     for t in f["tags"]:
                         for (x, y, w, h) in _fb.get(t, []):
                             markers.append((x, y, w, h, _SEV[f["severity"]],
-                                            f"[{f['rule']}] {t} — estimert "
-                                            f"posisjon fra DEXPI-geometri "
-                                            f"(stiplet = kan være unøyaktig)",
+                                            f"[{f['rule']}] {t} — estimated "
+                                            f"position from DEXPI geometry "
+                                            f"(dashed = may be imprecise)",
                                             True))          # dashed = estimated
                 boxes = {**boxes, **_fb}
         if _fb_info.get("ok"):
             st.caption(f"⬚ {len([t for t in _missing if t in boxes])} "
-                       f"symbol-only-tags vist med STIPLET boks — posisjon "
-                       f"estimert fra DEXPI-geometri (kalibrert mot "
-                       f"{_fb_info['anchors']} felles tags, residual "
-                       f"{_fb_info['residual']} px). Fargen betyr fortsatt "
-                       f"alvorlighet (rød/gul).")
+                       f"symbol-only tags shown with a DASHED box — position "
+                       f"estimated from DEXPI geometry (calibrated against "
+                       f"{_fb_info['anchors']} shared tags, residual "
+                       f"{_fb_info['residual']} px). Colour still means "
+                       f"severity (red/amber).")
         located = sum(1 for f in shown for t in f["tags"] if t in boxes)
         total = sum(len(f["tags"]) for f in shown)
-        st.caption(f"📍 {located} av {total} funn-tags lokalisert på "
-                   f"tegningen (hold musen over en boks for funnet). "
-                   f"Ulokaliserte tags er typisk symbol-only eller på "
-                   f"tilstøtende ark.")
+        st.caption(f"📍 {located} of {total} finding tags located on the "
+                   f"drawing (hover a box to see the finding). "
+                   f"Unlocated tags are typically symbol-only or on an "
+                   f"adjacent sheet.")
         png = st.session_state.get(f"vision_png_{system}")
         if not (png and Path(png).exists()):
             try:
@@ -578,37 +579,37 @@ with tab_funn:
                 st.session_state[f"vision_png_{system}"] = png
             except Exception as e:  # noqa: BLE001
                 png = None
-                st.caption(f"Kunne ikke rasterisere tegningen: {e}")
+                st.caption(f"Could not rasterise the drawing: {e}")
         if png and markers:
             _zoomable_image(str(png), markers=markers)
         elif png:
-            st.caption("Ingen av funn-tagene kunne lokaliseres i tekstlaget "
-                       "— viser tegningen uten markører.")
+            st.caption("None of the finding tags could be located in the text "
+                       "layer — showing the drawing without markers.")
             _zoomable_image(str(png))
 
 with tab_ai:
-    st.caption("LLM-omskriving av én nodes deterministiske rader til flytende "
-               "arbeidsark-tekst — kun tags fra noden, generisk merkes. "
-               "Utkast caches til disk (demo-sikring).")
+    st.caption("LLM rewrite of one node's deterministic rows into fluent "
+               "worksheet text — only the node's tags, generic is marked. "
+               "Drafts are cached to disk (demo insurance).")
     if os.getenv("GEMINI_API_KEY"):
-        node_ai = st.selectbox("AI-omskriving av én node", picked or nodes)
+        node_ai = st.selectbox("AI rewrite of one node", picked or nodes)
         from ai.ai_cache import load_rewrite, save_rewrite
         cached_rw = load_rewrite(system, node_ai)
-        rw_label = ("🔄 Nytt AI-utkast (overskriver cache)" if cached_rw
-                    else "Generer AI-utkast for noden")
+        rw_label = ("🔄 New AI draft (overwrites cache)" if cached_rw
+                    else "Generate AI draft for the node")
         if st.button(rw_label):
             node_rows = [r for r in all_rows if r["node"] == node_ai]
-            with st.spinner("Spør modellen…"):
+            with st.spinner("Asking the model…"):
                 text = ai_enrich_node(node_rows)
             save_rewrite(system, node_ai, text)
-            cached_rw = {"text": text, "saved_at": "nå (live)"}
+            cached_rw = {"text": text, "saved_at": "now (live)"}
         if cached_rw:
-            st.caption(f"🗂️ Utkast generert: {cached_rw['saved_at']}")
+            st.caption(f"🗂️ Draft generated: {cached_rw['saved_at']}")
             st.markdown(cached_rw["text"])
 
     else:
-        st.caption("Sett GEMINI_API_KEY for AI-utkast — arbeidsarket i første "
-                   "fane er deterministisk og komplett uten.")
+        st.caption("Set GEMINI_API_KEY for AI drafts — the worksheet in the first "
+                   "tab is deterministic and complete without it.")
 
 @st.cache_resource(show_spinner="Leser DEXPI-register…")
 def _dexpi_register(pid_stem: str) -> list[str] | None:
@@ -625,23 +626,23 @@ with tab_vision:
     if os.getenv("GEMINI_API_KEY"):
         _dexpi_tags = _dexpi_register(Path(pid_path).stem)
         if _dexpi_tags is not None:
-            register, reg_name = _dexpi_tags, "DEXPI-modellen (strukturert fasit)"
-            st.caption("Gemini SER på P&ID-en og foreslår HAZOP-observasjoner. "
-                       "Hver tag verifiseres mot **DEXPI-modellen** — den "
-                       "strukturerte fasiten for tegningen: ✅/☑️ bekreftet "
-                       "reell komponent · 🟠 velformet men IKKE i modellen — "
-                       "enten feillesning eller noe som mangler i leveransen "
-                       "(begge verdt å sjekke) · ❓ matcher ikke kjent "
-                       "tagformat. Krever pypdfium2.")
+            register, reg_name = _dexpi_tags, "the DEXPI model (structured ground truth)"
+            st.caption("Gemini LOOKS at the P&ID and proposes HAZOP observations. "
+                       "Each tag is verified against the **DEXPI model** — the "
+                       "structured ground truth for the drawing: ✅/☑️ confirmed "
+                       "real component · 🟠 well-formed but NOT in the model — "
+                       "either a misread or something missing from the delivery "
+                       "(both worth checking) · ❓ does not match a known "
+                       "tag format. Requires pypdfium2.")
         else:
             register, reg_name = [o.tag for o in objs], \
-                "PDF-tekstlaget (ingen DEXPI for tegningen)"
-            st.caption("Gemini SER på P&ID-en og foreslår HAZOP-observasjoner. "
-                       "Tegningen mangler DEXPI, så verifiseringen bruker "
-                       "PDF-tekstlagets register: ✅ finnes i uttrekket · "
-                       "🟠 velformet men ikke uttrukket (mulig "
-                       "symbol-only-funn) · ❓ matcher ikke kjent tagformat.")
-        st.caption(f"🔎 Verifiseringsregister: {reg_name}")
+                "the PDF text layer (no DEXPI for this drawing)"
+            st.caption("Gemini LOOKS at the P&ID and proposes HAZOP observations. "
+                       "This drawing has no DEXPI, so verification uses the "
+                       "PDF text-layer register: ✅ exists in the extraction · "
+                       "🟠 well-formed but not extracted (possible "
+                       "symbol-only find) · ❓ does not match a known tag format.")
+        st.caption(f"🔎 Verification register: {reg_name}")
         from ai.ai_cache import load_vision, save_vision
         # demoforsikring: hent cachet utdrag fra disk om det finnes
         if f"vision_{system}" not in st.session_state:
@@ -651,40 +652,40 @@ with tab_vision:
                 st.session_state[f"vision_png_{system}"] = cached["png"]
                 st.session_state[f"vision_ts_{system}"] = cached["saved_at"]
         focus = st.text_input(
-            "Ekstra fokus (valgfritt)",
-            placeholder="F.eks.: fokuser på erosjon/sand og noter om "
-                        "midlertidig utstyr",
-            help="Styrer modellens oppmerksomhet. JSON-formatet og "
-                 "tag-reglene kan IKKE overstyres — verifiseringslaget "
-                 "avhenger av dem. Nytt fokus krever ny API-kjøring.")
-        with st.expander("Vis den faste prompten (skrivebeskyttet)"):
+            "Extra focus (optional)",
+            placeholder="E.g.: focus on erosion/sand and note temporary "
+                        "equipment",
+            help="Steers the model's attention. The JSON format and the "
+                 "tag rules can NOT be overridden — the verification layer "
+                 "depends on them. A new focus requires a fresh API run.")
+        with st.expander("Show the fixed prompt (read-only)"):
             from ai.hazop_vision import PROMPT as _VISION_PROMPT
             st.code(_VISION_PROMPT, language="text")
-            st.caption("Gjenbrukbar prompt — se også README «Gjenbrukbare "
-                       "prompts». Fokusfeltet over settes inn som en merket "
-                       "tilleggsseksjon; reglene består.")
-        btn_label = ("🔄 Kjør på nytt mot API (overskriver cache)"
+            st.caption("Reusable prompt — see also the README section on reusable "
+                       "prompts. The focus field above is inserted as a marked "
+                       "extra section; the rules remain.")
+        btn_label = ("🔄 Re-run against the API (overwrites cache)"
                      if st.session_state.get(f"vision_{system}")
-                     else "Generer vision-utdrag for P&ID-en")
+                     else "Generate vision excerpt for the P&ID")
         if st.button(btn_label):
             from ai.hazop_vision import vision_hazop_excerpt
             try:
-                with st.spinner("Rasteriserer og spør Gemini…"):
+                with st.spinner("Rasterising and asking Gemini…"):
                     st.session_state[f"vision_{system}"] = vision_hazop_excerpt(
                         Path(pid_path), register, focus=focus)
                     # gjenbruk rasteret til visning ved siden av utdraget
                     from extraction.vision_extract import render_png
                     st.session_state[f"vision_png_{system}"] = render_png(
                         Path(pid_path), 200)
-                    st.session_state[f"vision_ts_{system}"] = "nå (live)"
+                    st.session_state[f"vision_ts_{system}"] = "now (live)"
                     save_vision(Path(pid_path).stem,
                                 st.session_state[f"vision_{system}"],
                                 st.session_state[f"vision_png_{system}"])
             except ImportError as e:
-                st.error(f"Mangler avhengighet: {e} — "
+                st.error(f"Missing dependency: {e} — "
                          f"`uv add pypdfium2 google-genai`")
             except Exception as e:  # noqa: BLE001
-                st.error(f"Vision-kallet feilet: {e}")
+                st.error(f"The vision call failed: {e}")
 
         # render + export from session state so the excerpt survives reruns
         # (any click, incl. a download button, reruns the whole page)
@@ -693,8 +694,8 @@ with tab_vision:
             from ai.hazop_vision import to_markdown
             ts = st.session_state.get(f"vision_ts_{system}")
             if ts:
-                st.caption(f"🗂️ Resultat generert: {ts} — bruk knappen over "
-                           f"for en fersk API-kjøring.")
+                st.caption(f"🗂️ Result generated: {ts} — use the button above "
+                           f"for a fresh API run.")
             _OBS_COLORS = ["#2d7dd2", "#b8442c", "#3a7d44", "#8e5aa8",
                            "#c98a1b", "#5aa8a0", "#a83a5f", "#6b705c"]
             png = st.session_state.get(f"vision_png_{system}")
@@ -709,14 +710,14 @@ with tab_vision:
                                    for t in o.get("tags", [])})
                     obs_tags.append(ts_i)
 
-                _labels = [f"Punkt {i+1} — "
+                _labels = [f"Item {i+1} — "
                            f"{(o.get('deviation') or o.get('observation',''))[:40]}"
                            for i, o in enumerate(obs_list)]
                 _sel = st.multiselect(
-                    "Vis markører for punkt(er)", _labels, default=_labels,
+                    "Show markers for item(s)", _labels, default=_labels,
                     key=f"obsmarks_{system}",
-                    help="Skru enkeltpunkter av/på — nyttig når tegningen "
-                         "blir travel eller når du vil fokusere på ett punkt.")
+                    help="Toggle single items on/off — useful when the drawing "
+                         "gets busy or you want to focus on one item.")
                 _active_idx = {_labels.index(l) for l in _sel}
 
                 all_o_tags = sorted({t for i, ts_i in enumerate(obs_tags)
@@ -734,7 +735,7 @@ with tab_vision:
                             px, py = max(14, 0.45 * w), max(14, 0.55 * h)
                             _markers.append((x - px, y - py,
                                              w + 2 * px, h + 2 * py, c,
-                                             f"Punkt {i+1}: {t}"))
+                                             f"Item {i+1}: {t}"))
                 img_col, txt_col = st.columns([1, 1])
                 with img_col:
                     _zoomable_image(str(png), markers=_markers)
@@ -743,10 +744,10 @@ with tab_vision:
                                if t in _boxes)
                     _tot = sum(len(ts_i) for i, ts_i in enumerate(obs_tags)
                                if i in _active_idx)
-                    st.caption(f"📍 {_hit} av {_tot} punkt-tags lokalisert "
-                               "på tegningen. Ulokaliserte tags er typisk "
-                               "symbol-only (recall-gapet) eller nevnt "
-                               "utenfor tegningsflaten.")
+                    st.caption(f"📍 {_hit} of {_tot} item tags located "
+                               "on the drawing. Unlocated tags are typically "
+                               "symbol-only (the recall gap) or mentioned "
+                               "outside the drawing area.")
                 with txt_col:
                     st.markdown(to_markdown(ex, obs_colors=_OBS_COLORS), unsafe_allow_html=True)
             else:
@@ -754,14 +755,14 @@ with tab_vision:
             vx = Path("reports") / f"hazop_vision_system_{system}.xlsx"
             write_vision_xlsx(ex, vx,
                               title=f"Vision HAZOP excerpt — System {system}")
-            st.download_button("Last ned vision-utdrag (Excel)",
+            st.download_button("Download vision excerpt (Excel)",
                                vx.read_bytes(), file_name=vx.name,
                                mime="application/vnd.openxmlformats-"
                                     "officedocument.spreadsheetml.sheet")
     else:
-        st.caption("Sett GEMINI_API_KEY for vision-utdrag — arbeidsarket i "
-                   "første fane er deterministisk og komplett uten.")
+        st.caption("Set GEMINI_API_KEY for vision excerpts — the worksheet in "
+                   "the first tab is deterministic and complete without it.")
 
 with tab_ark:
  if view.empty:
-    st.info("Velg minst én node.")
+    st.info("Select at least one node.")

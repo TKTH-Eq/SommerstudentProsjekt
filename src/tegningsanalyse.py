@@ -111,7 +111,9 @@ def symbol_image(symfile: str | None, height: int = 56):
 
 
 # ------------------------------------------------------------------- side
-st.title("🔍 Tegningsanalyse")
+from ui import page_header
+page_header("Drawing analysis",
+            "The symbol model (gatevalve-ai) reads the P&ID")
 st.caption("Velg en P&ID, la symbolmodellen lese den, og se hvilke "
            "komponenter den inneholder — og hvor. Et utkast for "
            "ingeniorgjennomgang, ikke en autoritativ kilde.")

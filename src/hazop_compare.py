@@ -47,7 +47,7 @@ def find_pairs() -> dict[str, tuple[Path, Path]]:
     return pairs
 
 
-@st.cache_resource(show_spinner="Kjører begge pipelinene…")
+@st.cache_resource(show_spinner="Running both pipelines…")
 def run_both(stem: str, pdf: str, xml: str) -> dict:
     # PDF side: text-layer extraction, loop-based nodes
     objs = sorted(set(create_objects(extract_tags(pdf), "P&ID")),
@@ -69,44 +69,46 @@ def run_both(stem: str, pdf: str, xml: str) -> dict:
 def _stats(rows, n_tags, n_edges) -> dict:
     with_sg = sum(1 for r in rows if not r["safeguards"].startswith("(none"))
     share = f"{with_sg}/{len(rows)} ({with_sg / len(rows):.0%})" if rows else "–"
-    return {"tags": n_tags, "noder": len({r["node"] for r in rows}),
-            "avviksrader": len(rows),
-            "andel rader med funnet barriere": share,
-            "koblinger i graf": n_edges}
+    return {"tags": n_tags, "nodes": len({r["node"] for r in rows}),
+            "deviation rows": len(rows),
+            "share of rows with found barrier": share,
+            "connections in graph": n_edges}
 
 
 def _show(rows, key: str, stem: str):
     if not rows:
-        st.warning("Ingen noder med prosessparametre.")
+        st.warning("No nodes with process parameters.")
         return
     df = pd.DataFrame(rows)[["node", "deviation", "causes",
                              "consequences", "safeguards"]]
-    node = st.selectbox("Node", ["(alle)"] + sorted(df.node.unique()), key=key)
-    if node != "(alle)":
+    node = st.selectbox("Node", ["(all)"] + sorted(df.node.unique()), key=key)
+    if node != "(all)":
         df = df[df.node == node]
     st.dataframe(df, use_container_width=True, hide_index=True, height=420)
     out = Path(f"reports/hazop_{key}_{re.sub(r'[^A-Za-z0-9]+', '_', stem)}.csv")
     out.parent.mkdir(exist_ok=True)
     write_worksheet_csv(rows, out)
-    st.download_button("Last ned (CSV)", out.read_bytes(),
+    st.download_button("Download (CSV)", out.read_bytes(),
                        file_name=out.name, mime="text/csv", key=f"dl_{key}")
 
 
 # ---- page -------------------------------------------------------------------
-st.title("⚖️ HAZOP-forberedelse: PDF vs DEXPI")
-st.caption("Samme arbeidsark-maskineri, samme tegning, to inputformater. "
-           "Alle forskjeller under skyldes formatet: PDF-siden må gjette "
-           "grupperinger fra tag-nummer, DEXPI-siden leser koblingene "
-           "eksplisitt og kan forankre noder i utstyr. Forberedelsesmateriale "
-           "for HAZOP-team — ikke en fullført studie.")
+from ui import page_header
+page_header("HAZOP preparation: PDF vs DEXPI",
+            "Same worksheet machinery · same drawing · two input formats")
+st.caption("Same worksheet machinery, same drawing, two input formats. "
+           "All differences below are due to the format: the PDF side must guess "
+           "groupings from tag numbers, the DEXPI side reads the connections "
+           "explicitly and can anchor nodes in equipment. Preparation material "
+           "for HAZOP teams — not a completed study.")
 
 pairs = find_pairs()
 if not pairs:
-    st.error("Fant ingen tegning som finnes både som PDF (data/raw/P&ID) og "
-             "DEXPI-XML (Semantum-mappen).")
+    st.error("Found no drawing that exists as both PDF (data/raw/P&ID) and "
+             "DEXPI XML (Semantum folder).")
     st.stop()
 
-stem = st.sidebar.selectbox("Tegning", sorted(pairs))
+stem = st.sidebar.selectbox("Drawing", sorted(pairs))
 pdf_path, xml_path = pairs[stem]
 R = run_both(stem, str(pdf_path), str(xml_path))
 
@@ -114,37 +116,37 @@ s_pdf = _stats(R["pdf_rows"], len(R["pdf_objs"]), R["pdf_edges"])
 s_dx = _stats(R["dx_rows"], R["dx"]["stats"]["tagged_elements"],
               R["dx"]["stats"]["tag_edges"])
 
-st.subheader("Nøkkeltall")
-mdf = pd.DataFrame({"PDF (tekstlag, løkke-noder)": s_pdf,
-                    "DEXPI (koblinger, utstyrsseksjoner)": s_dx})
+st.subheader("Key figures")
+mdf = pd.DataFrame({"PDF (text layer, loop nodes)": s_pdf,
+                    "DEXPI (connections, equipment sections)": s_dx})
 st.dataframe(mdf, use_container_width=True)
-st.caption("«Andel rader med funnet barriere»: avviksrader der minst én ekte, "
-           "uttrekt safeguard-tag ble identifisert — som andel, siden "
-           "PDF-siden lager mange flere, mindre noder og ellers ville vunnet "
-           "på volum. Merk også nodenavnene: PDF-siden KAN bare navngi noder "
-           "etter løkkenummer; DEXPI-siden kan forankre dem i utstyr.")
+st.caption("«Share of rows with found barrier»: deviation rows where at least one real, "
+           "extracted safeguard tag was identified — as a share, since "
+           "the PDF side creates many more, smaller nodes and would otherwise win "
+           "on volume. Note also the node names: the PDF side CAN only name nodes "
+           "by loop number; the DEXPI side can anchor them in equipment.")
 
 left, right = st.columns(2)
 with left:
-    st.subheader("PDF — funksjonelle løkker")
-    st.caption("Noder = tags som deler løkkenummer. Konnektivitet gjettes; "
-               "konsekvenser kan ikke krysse løkkegrenser.")
+    st.subheader("PDF — functional loops")
+    st.caption("Nodes = tags sharing a loop number. Connectivity is guessed; "
+               "consequences cannot cross loop boundaries.")
     _show(R["pdf_rows"], "pdf", stem)
 with right:
-    st.subheader("DEXPI — utstyrsforankrede seksjoner")
-    st.caption("Noder = alt prosess-koblet rundt hvert utstyr (nozzle-, "
-               "segment- og containment-relasjoner fra XML). Konsekvenser "
-               "følger reelle rettede koblinger.")
+    st.subheader("DEXPI — equipment-anchored sections")
+    st.caption("Nodes = everything process-connected around each piece of equipment (nozzle, "
+               "segment, and containment relations from XML). Consequences "
+               "follow real directed connections.")
     if R.get("dx_fallback"):
-        st.info("Denne tegningen ga ingen utstyrsseksjoner (ingen taggede "
-                "utstyrsenheter i prosessnettet) — viser løkke-noder på "
-                "DEXPI-data i stedet. Konsekvensene bruker fortsatt ekte "
-                "koblinger.")
+        st.info("This drawing yielded no equipment sections (no tagged "
+                "equipment units in the process network) — showing loop nodes on "
+                "DEXPI data instead. Consequences still use real "
+                "connections.")
     _show(R["dx_rows"], "dexpi", stem)
 
 st.divider()
-st.caption("Ærlige grenser: DEXPI-seksjonene er grafbaserte tilnærminger til "
-           "en HAZOP-leders nodekutt — på tegninger med få taggede "
-           "utstyrsenheter blir seksjonene grove, og elementer mellom to "
-           "utstyr kan tilhøre begge seksjoner. PDF-siden arver "
-           "tekstlagets recall-tak (se Results.md).")
+st.caption("Honest boundaries: The DEXPI sections are graph-based approximations of "
+           "a HAZOP leader's node cuts — on drawings with few tagged "
+           "equipment units, the sections become broad, and elements between two "
+           "pieces of equipment may belong to both sections. The PDF side inherits "
+           "the text layer's recall ceiling (see Results.md).")

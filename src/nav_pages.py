@@ -10,18 +10,18 @@ landing page) link to them safely via PAGES["key"].
 import streamlit as st
 
 PAGES = {
-    "hjem":        st.Page("hjem.py", title="Hjem", icon="🏠", default=True),
+    "hjem":        st.Page("hjem.py", title="Home", icon="🏠", default=True),
     "dexpi_vs_pdf": st.Page("dexpi_vs_pdf.py", title="DEXPI vs PDF (demo)", icon="🆚"),
-    "tag":         st.Page("tag_oversikt.py", title="Tag-oversikt", icon="🏷️"),
-    "topologi":    st.Page("dexpi_graph.py", title="DEXPI-topologi", icon="🔗"),
-    "sys_pdf":     st.Page("system_analysis.py", title="System-analyse (PDF)", icon="📄"),
-    "sys_dexpi":   st.Page("system_analysis_dexpi.py", title="System-analyse (DEXPI)", icon="🧭"),
-    "hazop":       st.Page("hazop.py", title="HAZOP-forberedelse", icon="⚠️"),
+    "tag":         st.Page("tag_oversikt.py", title="Tag register", icon="🏷️"),
+    "topologi":    st.Page("dexpi_graph.py", title="DEXPI topology", icon="🔗"),
+    "sys_pdf":     st.Page("system_analysis.py", title="System analysis (PDF)", icon="📄"),
+    "sys_dexpi":   st.Page("system_analysis_dexpi.py", title="System analysis (DEXPI)", icon="🧭"),
+    "hazop":       st.Page("hazop.py", title="HAZOP preparation", icon="⚠️"),
     "hazop_cmp":   st.Page("hazop_compare.py", title="HAZOP: PDF vs DEXPI", icon="⚖️"),
-    "kontrollrom": st.Page("kontrollrom.py", title="Kontrollrom-assistent", icon="🎛️"),
-    "anlegg":      st.Page("anleggsoversikt.py", title="Anleggsoversikt", icon="🏭"),
-    "neqsim":      st.Page("neqsim_side.py", title="NeqSim-simulering", icon="🧪"),
-    "tegning":     st.Page("tegningsanalyse.py", title="Tegningsanalyse", icon="🔍"),
+    "kontrollrom": st.Page("kontrollrom.py", title="Control-room assistant", icon="🎛️"),
+    "anlegg":      st.Page("anleggsoversikt.py", title="Plant overview", icon="🏭"),
+    "neqsim":      st.Page("neqsim_side.py", title="NeqSim simulation", icon="🧪"),
+    "tegning":     st.Page("tegningsanalyse.py", title="Drawing analysis", icon="🔍"),
 }
 
 NAV = [

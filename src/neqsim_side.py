@@ -345,7 +345,9 @@ def cached_properties(fluid_codes: tuple[str, ...], pressure: float, temperature
 
 tags_all, conns_all, assocs_all = load_dexpi_tables()
 
-st.title("🧪 NeqSim-simulering")
+from ui import page_header
+page_header("NeqSim simulation",
+            "DEXPI topology → NeqSim physics via FluidCodeAssignmentClass")
 st.caption(
     "Kobler DEXPI-topologien til fysiske NeqSim-beregninger via "
     "`FluidCodeAssignmentClass`. Kun tegninger med en DEXPI-eksport støttes — "

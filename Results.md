@@ -149,6 +149,52 @@ etter byttet. Modell-livssykluser på uker-til-måneder er en reell driftsrisiko
 ved gratis-tier-API-er; konfigurerbart modellvalg og validering mot fasit er
 mottiltaket.
 
+## Kanal-eksperimentet: tekst vs. vision vs. union
+
+Med hele bunken vision-lest ble et siste eksperiment mulig: kjøre vision på
+**alle** 16 fasit-tegningene — også de tekstrike — og skåre tre kanaler mot
+samme DEXPI-fasit med identisk matching (`compare_channels.py`, som importerer
+matchingen fra validatoren):
+
+| Kanal | Presisjon | Recall | F1 | Recall eks. nozzler |
+|---|---:|---:|---:|---:|
+| Tekst alene (validert pipeline) | 86 % | 55 % | 67 % | 65 % |
+| Vision alene | 84 % | 24 % | 37 % | 28 % |
+| Tekst ∪ vision | 83 % | **61 %** | **70 %** | **72 %** |
+
+To funn:
+
+**Union bryter dødvannet i de tette tegningene.** Kombinasjonen løfter recall
+6 poeng totalt for 3 poeng presisjon — og gevinsten kommer nettopp der ingen
+tidligere forbedring nådde: HO27-002 går 27 → 42 %, HO20-002 44 → 57 %,
+HO71 77 → 87 %, og HO63/HO64 når 98–100 %. Vision leser instrumentbobler som
+posisjons-rekombinasjonen mister når tegningen er tett, pluss innhold som kun
+finnes som grafikk. Union lander på 72 % eks-nozzle — tett under tekstmetodens
+teoretiske ~74-tak, nådd via en uavhengig kanal uten én tekstuttrekks-fiks.
+
+**Vision alene er ikke et alternativ — nå målt, ikke antatt.** 24 % recall:
+modellen kollapser på de største arkene (HO27-001, HO13, HO82: 0 % — trolig
+for mye innhold per bilde) og hallusinerer på HO20-001 (19 % presisjon). Der
+den virker, er den skarp (94–100 % presisjon på seks tegninger). Dette
+begrunner produksjonsarkitekturen empirisk: vision som *reserve* på
+tag-fattige tegninger bevarer 87 % presisjon; union er et dokumentert
+opt-in for recall-prioriterte bruksområder, ikke ny standard.
+
+**Oppfølgingseksperiment: høyere oppløsning hjelper ikke der det teller.**
+De tre kollaps-tegningene ble re-lest ved 300 dpi. Utfallet delte seg i tre:
+HO27-001 gikk fra 0 til 35 tags med 89 % presisjon — kollapsen var
+oppløsning — men alt vision nå leste hadde tekstkanalen fra før, så union
+sto stille. HO13 ga fortsatt null: på det tetteste arket er flaskehalsen
+innholdsmengde per bilde, ikke skarphet (flislegging er medisinen — videre
+arbeid). Og HO82 produserte 8 plausible, internt konsistente linjetags i
+jevn serie (69-20000L…) som **alle** var fraværende i fasiten — en
+selvsikker hallusinasjon som passerte mønsterfilteret og trakk
+union-presisjonen på tegningen fra 65 til 54 %. Adaptiv dpi-økning er derfor
+ikke tatt inn i produksjon: null union-gevinst, målbar presisjonsrisiko.
+HO82-serien er samtidig det beste enkelteksemplet i materialet på hvorfor
+mønsteret «LLM foreslår, strukturert register verifiserer» er nødvendig —
+plausibilitet er ikke sannhet.
+
 ## Begrensninger
 
 - Uttrekket er tilnærmet, ment som et **førsteutkast for ingeniørgjennomgang**,

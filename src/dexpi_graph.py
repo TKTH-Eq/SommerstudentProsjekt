@@ -11,7 +11,7 @@ Only drawings that have a DEXPI XML are covered here (the reliable subset).
 The PDF pages are unchanged and still cover everything as best-effort.
 
 Register in app.py's st.navigation list, e.g.:
-    st.Page("dexpi_graph.py", title="DEXPI-topologi", icon="🔗"),
+    st.Page("dexpi_graph.py", title="DEXPI topology", icon="🔗"),
 """
 from __future__ import annotations
 
@@ -62,7 +62,7 @@ def find_dexpi_files() -> dict:
     return out
 
 
-@st.cache_data(show_spinner="Leser DEXPI-topologi…")
+@st.cache_data(show_spinner="Reading DEXPI topology…")
 def parse_topology(xml_path: str, mtime: float) -> dict:
     root = ET.parse(xml_path).getroot()
 
@@ -167,11 +167,11 @@ def draw(g: nx.DiGraph, highlight: str | None = None):
                       "down": list(nx.descendants(g, highlight)),
                       "up": list(nx.ancestors(g, highlight))}
             components.html(
-                f"<div style='font-family:sans-serif'>{interactive_svg(g, highlight=he)}</div>",
+                f"<div style='font-family:Inter,sans-serif'>{interactive_svg(g, highlight=he)}</div>",
                 height=640, scrolling=False)
             return
         except Exception as e:  # noqa: BLE001
-            st.caption(f"(interactive_svg feilet – bruker enkel graf: {e})")
+            st.caption(f"(interactive_svg failed – using simple graph: {e})")
     st.graphviz_chart(_fallback_dot(g, highlight))
 
 
@@ -179,19 +179,21 @@ def draw(g: nx.DiGraph, highlight: str | None = None):
 # Page
 # --------------------------------------------------------------------------
 
-st.title("🔗 DEXPI-topologi")
-st.caption("Ekte koblinger fra Semantum sine DEXPI-filer — hva som faktisk er "
-           "koblet til hva, ikke gjettet fra nærhet. Samme grafvisning som "
-           "system-analysen, men matet fra DEXPI. Dekker kun tegninger som har "
-           "en DEXPI-XML; PDF-sidene dekker resten.")
+from ui import page_header
+page_header("DEXPI topology",
+            "Semantum DEXPI · FromID→ToID — stated connectivity, not guessed")
+st.caption("Real connections from Semantum's DEXPI files — what is actually "
+           "connected to what, not guessed from proximity. Same graph view as "
+           "the system analysis, but fed from DEXPI. Only covers drawings that have "
+           "a DEXPI XML; the PDF pages cover the rest.")
 
 files = find_dexpi_files()
 if not files:
-    st.error("Fant ingen DEXPI-XML under data/raw/ (f.eks. i "
+    st.error("Found no DEXPI XML under data/raw/ (e.g. in "
              "'Semantum Huldra P&IDS').")
     st.stop()
 
-choice = st.sidebar.selectbox("Tegning (system · dokument)", sorted(files))
+choice = st.sidebar.selectbox("Drawing (system · document)", sorted(files))
 xml_path = files[choice]
 topo = parse_topology(str(xml_path), xml_path.stat().st_mtime)
 g = build_graph(topo, source=xml_path.name)
@@ -200,37 +202,37 @@ connected = [n for n in g.nodes if g.degree(n) > 0]
 isolated = g.number_of_nodes() - len(connected)
 
 c1, c2, c3, c4 = st.columns(4)
-c1.metric("Komponenter med tag", topo["n_components"])
-c2.metric("Koblinger (rå)", topo["n_connections"])
-c3.metric("Tilkoblede noder", len(connected))
-c4.metric("Kanter (tag→tag)", g.number_of_edges())
+c1.metric("Components with tag", topo["n_components"])
+c2.metric("Connections (raw)", topo["n_connections"])
+c3.metric("Connected nodes", len(connected))
+c4.metric("Edges (tag→tag)", g.number_of_edges())
 
 if g.number_of_edges() == 0:
-    st.warning("Denne tegningens DEXPI-fil ga ingen tag-til-tag-koblinger å "
-               "tegne. Velg en annen tegning, eller se komponentlista under.")
-    with st.expander(f"Komponenter med tag ({g.number_of_nodes()})"):
+    st.warning("The DEXPI file for this drawing provided no tag-to-tag connections to "
+               "draw. Select another drawing, or view the component list below.")
+    with st.expander(f"Components with tag ({g.number_of_nodes()})"):
         st.dataframe({"tag": sorted(g.nodes)}, use_container_width=True,
                      hide_index=True)
     st.stop()
 
 st.sidebar.divider()
-focus = st.sidebar.selectbox("Fokusér på tag",
-                             ["(hele grafen)"] + sorted(connected))
+focus = st.sidebar.selectbox("Focus on tag",
+                             ["(entire graph)"] + sorted(connected))
 
-if focus != "(hele grafen)":
+if focus != "(entire graph)":
     st.markdown(f"**{focus}** &nbsp; "
-                f"↓ nedstrøms: {', '.join(g.successors(focus)) or '–'} &nbsp;&nbsp; "
-                f"↑ oppstrøms: {', '.join(g.predecessors(focus)) or '–'}")
+                f"↓ downstream: {', '.join(g.successors(focus)) or '–'} &nbsp;&nbsp; "
+                f"↑ upstream: {', '.join(g.predecessors(focus)) or '–'}")
     draw(g.subgraph(connected), highlight=focus)
 else:
     if isolated:
-        st.caption(f"Skjuler {isolated} frittstående tag(s) uten registrert "
-                   f"kobling.")
+        st.caption(f"Hiding {isolated} stand-alone tag(s) without registered "
+                   f"connection.")
     draw(g.subgraph(connected))
 
-with st.expander(f"Alle koblinger ({g.number_of_edges()})"):
-    st.dataframe({"fra": [u for u, _ in g.edges], "til": [v for _, v in g.edges]},
+with st.expander(f"All connections ({g.number_of_edges()})"):
+    st.dataframe({"from": [u for u, _ in g.edges], "to": [v for _, v in g.edges]},
                  use_container_width=True, hide_index=True)
 
-st.caption("Retning følger DEXPI FromID→ToID (strømnings-/signalretning). "
-           "Mellomliggende rørkomponenter uten tag er kontrahert bort.")
+st.caption("Direction follows DEXPI FromID→ToID (flow/signal direction). "
+           "Intermediate piping components without tags have been contracted out.")

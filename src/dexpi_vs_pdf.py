@@ -25,26 +25,28 @@ import streamlit.components.v1 as components
 
 HTML_PATH = Path(__file__).resolve().parent.parent / "demos" / "DEXPI_VS_PDF.html"
 
-st.title("🆚 DEXPI vs PDF — samme tegning, to kilder")
-st.caption("Interaktiv demo bygget på ekte data fra tegning "
-           "C025-V-HO27-P-_E-001-01: venstre side viser hva tekstuttrekket "
-           "fra PDF-en gir (tags, men null koblinger — de som mangler er "
-           "symbol-only), høyre side viser samme tegning rekonstruert fra "
-           "DEXPI-XML-en. Hold musen over en komponent i DEXPI-grafen for å "
-           "spore sløyfen — operasjonen som er umulig fra PDF.")
+from ui import page_header
+page_header("DEXPI vs PDF — same drawing, two sources",
+            "C025-V-HO27-P-_E-001-01 · tags from both, topology only from DEXPI")
+st.caption("Interactive demo built on real data from drawing "
+           "C025-V-HO27-P-_E-001-01: the left side shows what the text extraction "
+           "from the PDF provides (tags, but zero connections — the missing ones are "
+           "symbol-only), the right side shows the same drawing reconstructed from "
+           "the DEXPI XML. Hover over a component in the DEXPI graph to "
+           "trace the loop — the operation that is impossible from the PDF.")
 
 if not HTML_PATH.exists():
-    st.error(f"Fant ikke demoen: {HTML_PATH}. Den skal ligge i demos/-mappen "
-             f"i prosjektroten.")
+    st.error(f"Could not find the demo: {HTML_PATH}. It should be located in the demos/ folder "
+             f"in the project root.")
     st.stop()
 
 html = HTML_PATH.read_text(encoding="utf-8")
 
-height = st.sidebar.slider("Visningshøyde (px)", 800, 2400, 1450, step=50,
-                           help="Demoen er én lang side; juster om noe "
-                                "kuttes eller det blir mye luft.")
+height = st.sidebar.slider("View height (px)", 800, 2400, 1450, step=50,
+                           help="The demo is one long page; adjust if something "
+                                "is cut off or there is too much whitespace.")
 components.html(html, height=height, scrolling=True)
 
-st.caption("Demoen ligger som frittstående fil i `demos/DEXPI_VS_PDF.html` "
-           "og kan åpnes rett i nettleser uten appen — praktisk som vedlegg "
-           "eller reserve under presentasjonen.")
+st.caption("The demo is located as a standalone file in `demos/DEXPI_VS_PDF.html` "
+           "and can be opened directly in a browser without the app — practical as an attachment "
+           "or backup during the presentation.")

@@ -162,18 +162,15 @@ def run(g, by_tag, seeds: int, noises: list[int], max_faults: int,
 
 CONDITIONS = [
     ("ideal", dict(drop=0.0, dual=False),
-     "én feil, alle alarmer ringer — konsistenssjekk (100 % er forventet "
-     "av konstruksjon)"),
-    ("20 % tapte alarmer", dict(drop=0.2, dual=False),
-     "hver kaskadealarm uteblir med 20 % sannsynlighet — effektiv rot "
-     "= tidligste alarm som faktisk ringte"),
-    ("40 % tapte alarmer", dict(drop=0.4, dual=False),
-     "som over, 40 % — speiler recall-gapet i PDF-uttrekket"),
-    ("dobbel feil", dict(drop=0.0, dual=True),
-     "to uavhengige feil samtidig — hit1: toppkandidat er en av rotene; "
-     "hit3: BEGGE røtter i topp 3"),
-    ("dobbel feil + 20 % tap", dict(drop=0.2, dual=True),
-     "hardeste betingelse"),
+     "one fault, all alarms ring — consistency check (100 % expected by design)"),
+    ("20 % dropped alarms", dict(drop=0.2, dual=False),
+     "each cascade alarm is dropped with 20 % probability — effective root = earliest alarm that actually rang"),
+    ("40 % dropped alarms", dict(drop=0.4, dual=False),
+     "as above, 40 % — mirrors the recall gap in the PDF extraction"),
+    ("double fault", dict(drop=0.0, dual=True),
+     "two independent faults simultaneously — hit1: top candidate is one of the roots; hit3: BOTH roots in top 3"),
+    ("double fault + 20 % drop", dict(drop=0.2, dual=True),
+     "hardest condition"),
 ]
 
 
@@ -184,8 +181,7 @@ def main():
     ap.add_argument("--noise", default=[0, 1, 2, 3], type=int, nargs="+")
     ap.add_argument("--max-faults", default=40, type=int)
     ap.add_argument("--out", default="reports/eval_root_cause.json", type=Path,
-                    help="Skriv resultatet hit som JSON (leses av hjem-siden). "
-                         "Bruk --out '' for å hoppe over.")
+                    help="Write the result here as JSON (read by the home page). Use --out '' to skip.")
     a = ap.parse_args()
 
     g, by_tag, label = load_or_synthetic(a.raw)
@@ -206,8 +202,8 @@ def main():
         rows.append(row)
         print(f"  {name:24} hit1 {row['hit1_pct']:5.1f} %   "
               f"hit3 {row['hit3_pct']:5.1f} %   "
-              f"snittrang {row['mean_rank'] if row['mean_rank'] is not None else '—'}"
-              + (f"   (rot ikke kandidat: {row['not_candidate']})"
+              f"mean rank {row['mean_rank'] if row['mean_rank'] is not None else '—'}"
+              + (f"   (root not candidate: {row['not_candidate']})"
                  if row["not_candidate"] else ""))
 
     if str(a.out):
@@ -220,7 +216,7 @@ def main():
         a.out.parent.mkdir(parents=True, exist_ok=True)
         a.out.write_text(json.dumps(out, indent=2, ensure_ascii=False),
                          encoding="utf-8")
-        print(f"\n  skrevet til {a.out} — vises på hjem-siden ved neste kjøring")
+        print(f"\n  written to {a.out} — displayed on the home page on next run")
     print()
 
 

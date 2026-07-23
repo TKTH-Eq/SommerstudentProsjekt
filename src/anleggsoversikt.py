@@ -28,7 +28,7 @@ from analysis.plant_model import (build_plant_model, metro_svg, metro_html,
 RAW_DIR = Path(PID_DIR).parent
 
 
-@st.cache_resource(show_spinner="Syr sammen anleggsmodellen…")
+@st.cache_resource(show_spinner="Stitching the plant model together…")
 def load() -> dict:
     return build_plant_model(RAW_DIR)
 
@@ -36,51 +36,51 @@ def load() -> dict:
 M = load()
 S = M["stats"]
 
-page_header("Anleggsoversikt",
-            f"{S['drawings']} DEXPI-tegninger sydd sammen til én modell",
-            kpis=[("TEGNINGER", str(S["drawings"])),
+page_header("Plant Overview",
+            f"{S['drawings']} DEXPI drawings stitched together into a single model",
+            kpis=[("DRAWINGS", str(S["drawings"])),
                   ("TAGS", str(S["tags"])),
-                  ("LINJE-SØMMER", str(S["line_stitches"])),
-                  ("KOBLINGER", str(S["edges"]))])
-st.caption("Sømmene er delte linjenummer: samme rørlinje-tag på to ark ER "
-           "samme fysiske linje — det beviser koblingen mellom arkene. "
-           "Dette kartet er umulig å lage fra PDF-ene — og trivielt fra "
-           "strukturerte leveranser.")
+                  ("LINE STITCHES", str(S["line_stitches"])),
+                  ("CONNECTIONS", str(S["edges"]))])
+st.caption("The stitches are shared line numbers: the same pipeline tag on two sheets IS "
+           "the same physical line — this proves the connection between the sheets. "
+           "This map is impossible to create from the PDFs — and trivial from "
+           "structured deliveries.")
 
-st.subheader("Metrokartet — hvordan arkene henger sammen")
-st.caption("Én node per tegning (farge = system), strek = delt linjenummer "
-           "(tykkere = flere delte linjer). Interaktivt: scroll for å zoome, "
-           "dra bakgrunnen for å panorere, dra en node for å flytte den, "
-           "hold musen over en node for å framheve naboene, og klikk et "
-           "system i tegnforklaringen for å isolere det.")
+st.subheader("The Metro Map — how the sheets are connected")
+st.caption("One node per drawing (color = system), line = shared line number "
+           "(thicker = more shared lines). Interactive: scroll to zoom, "
+           "drag the background to pan, drag a node to move it, "
+           "hover over a node to highlight its neighbors, and click a "
+           "system in the legend to isolate it.")
 components.html(metro_html(M), height=640)
 
 left, right = st.columns(2)
 
 with left:
-    st.subheader("Sømmene")
-    st.caption("Hver rad er en fysisk linje som krysser en tegningsgrense — "
-               "med komponentene som forankrer den på hver side.")
-    rows = [{"linje": ln, "tegning A": a[-14:], "tegning B": b[-14:],
-             "forankring A": ", ".join(ta), "forankring B": ", ".join(tb)}
+    st.subheader("The stitches")
+    st.caption("Each row is a physical line crossing a drawing boundary — "
+               "with the components anchoring it on each side.")
+    rows = [{"line": ln, "drawing A": a[-14:], "drawing B": b[-14:],
+             "anchor A": ", ".join(ta), "anchor B": ", ".join(tb)}
             for ln, a, b, ta, tb in M["stitches"]]
     st.dataframe(pd.DataFrame(rows), use_container_width=True,
                  hide_index=True, height=380)
 
 with right:
-    st.subheader("Strukturelt mest eksponerte komponenter")
-    st.caption("Flest koblinger i hele anlegget — hvor en svikt kan nå "
-               "lengst. Eksponering, ikke konsekvens: redundans, bypass og "
-               "driftsmodus er ikke i modellen, så listen sier hvor "
-               "ingeniøren bør se først, ikke hva som faktisk stopper.")
+    st.subheader("Structurally most exposed components")
+    st.caption("Most connections in the entire plant — where a failure can reach "
+               "the furthest. Exposure, not consequence: redundancy, bypasses and "
+               "operating modes are not in the model, so the list indicates where "
+               "the engineer should look first, not what actually stops.")
     st.dataframe(pd.DataFrame(plant_criticality(M, 10)),
                  use_container_width=True, hide_index=True, height=380)
 
 st.divider()
-st.caption("Retning over en søm er ikke oppgitt i eksporten (off-page-"
-           "connectorene er navnløse), så kryss-kanter legges begge veier — "
-           "en dokumentert begrensning, og et direkte innspill til "
-           "minimumskravene: navngitte, rettede off-page-referanser og "
-           "konsistente linjenummer er det som gjør en anleggsmodell billig. "
-           "Prøv modellen i praksis: Kontrollrom-assistenten → "
-           "«🏭 Hele anlegget».")
+st.caption("Direction across a stitch is not provided in the export (off-page "
+           "connectors are unnamed), so cross-edges are added both ways — "
+           "a documented limitation, and a direct input to the "
+           "minimum requirements: named, directed off-page references and "
+           "consistent line numbers are what make a plant model cheap. "
+           "Try the model in practice: Control Room Assistant → "
+           "«🏭 Entire plant».")
