@@ -146,8 +146,8 @@ def alarm_response_facts(tag, entry, by_tag) -> dict:
         "priority": sem["priority"],
         "priority_label": sem["priority_label"],
         "direction": dir_label(sem["direction"]),
-        "level": {"trip": "trip/nedstengingsnivå", "alarm": "alarmnivå"}
-                 .get(sem["level"], "måling uten H/L-merking"),
+        "level": {"trip": "trip/shutdown level", "alarm": "alarm level"}
+                 .get(sem["level"], "measurement without H/L designation"),
         "response_time": sem["response_time"],
         "modes": entry["modes"],
         "upstream": entry["upstream"],
@@ -158,32 +158,32 @@ def alarm_response_facts(tag, entry, by_tag) -> dict:
 
 
 def _template_response(f) -> str:
-    dirn = f" retning {f['direction']}" if f["direction"] else ""
+    dirn = f" direction {f['direction']}" if f["direction"] else ""
     cause = "; ".join(f["modes"])
     if f["upstream"]:
         up = ", ".join(f["upstream"][:6]) + (" …" if len(f["upstream"]) > 6 else "")
-        cause += f". Mulig opprinnelse oppstrøms: {up}"
+        cause += f". Possible upstream origin: {up}"
     n_down = len(f["downstream"])
-    cons = (f"når frem til {n_down} nedstrøms funksjon(er)" if n_down
-            else "ingen nedstrøms funksjon i modellen")
+    cons = (f"reaches {n_down} downstream function(s)" if n_down
+            else "no downstream function in the model")
     if f["safety"]:
         sf = ", ".join(f["safety"][:6]) + (" …" if len(f["safety"]) > 6 else "")
-        cons += f"; sikkerhetsfunksjoner i kjeden: {sf}"
+        cons += f"; safety functions in the chain: {sf}"
     action = "; ".join(f["checks"])
     if f["safety"]:
-        action += "; bekreft status/tilgjengelighet på barrierene nevnt over"
+        action += "; confirm status/availability of the barriers mentioned above"
     return (
-        f"PRIORITET: {f['priority_label']} · {f['level']}{dirn}\n"
-        f"MULIG ÅRSAK: {cause}.\n"
-        f"KONSEKVENS: {cons}.\n"
-        f"KORRIGERENDE HANDLING: {action}.\n"
-        f"FORVENTET RESPONSTID: {f['response_time']} "
-        f"(generell veiledning etter prioritet — reell frist står i "
-        f"alarmfilosofien).\n"
-        f"MERKNAD: Prioritet/retning er utledet fra tag-en (proxy), ikke "
-        f"konfigurert alarmprioritet. Beslutningsstøtte fra AI-uttrekt, "
-        f"løkkebasert data — verifiser mot P&ID/SCD og live-verdier før "
-        f"inngrep."
+        f"PRIORITY: {f['priority_label']} · {f['level']}{dirn}\n"
+        f"POSSIBLE CAUSE: {cause}.\n"
+        f"CONSEQUENCE: {cons}.\n"
+        f"CORRECTIVE ACTION: {action}.\n"
+        f"EXPECTED RESPONSE TIME: {f['response_time']} "
+        f"(general guidance by priority — actual deadline is stated in the "
+        f"alarm philosophy).\n"
+        f"NOTE: Priority/direction is derived from the tag (proxy), not "
+        f"configured alarm priority. Decision support from AI-extracted, "
+        f"loop-based data — verify against P&ID/SCD and live values before "
+        f"acting."
     )
 
 
