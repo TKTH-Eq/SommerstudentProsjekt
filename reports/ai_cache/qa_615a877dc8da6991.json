@@ -1,0 +1,5 @@
+{
+ "question": "What should I hold off on doing, and why?",
+ "answer": "Given the preceding analysis, **DO NOT ACT YET**.\n\nDo not manually operate any equipment or adjust setpoints until verification steps are completed and the root cause and full system response are clearly understood, as automatic safety functions may be in action.\n\nStructural decision support — operator's judgment prevails.",
+ "saved_at": "2026-07-23 13:13"
+}

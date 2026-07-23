@@ -1,0 +1,5 @@
+{
+ "question": "Does the coverage mean that it cant be an alarm that is not mentioned?",
+ "answer": "Yes, the 'explains X active alarms' tag specifically refers to alarms present in the 'ACTIVE ALARMS' list. If an alarm is not listed as active, it is by definition not an active alarm, and therefore cannot be 'explained' by this mechanism.",
+ "saved_at": "2026-07-23 15:07"
+}

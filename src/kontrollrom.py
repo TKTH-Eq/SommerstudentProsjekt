@@ -37,7 +37,8 @@ from config import PID_DIR, CATEGORY_COLORS
 from analysis.build_dependency_graph import interactive_svg
 from analysis.hazop_dexpi import load_dexpi_model
 from analysis.analyze_scd import failure_map
-from analysis.control_room import (alarm_shower, candidate_brief,
+from analysis.control_room import (alarm_shower, alarm_timeline_svg,
+                                   candidate_brief, explains_bar_svg,
                                    scenario_order, shower_debrief,
                                    situation_brief)
 from analysis.alarm_priority import (alarm_semantics, DIR_ARROW,
@@ -212,6 +213,16 @@ playing = bool(S.get("playing")) and not done and elapsed < window
 
 briefs = candidate_brief(g, by_tag, active)   # på det som er avslørt så langt
 
+# tags the LATEST AI answer referenced (verified only) — drawn as gold
+# rings on the timeline and cause map so the agent's claims are visibly
+# anchored in the model. Empty set until the assistant has answered.
+from analysis.control_room import canonicalize_tags as _canon
+_qa_hist_key = f"qa_hist_{S['fault']}_{len(S['shower']['alarms'])}"
+_qa_prev = st.session_state.get(_qa_hist_key) or []
+qa_glow = (set(_canon(_qa_prev[-1][2]["verified"], by_tag).values())
+           if _qa_prev else set())
+
+
 m1, m2, m3, m4 = st.columns(4)
 m1.metric("Concurrent alarms", len(active),
           help="Only alarm-CAPABLE functions trigger (instruments, switches, "
@@ -268,11 +279,28 @@ with tab_sit:
     if len(sb["ranking"]) > _cap:
         st.caption(f"+ {len(sb['ranking']) - _cap} more candidates "
                    f"(explains fewer or none).")
+    components.html(
+        f"<div style='background:#141820;border-radius:10px;padding:8px'>"
+        f"{explains_bar_svg(briefs, len(active), cap=_cap)}</div>",
+        height=min(340, 60 + 30 * min(len(briefs), _cap)), scrolling=False)
     if sb["any_none"]:
         st.caption("Candidates explaining 0 can be independent/isolated "
                    "alarms — or noise. The graph displays structural reachability, "
                    "not process cause; confirm against the drawing and operating mode.")
     st.divider()
+
+    # ---- arrival timeline -------------------------------------------------------
+    with st.expander("⏱️ Arrival timeline — when each alarm rang", expanded=True):
+        st.caption("One row per alarm in arrival order, dot at its +t offset. "
+                   "While the sequence rolls, the orange sweep line marks «now». "
+                   "Colors = tag category (fault-blind); after you answer, the "
+                   "dots are recolored by ROLE — cascade vs. noise — so the "
+                   "debrief shows the shape of the incident at a glance.")
+        components.html(
+            f"<div style='background:#141820;border-radius:10px;padding:8px'>"
+            f"{alarm_timeline_svg(timeline, active, by_tag, S['shower']['cascade'], S['shower']['noise'], elapsed, window, reveal_roles=done, first_up=S['shower'].get('first_up'), drawings_of=drawings_of or None, glow=qa_glow)}"
+            f"</div>",
+            height=min(620, 110 + 30 * len(active)), scrolling=True)
 
     left, right = st.columns([1, 1.5])
 
@@ -454,7 +482,7 @@ with tab_graf:
                "non-alarming components (manual valves, etc.).")
     components.html(
         f"<div style='background:#141820;border-radius:10px;padding:8px'>"
-        f"{layered_cause_svg(g, hl_pick, active, drawings_of or None)}</div>",
+        f"{layered_cause_svg(g, hl_pick, active, drawings_of or None, glow=qa_glow)}</div>",
         height=760, scrolling=True)
     with st.expander("Show raw subgraph (spring layout, all intermediates)"):
         components.html(
@@ -468,6 +496,42 @@ with tab_chat:
         with st.expander("💬 Ask the Assistant (Gemini, grounded in the model)",
                          expanded=bool(st.session_state.get("qa_hist"))):
             from analysis.control_room import audit_answer_tags
+
+            def _answer_visuals(ans_text: str, audit: dict,
+                                cached: bool = False) -> None:
+                """Deterministic figures parsed FROM the answer — the model
+                never draws; we render only tags verified in the register."""
+                from analysis.control_room import (agent_trace_svg,
+                                                   answer_coverage_svg,
+                                                   parse_verification_plan,
+                                                   qa_plan_svg)
+                n_ce = sum(len(ce_lines_for(b["tag"], ce_index, 3))
+                           for b in briefs)
+                top = briefs[0] if briefs else None
+                components.html(
+                    f"<div style='background:#141820;border-radius:10px;"
+                    f"padding:8px'>"
+                    f"{agent_trace_svg(len(active), len(briefs), top and top['tag'], len(top['explains']) if top else 0, n_ce, len(_qa_context()), len(audit['verified']), len(audit['suspect']), cached=cached)}"
+                    f"</div>", height=165, scrolling=False)
+                steps = parse_verification_plan(ans_text, by_tag)
+                if steps:
+                    st.caption("📐 Verification plan as a figure (parsed from "
+                               "the answer, tags verified):")
+                    components.html(
+                        f"<div style='background:#141820;border-radius:10px;"
+                        f"padding:8px'>"
+                        f"{qa_plan_svg(steps, by_tag, active)}</div>",
+                        height=185, scrolling=False)
+                if audit["verified"] or audit["suspect"]:
+                    with st.expander("🗺️ Answer coverage of the alarm board"):
+                        components.html(
+                            f"<div style='background:#141820;border-radius:"
+                            f"10px;padding:8px'>"
+                            f"{answer_coverage_svg(active_sorted, audit['verified'], audit['suspect'], by_tag)}"
+                            f"</div>",
+                            height=80 + 34 * (1 + (len(active) - 1) // 9)
+                            + (34 if audit["suspect"] else 0),
+                            scrolling=False)
 
             # conversation memory per scenario — resets when a new scenario starts
             hist_key = f"qa_hist_{S['fault']}_{len(S['shower']['alarms'])}"
@@ -512,6 +576,8 @@ with tab_chat:
                     st.write(q_prev)
                 with st.chat_message("assistant"):
                     st.markdown(a_prev)
+                    _answer_visuals(a_prev, audit_prev,
+                                    cached="🗂" in q_prev)
                     if audit_prev["suspect"]:
                         st.caption("Tag check: ✅ "
                                    + ", ".join(audit_prev["verified"]) + " · ❓ **"
