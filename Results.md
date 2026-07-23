@@ -13,11 +13,12 @@ uavhengig fasit — ikke en demo, men et tall vi tør å stå for.
 - Uttrekket er validert mot Semantum sine **DEXPI XML-filer** (ISO 15926,
   strukturert P&ID-eksport), som fungerer som fasit der de finnes.
 - Målt på de 16 P&ID-ene som har både PDF og XML: **presisjon 87 %, recall 55 %,
-  F1 67 %** (≈ 1 027 fasit-tags totalt). Ekskluderes nozzle-tags fra fasiten
-  (de er sjelden trykt som tekst), er recall **65 %**.
+  F1 68 %** (≈ 1 027 fasit-tags totalt). Ekskluderes nozzle-tags fra fasiten
+  (de er sjelden trykt som tekst), er recall **~66 %**.
 - To små, validerte regel-fikser løftet recall fra 26 % til 55 % — mer enn en
   dobling — uten at presisjonen falt. En Gemini-basert vision-reserve lukket
-  deretter bilde-tegning-gapet (HO11: 0 → 2 treff, 100 % presisjon).
+  deretter bilde-tegning-gapet fullstendig: HO11 leses nå 6 av 6 —
+  100 % presisjon og 100 % recall.
 - Det gjenstående recall-gapet er ikke bare kartlagt, men **tallfestet**: av de
   bommede valve-/linje-taggene finnes bare 40 % som tekst i PDF-en i det hele
   tatt. Resten er tegnet som symboler og er per definisjon utenfor rekkevidde
@@ -53,7 +54,7 @@ Alle tall er mikro-gjennomsnitt over de samme 16 tegningene (≈ 1 027 fasit-tag
 | Utgangspunkt | Kun type-først-uttrekk | 76 % | 26 % | 38 % |
 | + Nummer-først-tags | Fanger håndventiler (`27-4510PV`) | 86 % | 49 % | 62 % |
 | + Maskin-tags | Fanger to-sifrede tags (`27-KA50`) | 87 % | 55 % | 67 % |
-| + Vision-reserve | Gemini leser bilde-tegninger (HO11: 0 → 2 treff) | 87 % | 55 % | 67 % |
+| + Vision-reserve | Gemini leser bilde-tegninger (HO11: 0 → 6 av 6, 100 %) | 87 % | 55 % | 68 % |
 
 Regel-forbedringene ble funnet ved å lese diff-rapporten fra valideringen: den
 viste at recall-tapet var konsentrert i to konkrete tag-former som mønstrene ikke
@@ -81,13 +82,11 @@ første er en programvarefeil:
 3. **Bilde-tegninger — løst med vision-reserven.** Én tegning (HO11) har et
    tekstlag som bare inneholder tittelfelt og rutenett, mens selve innholdet er
    grafikk. Her ga tekstuttrekk null tags. Gemini-vision-reserven leser nå slike
-   tegninger automatisk: på HO11 fant den 2 av 6 fasit-tags med 100 % presisjon,
-   mens mønsterfilteret avviste 8 modellsvar som ikke var gyldige tags. De 4
-   gjenstående bommene er nozzler, som ikke står som lesbar tekst — reserven
-   fanger altså alt som faktisk finnes å lese. Reserven trigget også på én liten
-   tegning (V-HO71, 1 tekst-tag) og var nøytral der: vision bekreftet teksten
-   uten å forurense. Kostnad: 2 Gemini-kall for hele valideringskjøringen
-   (gratis tier).
+   tegninger automatisk: på HO11 leser den **alle 6 fasit-tags — 100 % presisjon
+   og 100 % recall** — mens mønsterfilteret avviser modellsvar som ikke er
+   gyldige tags. Reserven trigget også på én liten tegning (V-HO71, 1 tekst-tag)
+   og var nøytral der: vision bekreftet teksten uten å forurense. Kall caches
+   til disk, så gjentatte kjøringer er gratis (se «Vision i full skala» under).
 
 ## Nozzle-justert recall
 
@@ -96,10 +95,12 @@ sjelden trykt som lesbar tekst på tegningen. Med nozzler ekskludert fra fasiten
 stiger recall fra 55 % til **65 %** — 164 av 462 bom (35 %) er nozzler.
 
 Effekten er dramatisk på enkelttegninger: HO27-003 går fra 23 % til **86 %**
-(79 av 83 bom var nozzler — tegningen var aldri et uttreksproblem), og V-HO64 og
-HO11 når **100 %**. De tette tegningene (HO27-002, HO20-001/-002) påvirkes
-derimot knapt — deres gap er reelle uttreksfeil, ikke fasit-artefakter, helt i
-tråd med feilmodus-inndelingen over.
+(79 av 83 bom var nozzler — tegningen var aldri et uttreksproblem), og V-HO64
+når **100 %**. De tette tegningene (HO27-002, HO20-001/-002) påvirkes derimot
+knapt — deres gap er reelle uttreksfeil, ikke fasit-artefakter, helt i tråd med
+feilmodus-inndelingen over. (Tallene i denne analysen er målt på kjøringen der
+HO11 hadde 2 vision-treff; med dagens 6 av 6 er justert recall marginalt
+høyere, ~66 %.)
 
 Justeringen er konservativ: treff antas nozzle-frie, så kun nevneren krympes.
 Skulle enkelte nozzler faktisk være truffet, er det justerte tallet marginalt
@@ -128,6 +129,25 @@ Fikses alle 70 text-present-bommene, lander recall på ~**74 %** eks. nozzler.
 Det er det realistiske taket for enhver ren tekstmetode på dette settet — resten
 krever symbolgjenkjenning (jf. `gatevalve-ai`) eller strukturerte leveranser.
 Dette er prosjektets formatargument i ett tall.
+
+## Vision i full skala — hele SCD-bunken lest
+
+Registerbyggingen avdekket at rundt to tredjedeler av SCD-ene mangler lesbart
+tekstlag helt (bilde-eksporter). Vision-reserven er derfor kjørt over **hele**
+tegningsbunken, med disk-caching (`reports/vision_cache/tags/`) som gjør
+kjøringen gjenopptakbar innenfor gratis-tierens kvoter: **72 tegninger lest,
+45 med funn, 360 vision-tags totalt — i én kjøring, til null API-kostnad.**
+De 27 tegningene uten funn er i hovedsak rene logikkark uten leselige tags.
+Registeret beholder kun kanonisk prefiksform (NN-…); vision-tags uten
+systemprefiks brukes bare til validerings-matching.
+
+Underveis ble modellvalget satt på prøve: den opprinnelige modellgenerasjonen
+(gemini-2.5-flash-lite) ble avviklet for nye brukere midt i prosjektperioden,
+og byttet til gemini-3.1-flash-lite ble gjort med én miljøvariabel
+(`GEMINI_MODEL`) og verifisert mot fasiten — HO11 gikk fra 2 til 6 av 6 treff
+etter byttet. Modell-livssykluser på uker-til-måneder er en reell driftsrisiko
+ved gratis-tier-API-er; konfigurerbart modellvalg og validering mot fasit er
+mottiltaket.
 
 ## Begrensninger
 

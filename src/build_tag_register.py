@@ -157,14 +157,19 @@ def extract_tags(path: Path, system: str, doc_type: str,
     are kept in the signature for register bookkeeping; the extractor derives
     the system itself from the filename. The vision reserve is controlled
     globally via HULDRA_VISION (set in main() from --vision) and runs on
-    page 1 only.
+    page 1 only. Unprefixed vision twins are filtered out — the register
+    keeps the canonical NN-prefixed form only.
     """
     with pdfplumber.open(path) as pdf:
         n_pages = len(pdf.pages)
     tags: set[str] = set()
     for page in range(n_pages):
         tags |= _validated_extract_tags(path, page=page)
-    return tags
+    # The vision reserve adds unprefixed twins ("PT4805" alongside
+    # "27-PT4805") so validation matches either written form. The register
+    # wants the canonical prefixed form only — the twins would land as
+    # system "?" and double-count components.
+    return {t for t in tags if re.match(r"^\d{2,3}-", t)}
 
 
 def split_tag(tag: str):

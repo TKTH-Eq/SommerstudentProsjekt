@@ -19,8 +19,8 @@ beskrives: alt under er kjørbar kode på ekte tegninger, og alle AI-uttrekk er
 
 | | Presisjon | Recall | F1 |
 |---|---:|---:|---:|
-| PDF-tekstuttrekk + vision-reserve, målt mot DEXPI-fasit (16 tegninger) | 87 % | 55 % | 67 % |
-| Samme, med nozzler ekskludert fra fasiten | 87 % | 65 % | — |
+| PDF-tekstuttrekk + vision-reserve, målt mot DEXPI-fasit (16 tegninger) | 87 % | 55 % | 68 % |
+| Samme, med nozzler ekskludert fra fasiten | 87 % | ~66 % | — |
 
 Recall er begrenset oppad av kildematerialet: tags tegnet som **symboler**
 fremfor tekst kan tekstuttrekk aldri fange. Dette taket er nå **målt**: av de
@@ -89,8 +89,14 @@ set HULDRA_VISION=1              # skru på reserven (av som standard)
 ```
 
 Reserven utløses automatisk kun på tag-fattige tegninger (< 3 tekst-tags), og
-modellsvaret filtreres mot et tag-mønster før noe slippes inn i uttrekket. I
-praksis: 2 Gemini-kall for en full valideringskjøring over 16 tegninger.
+modellsvaret filtreres mot et tag-mønster før noe slippes inn i uttrekket.
+Vellykkede kall caches til `reports/vision_cache/tags/` (én lesbar JSON per
+tegning), så gjentatte kjøringer er gratis og kvotebegrensede kjøringer kan
+gjenopptas — feil caches aldri, de prøves bare på nytt. Modellen velges med
+`GEMINI_MODEL` i `.env` (standard i prosjektet: gemini-3.1-flash-lite). I full
+skala: hele tegningsbunken (72 bilde-lesninger, 360 tags) i én kjøring på
+gratis tier. På valideringstegningen HO11 leser reserven alle 6 fasit-tags —
+100 % presisjon og recall.
 
 ## Eksempel-arbeidsflyt
 
@@ -137,8 +143,12 @@ Oppgaven etterspør gjenbrukbare artefakter. De viktigste, med plassering:
   networkx, PyMuPDF, pdfplumber, pypdfium2, pandas/scipy/scikit-learn,
   openpyxl, matplotlib. NeqSim (Apache 2.0, krever Java) for termodynamikk.
 - **AI-tjenester:** Google Gemini — én tjeneste, én nøkkel, for hele AI-laget
-  inkludert vision-reserven (gratis tier holdt til all utvikling og demo;
-  merk rate-grenser — generer demo-resultater på forhånd).
+  inkludert vision-reserven (gratis tier holdt til all utvikling og demo,
+  inkludert full vision-lesning av tegningsbunken takket være disk-caching).
+  Erfart driftsrisiko: modellgenerasjoner avvikles på uker-til-måneder
+  (2.5-flash-lite forsvant for nye brukere midt i prosjektet); mottiltaket er
+  konfigurerbart modellvalg (`GEMINI_MODEL`) pluss validering mot fasit etter
+  bytte.
 - **Strukturert fasit:** Semantum Model Broker-produserte DEXPI-filer
   (kommersielt verktøy; filene var levert som del av datasettet).
 - **Agentiske kodeverktøy** ble brukt gjennom hele utviklingen og var
@@ -168,9 +178,9 @@ i demonstrasjonene er syntetiske.
   møte for møte. Et lagret ark er et øyeblikksbilde av uttrekket det ble
   bygget fra; en egen knapp bygger nytt fra dagens uttrekk.
 - Tag-registeret bygges på den validerte ekstraktoren, så valideringstallene
-  gjelder hele kjeden. Registerbyggingen avdekket at rundt to tredjedeler av
-  SCD-ene mangler lesbart tekstlag helt — enda et argument for strukturerte
-  leveranser.
+  gjelder hele kjeden. Rundt to tredjedeler av SCD-ene mangler lesbart
+  tekstlag helt — enda et argument for strukturerte leveranser; disse leses nå
+  av vision-reserven (360 tags fra 45 bilde-ark, cachet og reproduserbart).
 - Kontrollrom-assistenten viser strukturell nåbarhet, ikke prosesskonsekvens;
   scenariene er syntetiske. Motoren (`analysis/control_room.py`) er
   datakilde-agnostisk — bytt scenariegeneratoren med en alarmfeed, så er
