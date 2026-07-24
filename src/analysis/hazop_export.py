@@ -27,6 +27,7 @@ from openpyxl.utils import get_column_letter
 
 _COLS = [("deviation", "Deviation", 18), ("causes", "Causes", 52),
          ("consequences", "Consequences", 52), ("safeguards", "Safeguards", 28),
+         ("severity", "S", 5), ("likelihood", "L", 5), ("risk", "Risk", 12),
          ("recommendation", "Recommendation", 34),
          ("action_party", "Action party", 16), ("status", "Status", 12)]
 
@@ -50,7 +51,8 @@ def _sheet_name(node: str, used: set[str]) -> str:
 
 
 def write_worksheet_xlsx(rows: list[dict], path: Path,
-                         title: str = "HAZOP preparation") -> Path:
+                         title: str = "HAZOP preparation",
+                         meta: dict | None = None) -> Path:
     """One formatted sheet per node + a summary sheet. Rows may carry edits
     (recommendation / action_party / status) from the review UI."""
     by_node: dict[str, list[dict]] = defaultdict(list)
@@ -65,6 +67,13 @@ def write_worksheet_xlsx(rows: list[dict], path: Path,
     ws.title = "Summary"
     ws.append([title])
     ws["A1"].font = Font(bold=True, size=14)
+    if meta and any(str(v).strip() for v in meta.values()):
+        for k, lab in (("chairman", "Chairman"), ("date", "Meeting date"),
+                       ("participants", "Participants"),
+                       ("revision", "Revision")):
+            if str(meta.get(k, "")).strip():
+                ws.append([f"{lab}: {meta[k]}"])
+                ws.cell(row=ws.max_row, column=1).font = Font(size=10)
     ws.append([])
     head = ["Node", "Members", "Rows", "Rows w/ safeguard",
             "proposed", "reviewed", "rejected"]

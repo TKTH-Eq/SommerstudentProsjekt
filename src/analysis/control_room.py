@@ -605,7 +605,7 @@ def agent_pick(text: str, by_tag, cand_tags: list[str]) -> str | None:
 
 def synthetic_trends(timeline: dict, window: float, by_tag,
                      seed: str = "", pre: float = 15.0, post: float = 5.0,
-                     step: float = 1.0) -> dict:
+                     step: float = 1.0, noise_level: float = 0.0) -> dict:
     """SYNTHETIC process trends for demo purposes — generated ONLY from
     the alarm arrival order (which the operator sees anyway), never from
     the hidden fault, so the game leaks nothing. Illustrates what the
@@ -614,6 +614,13 @@ def synthetic_trends(timeline: dict, window: float, by_tag,
     its threshold exactly at the alarm time, then plateaus. Direction
     (high/low) follows the tag's alarm semantics. Deterministic per
     scenario via `seed`.
+
+    `noise_level` (default 0.0 = clean, identical to before) adds
+    realistic imperfection FOR ROBUSTNESS TESTING, drawn from a separate
+    random stream so the base curves are unchanged: gaussian measurement
+    noise, slow PV oscillation, and occasional baseline excursions toward
+    the limit that retreat ("limit sniffers") — the classic source of
+    false early warnings. ~1.0 is realistic, ~2.0 harsh.
 
     Returns {'t': [...], 'series': {tag: [...]}, 'hi': 80, 'lo': 20,
              'lead': {tag: seconds of pre-alarm drift}}."""
@@ -644,6 +651,28 @@ def synthetic_trends(timeline: dict, window: float, by_tag,
         sem = alarm_semantics(getattr(o, "type_code", "")) if o else {}
         low = sem.get("direction") == "low"
         thr = LO if low else HI
+        # imperfection layer (separate stream: base curves stay identical)
+        nz = None
+        if noise_level > 0:
+            import math as _m
+            r2 = random.Random(f"{seed}|noise|{tag}")
+            amp_o = 2.2 * noise_level
+            per = r2.uniform(18.0, 45.0)
+            ph = r2.uniform(0.0, per)
+            bumps = []
+            for _ in range(r2.randint(0, 2)):        # limit sniffers
+                c = r2.uniform(ts[0], max(ts[0] + 1.0, onset - 2.0))
+                bumps.append((c, r2.uniform(4.0, 9.0)
+                              * min(noise_level, 1.5),
+                              r2.uniform(3.0, 6.0)))
+            sgn = -1.0 if low else 1.0
+
+            def nz(tt):
+                v = amp_o * _m.sin(2 * _m.pi * (tt + ph) / per)
+                v += r2.gauss(0.0, 0.9 * noise_level)
+                for c, a, wdt in bumps:
+                    v += sgn * a * _m.exp(-((tt - c) / wdt) ** 2)
+                return v
         vals = []
         for tt in ts:
             j = rng.uniform(-1.2, 1.2)
@@ -655,6 +684,8 @@ def synthetic_trends(timeline: dict, window: float, by_tag,
             else:
                 over = min(12.0, (tt - t_a) * 1.5)
                 v = thr + (-over if low else over) * 0.8 + j
+            if nz is not None:
+                v += nz(tt)
             vals.append(round(max(0.0, min(100.0, v)), 2))
         series[tag] = vals
     return {"t": ts, "series": series, "hi": HI, "lo": LO, "lead": lead}
@@ -949,6 +980,115 @@ def structure_time_verdict(briefs, trends: dict, timeline: dict) -> list[dict]:
                                f" — supports the noise hypothesis. "
                                f"*(synthetic trend)*"})
     return ev
+
+
+def incident_report_md(title: str, fault: str, chosen: str | None,
+                       shower: dict, watch_log: list[dict],
+                       qa_hist: list, briefs, by_tag,
+                       debrief_lines: list[str],
+                       drawings_of: dict | None = None,
+                       replay_meta: dict | None = None,
+                       trends: dict | None = None) -> str:
+    """Assemble the complete INCIDENT REPORT as Markdown — the document a
+    shift would otherwise write by hand after an event: what happened
+    (timeline), what the agent said while it happened (watch log, with
+    timestamps), what it assessed and how that was audited, what the
+    operator decided, and the verdict. Pure function over data the app
+    already holds; nothing is generated here, only assembled — so the
+    report is exactly as trustworthy as its sources, and says so."""
+    import re as _re
+    from datetime import datetime, timezone
+    from analysis.alarm_priority import alarm_semantics, DIR_ARROW
+
+    def _plain(s: str) -> str:
+        return _re.sub(r"\*\*?", "", str(s))
+
+    timeline = shower.get("timeline", {})
+    noise = set(shower.get("noise", []))
+    chatter = shower.get("chatter") or {}
+    order = sorted(timeline, key=timeline.get)
+    L: list[str] = []
+    L.append(f"# Incident report — {title}")
+    L.append("")
+    L.append(f"*Generated {datetime.now(timezone.utc).isoformat(timespec='seconds')} · "
+             f"training/demonstration on SYNTHETIC data — structural model is "
+             f"real, timestamps and process values are generated.*")
+    if replay_meta:
+        L.append(f"*Replayed historical demo incident recorded "
+                 f"{str(replay_meta.get('start_iso', ''))[:16]}.*")
+    L.append("")
+    L.append("## Summary")
+    L.append("")
+    verdict = debrief_lines[0] if debrief_lines else ""
+    L.append(f"- **Alarms:** {len(order)} in {shower.get('window', 0):.0f} s "
+             f"(first-up **{shower.get('first_up', '?')}**)")
+    L.append(f"- **Operator's call:** {chosen or '(none)'}")
+    L.append(f"- **{_plain(verdict)}**")
+    top = briefs[0] if briefs else None
+    if top:
+        L.append(f"- **Top structural candidate at completion:** "
+                 f"{top['tag']} — explained {len(top['explains'])} of the "
+                 f"other active alarms")
+    if drawings_of:
+        drw = sorted({d for t in order for d in drawings_of.get(t, [])})
+        if drw:
+            L.append(f"- **Drawings involved:** {', '.join(drw)}")
+    L.append("")
+    L.append("## Alarm timeline")
+    L.append("")
+    L.append("| +t (s) | tag | prio | role | activations |")
+    L.append("|---:|---|---|---|---:|")
+    for t in order:
+        o = by_tag.get(t)
+        sem = alarm_semantics(getattr(o, "type_code", "")) if o else {}
+        pr = (f"P{sem.get('priority', '?')}"
+              f"{DIR_ARROW.get(sem.get('direction'), '')}")
+        role = ("noise" if t in noise else
+                "root" if t == fault else "cascade")
+        n_act = len(chatter.get(t, {}).get("alm", [])) or 1
+        L.append(f"| {timeline[t]:.1f} | {t} | {pr} | {role} | "
+                 f"{n_act}{' (chatter)' if n_act >= 3 else ''} |")
+    L.append("")
+    if watch_log:
+        L.append("## Agent watch log (as it happened)")
+        L.append("")
+        for e in watch_log:
+            L.append(f"- `+{e.get('t', 0):>5.1f}s` {e.get('icon', '')} "
+                     f"{_plain(e.get('text', ''))}")
+        L.append("")
+    if qa_hist:
+        L.append("## Agent assessment & Q&A (audited)")
+        L.append("")
+        for q, a, aud in qa_hist:
+            L.append(f"**Q:** {_plain(q)}")
+            L.append("")
+            L.append(a.strip())
+            L.append("")
+            ver, sus = aud.get("verified", []), aud.get("suspect", [])
+            L.append(f"*Tag audit: {len(ver)} verified"
+                     + (f" · {len(sus)} NOT in the model: "
+                        f"{', '.join(sus)}" if sus else " · 0 invented")
+                     + "*")
+            L.append("")
+    L.append("## Operator decision & debrief")
+    L.append("")
+    for line in debrief_lines:
+        L.append(f"- {_plain(line)}")
+    L.append("")
+    L.append("## Basis & limitations")
+    L.append("")
+    L.append("- Candidate ranking and the watch log are **deterministic** "
+             "structural analysis of the extracted topology (DEXPI/SCD); "
+             "the graph shows reachability, not process consequence.")
+    L.append("- The AI assessment is a single generative step over a fixed, "
+             "fact-grounded template; every tag token was audited against "
+             "the register (results above).")
+    L.append("- Process trends and timestamps are **synthetic**, generated "
+             "from the alarm arrival order for demonstration; trend-based "
+             "statements are marked as such in the log.")
+    L.append("- Decision support only — the operator's judgment prevails.")
+    L.append("")
+    return "\n".join(L)
 
 
 def agent_watch_events(state: dict | None, active: list[str], briefs,

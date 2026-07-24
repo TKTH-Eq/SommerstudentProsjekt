@@ -113,13 +113,43 @@ if not systems:
     st.error("No system found with both a P&ID and an SCD in data/raw/.")
     st.stop()
 
-from incident_context import incident_banner, match_index
-_inc = incident_banner("system preselected — prepare HAZOP for the "
-                       "incident area", key="hazop")
-system = st.sidebar.selectbox(
-    "System", list(systems), format_func=lambda s: f"System {s}",
-    index=match_index(list(systems), _inc and _inc.get("system")))
+system = st.sidebar.selectbox("System", list(systems), format_func=lambda s: f"System {s}")
 pid_path, scd_path = systems[system]
+
+# ---- node basis: functional loops (PDF) vs DEXPI process sections ----------
+from config import PID_DIR as _PID_DIR
+_dex_xml = next(iter(Path(_PID_DIR).parent.rglob(
+    f"{Path(pid_path).stem}.DGN.xml")), None)
+_basis_opts = ["Functional loops (PDF)"] + (
+    ["DEXPI process sections"] if _dex_xml else [])
+node_basis = st.sidebar.radio(
+    "Node basis", _basis_opts,
+    help="Real HAZOP nodes are process sections. Where the drawing has a "
+         "DEXPI export, the worksheet can use equipment-anchored sections "
+         "(analysis/hazop_dexpi) instead of functional loops — same "
+         "columns and guidewords, better node quality. Sections from graph "
+         "reachability approximate but do not replace an engineer's node "
+         "cut.")
+use_dexpi = node_basis.startswith("DEXPI")
+node_cap = (st.sidebar.number_input(
+    "Max tags per node (DEXPI sections)", 10, 120, 40, 5,
+    help="Sections larger than this are subdivided into contiguous loop "
+         "groups within the anchor. Lower = finer nodes.")
+    if use_dexpi else 40)
+if not _dex_xml:
+    st.sidebar.caption("DEXPI sections unavailable — no XML found for "
+                       "this drawing.")
+
+with st.sidebar.expander("📇 Study meta (goes into the Excel export)"):
+    _sm_key = f"hazop_study_{system}"
+    _sm = st.session_state.get(_sm_key, {})
+    study_meta = {
+        "chairman": st.text_input("Chairman", _sm.get("chairman", "")),
+        "date": st.text_input("Meeting date", _sm.get("date", "")),
+        "participants": st.text_input("Participants", _sm.get("participants", "")),
+        "revision": st.text_input("Revision", _sm.get("revision", "")),
+    }
+    st.session_state[_sm_key] = study_meta
 
 # lagrede arbeidsark på tvers av systemer — synlig bevis på at arbeidet
 # overlever økten (og hvilke systemer som har påbegynt HAZOP-forberedelse)
@@ -132,14 +162,34 @@ if _stored_all:
 
 
 @st.cache_resource(show_spinner="Building worksheet…")
-def load(system: str, pid: str, scd: str):
+def load(system: str, pid: str, scd: str, basis: str = "loops",
+         dexpi_xml: str = "", cap: int = 40):
     objs = sorted(set(create_objects(extract_tags(pid), "P&ID"))
                   | set(create_objects(extract_tags(scd), "SCD")), key=lambda o: o.tag)
     g = build_graph(objs)
-    return objs, g, build_worksheet(g, objs)
+    if basis == "dexpi" and dexpi_xml:
+        from analysis.hazop_dexpi import load_dexpi_model
+        m = load_dexpi_model(Path(dexpi_xml), cap=cap)
+        rows = build_worksheet(m["tag_graph"], m["objects"],
+                               nodes=m["sections"])
+        if rows:                       # sections can be empty on sparse exports
+            return objs, g, rows, m["stats"]
+    return objs, g, build_worksheet(g, objs), None
 
 
-objs, g, all_rows = load(system, str(pid_path), str(scd_path))
+objs, g, all_rows, _dex_stats = load(system, str(pid_path), str(scd_path),
+                                     "dexpi" if use_dexpi else "loops",
+                                     str(_dex_xml or ""), int(node_cap))
+if use_dexpi and _dex_stats:
+    st.caption(f"🧩 Node basis: **DEXPI process sections** — "
+               f"{_dex_stats.get('sections', '?')} sections, method: "
+               f"{_dex_stats.get('section_method', 'equipment-anchored')} "
+               f"({_dex_stats.get('equipment_anchors', 0)} equipment "
+               f"anchor(s) in the export). Sections approximate an "
+               f"engineer's node cut — review the split.")
+elif use_dexpi:
+    st.warning("DEXPI sections yielded no usable nodes — fell back to "
+               "functional loops.")
 
 from config import PID_DIR
 from ui import chips as _ui_chips, page_header
@@ -172,12 +222,20 @@ if not nodes:
 # bottom of the ark tab discards it and rebuilds from the current extraction.
 KEY = ["node", "parameter", "deviation"]
 _COLS = list(all_rows[0].keys())
-state_key = f"hazop_master_{system}"
-_store_key = f"system_{system}"
+_basis_tok = "dexpi" if use_dexpi else "loops"
+state_key = (f"hazop_master_{system}_{_basis_tok}"
+             + (f"_{int(node_cap)}" if use_dexpi else ""))
+_store_key = f"system_{system}" + ("_dexpi" if use_dexpi else "")
 if state_key not in st.session_state:
     _stored = load_worksheet(_store_key)
+    if (use_dexpi and _stored
+            and _stored.get("meta", {}).get("node_cap") != int(node_cap)):
+        _stored = None          # saved with another node split — build fresh
     if _stored and _stored.get("data"):
         _df = pd.DataFrame(_stored["data"])
+        for _c in ("severity", "likelihood", "risk"):   # pre-S/L saves
+            if _c not in _df.columns:
+                _df[_c] = ""
         if set(_COLS) <= set(_df.columns):          # kolonner intakte
             st.session_state[state_key] = _df[_COLS]
             st.session_state[f"hazop_meta_{system}"] = _stored.get("meta", {})
@@ -217,6 +275,11 @@ tab_ark, tab_vision, tab_funn, tab_ai = st.tabs(
      "🤖 AI draft per node"])
 
 with tab_ark:
+    st.caption("Guidewords covered: High/Low on Pressure, Level, Temperature "
+               "— No/Low/High/Reverse on Flow. NOT covered (no data basis "
+               "in the extraction): As well as / Other than / Part of "
+               "(composition, contamination), maintenance and utility "
+               "deviations — bring these to the meeting manually.")
     f1, f2 = st.columns([2, 1])
     with f1:
         sel_all = st.checkbox(f"Select every node in the system ({len(nodes)})")
@@ -266,9 +329,10 @@ with tab_ark:
                "filtered out.")
     edited = st.data_editor(
         view[["node", "parameter", "deviation", "causes", "consequences",
-              "safeguards", "recommendation", "action_party", "status"]],
+              "safeguards", "severity", "likelihood", "risk",
+              "recommendation", "action_party", "status"]],
         use_container_width=True, hide_index=True, num_rows="fixed",
-        disabled=["node", "parameter", "deviation"],
+        disabled=["node", "parameter", "deviation", "risk"],
         column_config={
             "node": st.column_config.TextColumn("node", width="small"),
             "parameter": st.column_config.TextColumn("param.", width="small"),
@@ -285,6 +349,16 @@ with tab_ark:
                 "safeguards", width="medium",
                 help="Only tags that actually exist in the extraction. "
                      "\u00ab(none found)\u00bb means: not in the text layer — check the drawing."),
+            "severity": st.column_config.SelectboxColumn(
+                "S", options=["", "1", "2", "3", "4", "5"], width="small",
+                help="Severity 1-5 — the team's judgment, never prefilled."),
+            "likelihood": st.column_config.SelectboxColumn(
+                "L", options=["", "1", "2", "3", "4", "5"], width="small",
+                help="Likelihood 1-5 — the team's judgment, never prefilled."),
+            "risk": st.column_config.TextColumn(
+                "risk", width="small",
+                help="S x L: >=15 High, >=8 Medium, else Low. Computed; "
+                     "empty until both S and L are set."),
             "recommendation": st.column_config.TextColumn("recommendation",
                                                           width="medium"),
             "action_party": st.column_config.TextColumn("action party",
@@ -294,6 +368,10 @@ with tab_ark:
                 required=True, width="small"),
         },
         key=f"editor_{system}")
+
+    from analysis.hazop_prep import risk_of
+    edited = edited.assign(risk=[risk_of(s_, l_) for s_, l_ in
+                                 zip(edited["severity"], edited["likelihood"])])
 
     # merge the edited view back into the master by row key, and autosave
     # to disk only when something actually changed (a plain rerun is a no-op)
@@ -305,7 +383,10 @@ with tab_ark:
         save_worksheet(_store_key, merged.to_dict("records"),
                        meta={"system": system,
                              "pid": Path(pid_path).name,
-                             "scd": Path(scd_path).name})
+                             "scd": Path(scd_path).name,
+                             "node_basis": _basis_tok,
+                             "node_cap": int(node_cap),
+                             "study": study_meta})
         st.session_state[f"hazop_meta_{system}"] = \
             (load_worksheet(_store_key) or {}).get("meta", {})
     rows_out = st.session_state[state_key].to_dict("records")
@@ -325,7 +406,9 @@ with tab_ark:
     write_worksheet_csv(rows_out, csv_path)
     xlsx_path = out_dir / f"hazop_system_{system}.xlsx"
     write_worksheet_xlsx(rows_out, xlsx_path,
-                         title=f"HAZOP preparation — System {system}")
+                         title=f"HAZOP preparation — System {system} "
+                               f"({'DEXPI process sections' if use_dexpi else 'functional loops'})",
+                         meta=study_meta)
     d1, d2 = st.columns(2)
     d1.download_button("Download Excel worksheet (per node)",
                        xlsx_path.read_bytes(), file_name=xlsx_path.name,

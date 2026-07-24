@@ -74,7 +74,8 @@ def _to_object(tag: str, source: str) -> EngineeringObject:
     return o
 
 
-def load_dexpi_model(xml_path: Path) -> dict:
+def load_dexpi_model(xml_path: Path,
+                     cap: int | None = None) -> dict:
     """Parse one DEXPI file into everything the HAZOP worksheet needs.
 
     Returns {objects, tag_graph, sections, stats}:
@@ -181,25 +182,33 @@ def load_dexpi_model(xml_path: Path) -> dict:
             f"{r.component_class} ({str(r.id)[-4:]})"
         anchors[r.id] = f"{name}-section"
 
+    # nearest-anchor partition: ONE simultaneous BFS from all anchors, each
+    # element joining its closest equipment — a proper partition even when
+    # the piping between anchors is fully connected. (The old per-anchor
+    # flood only stopped at other anchors, so a lone anchor — or none —
+    # swallowed the whole drawing into one group.)
+    from collections import deque
     section_members = defaultdict(set)        # node name -> set of tags
     claimed = set()
-    for aid, name in anchors.items():
+    owner = {}
+    dq = deque()
+    for aid in sorted(anchors, key=lambda a: anchors[a]):
         if isinstance(equip.set_index("id").tag_name.get(aid), str):
-            section_members[name].add(id2norm.get(aid, ""))
-        if aid not in gund:
-            continue
-        seen, stack = {aid}, list(gund.neighbors(aid))
-        while stack:
-            n = stack.pop()
-            if n in seen:
+            section_members[anchors[aid]].add(id2norm.get(aid, ""))
+        if aid in gund:
+            owner[aid] = aid
+            dq.append(aid)
+    while dq:
+        n = dq.popleft()
+        for nb in gund.neighbors(n):
+            if nb in owner or nb in anchors:
                 continue
-            seen.add(n)
-            if n in anchors and n != aid:      # stop at next equipment
-                continue
-            if n in id2norm:
-                section_members[name].add(id2norm[n])
-                claimed.add(n)
-            stack.extend(gund.neighbors(n))
+            owner[nb] = owner[n]
+            dq.append(nb)
+    for n, aid in owner.items():
+        if n in id2norm and n not in anchors:
+            section_members[anchors[aid]].add(id2norm[n])
+            claimed.add(n)
 
     # leftovers: tagged elements not reached from any equipment, grouped by
     # connected component so related items stay together. Truly isolated tags
@@ -223,6 +232,28 @@ def load_dexpi_model(xml_path: Path) -> dict:
         if len(ms) >= 2:
             sections[name] = ms
 
+    # quality gate 1: NO usable anchors — fall back entirely to
+    # CONTIGUOUS LOOP GROUPS (functional loops merged along actual
+    # tag-graph connectivity, size-capped).
+    _cap = cap if cap and cap >= 10 else SECTION_CAP
+    method = "equipment-anchored"
+    if len(sections) < 2:
+        fb = _loop_group_sections(objects, tg, cap=_cap)
+        if len(fb) > len(sections):
+            sections = fb
+            method = ("loop groups (fallback — too few usable "
+                      "equipment anchors in the export)")
+    else:
+        # quality gate 2: a few anchors can still swallow half the drawing
+        # each (e.g. 2 anchors — 86 + 83 tags). An 80-tag "section" is
+        # not a HAZOP node. Subdivide oversized anchor sections into loop
+        # groups WITHIN the anchor, keeping the anchor name as prefix, so
+        # locality is preserved and the split is visible.
+        sections, n_split = _cap_sections(sections, tg, cap=_cap)
+        if n_split:
+            method += (f" · {n_split} oversized section(s) subdivided "
+                       f"by loop groups (cap {_cap})")
+
     return {
         "objects": list(objects.values()),
         "tag_graph": tg,
@@ -231,7 +262,8 @@ def load_dexpi_model(xml_path: Path) -> dict:
                   "connections": len(conn_df),
                   "tag_edges": tg.number_of_edges(),
                   "equipment_anchors": len(anchors),
-                  "sections": len(sections)},
+                  "sections": len(sections),
+                  "section_method": method},
     }
 
 
@@ -255,3 +287,73 @@ if __name__ == "__main__":
               f"   causes:      {r['causes']}\n"
               f"   consequence: {r['consequences'][:160]}\n"
               f"   safeguards:  {r['safeguards']}")
+
+def _loop_group_sections(objects: dict, tg, cap: int = 40) -> dict:
+    """Fallback node basis when equipment anchors are missing or too
+    coarse: merge functional loops that are DIRECTLY CONNECTED in the tag
+    graph into contiguous groups, packed along a BFS order and size-capped
+    so no group degenerates into "the whole drawing". Deterministic.
+    Better than single loops (cross-loop consequences stay inside a
+    node), honest about approximating an engineer's section cut."""
+    from collections import defaultdict as _dd
+    loops = _dd(list)
+    for o in objects.values():
+        loops[getattr(o, "loop", None) or o.tag].append(o)
+    lg = nx.Graph()
+    lg.add_nodes_from(loops)
+    for u, v in tg.edges():
+        lu = getattr(objects.get(u), "loop", None) or u
+        lv = getattr(objects.get(v), "loop", None) or v
+        if lu != lv and lu in loops and lv in loops:
+            lg.add_edge(lu, lv)
+    sections, k = {}, 0
+
+    def _emit(chunk):
+        nonlocal k
+        ms = [o for lp in chunk for o in loops[lp]]
+        if len(ms) >= 2:
+            k += 1
+            label = ", ".join(str(c) for c in chunk[:4]) + \
+                ("\u2026" if len(chunk) > 4 else "")
+            sections[f"loop group {k} ({label})"] = ms
+
+    comps = sorted(nx.connected_components(lg),
+                   key=lambda c: (-len(c), sorted(map(str, c))[0]))
+    for comp in comps:
+        start_s = sorted(map(str, comp))[0]
+        start = next(c for c in comp if str(c) == start_s)
+        order = list(nx.bfs_tree(lg.subgraph(comp), start))
+        chunk, size = [], 0
+        for lp in order:
+            n = len(loops[lp])
+            if chunk and size + n > cap:
+                _emit(chunk)
+                chunk, size = [], 0
+            chunk.append(lp)
+            size += n
+        _emit(chunk)
+    return sections
+
+SECTION_CAP = 40          # max tags per HAZOP node before subdivision
+
+
+def _cap_sections(sections: dict, tg, cap: int = SECTION_CAP):
+    """Subdivide any section larger than `cap` into contiguous loop groups
+    WITHIN that section (anchor name kept as prefix). Returns
+    (new_sections, n_subdivided). Sections at or under the cap pass
+    through untouched."""
+    out, n_split = {}, 0
+    for name, ms in sections.items():
+        if len(ms) <= cap:
+            out[name] = ms
+            continue
+        sub_obj = {o.tag: o for o in ms}
+        subs = _loop_group_sections(sub_obj, tg.subgraph(sub_obj), cap=cap)
+        if len(subs) <= 1:
+            out[name] = ms
+            continue
+        n_split += 1
+        for i, (k2, ms2) in enumerate(subs.items(), 1):
+            lab = k2.split("(", 1)[1].rstrip(")") if "(" in k2 else str(i)
+            out[f"{name} · part {i} ({lab})"] = ms2
+    return out, n_split

@@ -611,6 +611,32 @@ with tab_sit:
                                        board=S["shower"]["alarms"],
                                        first_up=S["shower"].get("first_up")):
                 st.write("• " + line)
+
+        # 📄 incident report: everything above, assembled into the document
+        # a shift would otherwise write by hand — timeline, watch log, the
+        # audited AI assessment, the operator's call and the verdict.
+        from analysis.control_room import incident_report_md
+        _rep_md = incident_report_md(
+            title=((S.get("replay") or {}).get("title")
+                   or f"Alarm shower, root {S['fault']}"),
+            fault=S["fault"], chosen=S["chosen"], shower=S["shower"],
+            watch_log=(st.session_state.get(_aw_key) or {}).get("log", []),
+            qa_hist=st.session_state.get(
+                f"qa_hist_{S['fault']}_{len(S['shower']['alarms'])}") or [],
+            briefs=briefs, by_tag=by_tag,
+            debrief_lines=shower_debrief(
+                S["fault"], S["chosen"], S["shower"]["noise"], len(active),
+                board=S["shower"]["alarms"],
+                first_up=S["shower"].get("first_up")),
+            drawings_of=drawings_of if plant_mode else None,
+            replay_meta=S.get("replay"))
+        st.download_button(
+            "📄 Export incident report (Markdown)", _rep_md,
+            file_name=f"incident_report_{S['fault'].replace('/', '_')}.md",
+            mime="text/markdown",
+            help="Timeline, live watch log, audited AI assessment, operator "
+                 "decision and verdict — assembled from this session, "
+                 "nothing regenerated.")
         if plant_mode:
             drawn = sorted({d for t in active for d in drawings_of.get(t, [])})
             st.write(f"• The cascade affected **{len(drawn)} drawings**: "

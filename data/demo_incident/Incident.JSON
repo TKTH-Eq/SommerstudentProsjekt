@@ -16,6 +16,7 @@
   "generator": {
     "seed": 42,
     "step_s": 3.0,
+    "noise_level": 0.0,
     "mode": "real-model"
   },
   "solution": {

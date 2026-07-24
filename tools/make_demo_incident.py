@@ -138,7 +138,9 @@ def build(args) -> dict:
     alarms = shower["alarms"][:args.alarms]
     timeline = {t: shower["timeline"][t] for t in alarms}
     window = max(timeline.values())
-    trends = synthetic_trends(timeline, window, by_tag, seed=str(args.seed))
+    trends = synthetic_trends(timeline, window, by_tag,
+                              seed=str(args.seed),
+                              noise_level=args.noise_level)
     chatter = synthetic_chatter([t for t in shower["noise"] if t in timeline],
                                 timeline, window, seed=str(args.seed))
 
@@ -192,6 +194,7 @@ def build(args) -> dict:
         "sample_rate_hz": 1,
         "chatter": {t: len(d["alm"]) for t, d in chatter.items()},
         "generator": {"seed": args.seed, "step_s": args.step,
+                      "noise_level": args.noise_level,
                       "mode": "fallback" if args.fallback else "real-model"},
         "solution": {"fault": fault,
                      "cascade": [t for t in alarms
@@ -230,6 +233,9 @@ if __name__ == "__main__":
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--step", type=float, default=3.0,
                     help="seconds between cascade alarms")
+    ap.add_argument("--noise-level", type=float, default=0.0,
+                    help="trend imperfection: 0=clean, ~1=realistic, "
+                         "~2=harsh (robustness testing)")
     ap.add_argument("--fallback", action="store_true",
                     help="use built-in mini flowsheet (no DEXPI needed)")
     a = ap.parse_args()

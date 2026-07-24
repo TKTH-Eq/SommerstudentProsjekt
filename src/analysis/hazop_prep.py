@@ -211,6 +211,15 @@ def build_worksheet(graph: nx.DiGraph, objects, loops: list[str] | None = None,
         for param in params:
             for dev in DEVIATIONS[param]:
                 sg = _safeguards(members, down, by_tag, dev)
+                # IPL principle: a safeguard sharing the loop with the
+                # initiating instruments is not an independent layer —
+                # credit it, but say so, so the team verifies independence.
+                member_loops = {getattr(o, "loop", None) for o in members}
+                sg = [t + (" (⚠ same loop — verify independence)"
+                           if by_tag.get(t) is not None
+                           and getattr(by_tag[t], "loop", None) in member_loops
+                           else "")
+                      for t in sg]
                 causes = _tagged_causes(members, dev) + _GENERIC_CAUSES.get(dev, [])
                 conseq = _GENERIC_CONSEQUENCES.get(dev, "(review)")
                 if down:
@@ -225,6 +234,9 @@ def build_worksheet(graph: nx.DiGraph, objects, loops: list[str] | None = None,
                     "causes": "; ".join(causes) if causes else "(review)",
                     "consequences": conseq,
                     "safeguards": ", ".join(sg) if sg else "(none found in extraction — verify)",
+                    "severity": "",                 # 1-5, the team's judgment
+                    "likelihood": "",               # 1-5, the team's judgment
+                    "risk": "",                     # computed from S x L
                     "recommendation": "",           # for the HAZOP team to fill in
                     "action_party": "",
                     "status": "proposed",
@@ -303,3 +315,17 @@ if __name__ == "__main__":
     out.parent.mkdir(exist_ok=True)
     write_worksheet_csv(rows, out)
     print(f"-> {out}")
+
+def risk_of(severity, likelihood) -> str:
+    """Risk class from the team's 1-5 severity x likelihood judgment.
+    Deliberately NOT prefilled anywhere — scoring is the HAZOP team's
+    call; this only classifies what they entered. Empty until both set."""
+    try:
+        s_, l_ = int(str(severity)), int(str(likelihood))
+    except (TypeError, ValueError):
+        return ""
+    if not (1 <= s_ <= 5 and 1 <= l_ <= 5):
+        return ""
+    v = s_ * l_
+    band = "High" if v >= 15 else "Medium" if v >= 8 else "Low"
+    return f"{v} · {band}"
