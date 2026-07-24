@@ -1,0 +1,38 @@
+{
+  "title": "Demo incident \u2014 1st stage separator pressure excursion",
+  "site": "Huldra (SYNTHETIC demonstration data)",
+  "synthetic": true,
+  "note": "Alarm ORDER and cascade come from the structural model (real in real-model mode); timestamps and process values are generated. Not measured plant data.",
+  "start_iso": "2024-11-07T03:14:00+00:00",
+  "window_s": 38.91,
+  "alarm_count": 15,
+  "first_up": "20-PSHH2022",
+  "sample_rate_hz": 1,
+  "generator": {
+    "seed": 42,
+    "step_s": 3.0,
+    "mode": "real-model"
+  },
+  "solution": {
+    "fault": "20-2031VF",
+    "cascade": [
+      "20-2004PT",
+      "20-TT2010",
+      "20-2002PT",
+      "20-TI2010",
+      "20-PT2012",
+      "20-2005PT",
+      "20-PT2018",
+      "20-PT2019",
+      "20-2003PT",
+      "20-PSE2018",
+      "20-PSHH2021",
+      "20-PI2019",
+      "20-PSHH2022",
+      "20-PSE2019"
+    ],
+    "noise": [
+      "71-PI2007"
+    ]
+  }
+}

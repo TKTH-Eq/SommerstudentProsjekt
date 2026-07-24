@@ -369,12 +369,15 @@ def parse_verification_plan(text: str, by_tag) -> list[dict]:
 
 
 def qa_plan_svg(steps: list[dict], by_tag, active: list[str],
-                w: int = 1100) -> str:
+                checked: set | None = None, w: int = 1100) -> str:
     """Render the parsed verification plan as a numbered step chain:
     circles 1→n connected left-to-right, the step's register tag(s)
     beneath, colored by tag priority (P1 red … P4 grey), full step text
-    on hover. Everything shown is parsed from the answer and verified
-    against the register — the figure cannot contain a hallucinated tag."""
+    on hover. `checked` is a set of 0-based POSITIONS (robust to answers
+    that reuse a step number): done steps turn green with ✓, the first
+    undone step pulses. Everything shown is parsed from the answer and
+    verified against the register — the figure cannot contain a
+    hallucinated tag."""
     import html as _html
     from analysis.alarm_priority import alarm_semantics, DIR_ARROW
     if not steps:
@@ -398,11 +401,23 @@ def qa_plan_svg(steps: list[dict], by_tag, active: list[str],
         sem = alarm_semantics(getattr(o, "type_code", "")) if o else None
         fill = PRIO_FILL.get(sem["priority"], "#6e7781") if sem else "#3a4250"
         tip = f"Step {s['n']}: {s['text']}"
-        P.append(f'<g><circle cx="{cx}" cy="{cy}" r="20" fill="{fill}">'
+        done = checked is not None and i in checked
+        is_next = (checked is not None and not done
+                   and all(j in checked for j in range(i)))
+        if done:
+            fill = "#2d5a3d"
+        if is_next:
+            P.append(f'<circle cx="{cx}" cy="{cy}" r="26" fill="none" '
+                     f'stroke="#f4d35e" stroke-width="2">'
+                     f'<animate attributeName="opacity" '
+                     f'values="0.9;0.15;0.9" dur="1.6s" '
+                     f'repeatCount="indefinite"/></circle>')
+        ring = ' stroke="#3f8f4f" stroke-width="2"' if done else ""
+        P.append(f'<g><circle cx="{cx}" cy="{cy}" r="20" fill="{fill}"{ring}>'
                  f'<title>{_html.escape(tip)}</title></circle>'
                  f'<text x="{cx}" y="{cy + 5}" text-anchor="middle" '
                  f'font-size="14" font-weight="bold" fill="#fff">'
-                 f'{s["n"]}</text></g>')
+                 f'{"✓" if done else s["n"]}</text></g>')
         y = cy + 40
         for t in s["tags"][:3]:
             oo = by_tag.get(t)
@@ -537,6 +552,294 @@ def agent_trace_svg(n_active: int, n_candidates: int, top_tag: str | None,
              f'next</text>')
     P.append("</svg>")
     return "".join(P)
+
+
+def parse_hold_off(text: str, by_tag) -> dict | None:
+    """Extract the DO NOT ACT YET section (section 3 of the fixed
+    template): the hold-off instruction and the register-verified tags it
+    names. Deterministic parse; None if the answer lacks the section."""
+    import re as _re
+    m = _re.search(r"DO\s+NOT\s+ACT\s+YET[^\n]*?[\u2014\-:\u2013]*\s*(.+?)"
+                   r"(?:Structural\s+decision\s+support|$)", text,
+                   _re.S | _re.I)
+    if not m:
+        return None
+    body = _re.sub(r"[*_#]+", "", m.group(1)).strip()
+    body = _re.sub(r"\s+", " ", body).lstrip("—–-: ").strip()
+    if not body:
+        return None
+    toks = _re.findall(_TAG_TOKEN_RE, body)
+    tags = list(dict.fromkeys(canonicalize_tags(toks, by_tag).values()))
+    return {"text": body, "tags": tags}
+
+
+def agent_pick(text: str, by_tag, cand_tags: list[str]) -> str | None:
+    """Which CANDIDATE the answer's WEIGHING EVIDENCE section favours,
+    inferred deterministically: the candidate tag mentioned most often in
+    section 1 (ties -> first mention). None if the section is missing or
+    names no candidate. Used to compare the agent's stance against the
+    structural top candidate — agreement confirms, disagreement is the
+    moment the operator should read closely."""
+    import re as _re
+    m = _re.search(r"WEIGHING\s+EVIDENCE(.*?)(?:VERIFICATION\s+PLAN|$)",
+                   text, _re.S | _re.I)
+    if not m:
+        return None
+    sec = m.group(1)
+    canon = canonicalize_tags(set(_re.findall(_TAG_TOKEN_RE, sec)), by_tag)
+    cset = set(cand_tags)
+    counts, first = {}, {}
+    for tok, c in canon.items():
+        if c not in cset:
+            continue
+        n = len(_re.findall(_re.escape(tok), sec))
+        counts[c] = counts.get(c, 0) + n
+        pos = sec.find(tok)
+        if pos >= 0:
+            first[c] = min(first.get(c, 10**9), pos)
+    if not counts:
+        return None
+    return max(counts, key=lambda c: (counts[c], -first.get(c, 10**9)))
+
+
+def synthetic_trends(timeline: dict, window: float, by_tag,
+                     seed: str = "", pre: float = 15.0, post: float = 5.0,
+                     step: float = 1.0) -> dict:
+    """SYNTHETIC process trends for demo purposes — generated ONLY from
+    the alarm arrival order (which the operator sees anyway), never from
+    the hidden fault, so the game leaks nothing. Illustrates what the
+    pilot does once real historian data is connected: each alarmed tag
+    drifts from baseline starting a few seconds BEFORE its alarm, crosses
+    its threshold exactly at the alarm time, then plateaus. Direction
+    (high/low) follows the tag's alarm semantics. Deterministic per
+    scenario via `seed`.
+
+    Returns {'t': [...], 'series': {tag: [...]}, 'hi': 80, 'lo': 20,
+             'lead': {tag: seconds of pre-alarm drift}}."""
+    import random
+    from analysis.alarm_priority import alarm_semantics
+    HI, LO, BASE = 80.0, 20.0, 50.0
+    ts = []
+    t = -pre
+    while t <= window + post:
+        ts.append(round(t, 2))
+        t += step
+    series, lead = {}, {}
+    for tag, t_a in timeline.items():
+        rng = random.Random(f"{seed}|{tag}")
+        ld = rng.uniform(6.0, 13.0)
+        lead[tag] = ld
+        o = by_tag.get(tag)
+        sem = alarm_semantics(getattr(o, "type_code", "")) if o else {}
+        low = sem.get("direction") == "low"
+        thr = LO if low else HI
+        vals = []
+        for tt in ts:
+            j = rng.uniform(-1.2, 1.2)
+            if tt < t_a - ld:
+                v = BASE + j
+            elif tt < t_a:
+                p = (tt - (t_a - ld)) / ld            # 0→1 up to alarm
+                v = BASE + (thr - BASE) * (p * p * (3 - 2 * p)) + j  # smoothstep
+            else:
+                over = min(12.0, (tt - t_a) * 1.5)
+                v = thr + (-over if low else over) * 0.8 + j
+            vals.append(round(max(0.0, min(100.0, v)), 2))
+        series[tag] = vals
+    return {"t": ts, "series": series, "hi": HI, "lo": LO, "lead": lead}
+
+
+def trend_svg(trends: dict, timeline: dict, elapsed: float, window: float,
+              active: list[str], by_tag, glow: set | None = None,
+              max_series: int = 8, w: int = 1100) -> str:
+    """Live HMI-style trend chart of the SYNTHETIC series: lines clipped
+    at «now» during playback (they grow with the sweep), dashed HI/LO
+    alarm limits, a dot where each series crosses its limit (= its alarm
+    time), category colors, gold ⌾ label for tags referenced by the AI
+    answer, and an unmissable SYNTHETIC watermark."""
+    import html as _html
+    from config import CATEGORY_COLORS
+    show = [t for t in active if t in trends["series"]][:max_series]
+    if not show:
+        return "<svg xmlns='http://www.w3.org/2000/svg'/>"
+    ts = trends["t"]
+    t0, t1 = ts[0], ts[-1]
+    h, left, right, top, bot = 300, 60, 120, 24, 34
+    def X(t): return left + (t - t0) / (t1 - t0) * (w - left - right)
+    def Y(v): return top + (100 - v) / 100 * (h - top - bot)
+    cut = min(elapsed, t1) if elapsed < window else t1
+    P = [f'<svg viewBox="0 0 {w} {h}" xmlns="http://www.w3.org/2000/svg" '
+         f'style="width:100%;height:auto;font-family:sans-serif">']
+    # axes + thresholds
+    P.append(f'<line x1="{left}" y1="{Y(0)}" x2="{w - right}" y2="{Y(0)}" '
+             f'stroke="#2e3644"/>')
+    for thr, lab in ((trends["hi"], "HI alarm"), (trends["lo"], "LO alarm")):
+        P.append(f'<line x1="{left}" y1="{Y(thr)}" x2="{w - right}" '
+                 f'y2="{Y(thr)}" stroke="#b8442c" stroke-width="1" '
+                 f'stroke-dasharray="6 4" opacity="0.7"/>'
+                 f'<text x="{left - 6}" y="{Y(thr) + 4}" text-anchor="end" '
+                 f'font-size="10" fill="#b8442c">{lab}</text>')
+    P.append(f'<text x="{left - 6}" y="{Y(50) + 4}" text-anchor="end" '
+             f'font-size="10" fill="#556070">base</text>')
+    # t=0 marker (first alarm)
+    P.append(f'<line x1="{X(0)}" y1="{top}" x2="{X(0)}" y2="{Y(0)}" '
+             f'stroke="#3a4250" stroke-dasharray="2 3"/>'
+             f'<text x="{X(0)}" y="{h - 12}" text-anchor="middle" '
+             f'font-size="10" fill="#556070">t=0 (first alarm)</text>')
+    for tag in show:
+        o = by_tag.get(tag)
+        col = CATEGORY_COLORS.get(getattr(o, "category", "other"), "#9aa0a6")
+        pts, last = [], None
+        for tt, v in zip(ts, trends["series"][tag]):
+            if tt <= cut:
+                pts.append(f"{X(tt):.1f},{Y(v):.1f}")
+                last = (tt, v)
+        if not pts:
+            continue
+        P.append(f'<polyline points="{" ".join(pts)}" fill="none" '
+                 f'stroke="{col}" stroke-width="1.8" opacity="0.9"/>')
+        t_a = timeline.get(tag, 0.0)
+        if t_a <= cut:                       # alarm-crossing marker
+            _ia = min(range(len(ts)), key=lambda k: abs(ts[k] - t_a))
+            thr = (trends["hi"]
+                   if trends["series"][tag][_ia] >= 50 else trends["lo"])
+            P.append(f'<circle cx="{X(t_a):.1f}" cy="{Y(thr):.1f}" r="4.5" '
+                     f'fill="#e07b6a" stroke="#141820" stroke-width="1.5">'
+                     f'<title>{_html.escape(tag)} alarm at +{t_a:.0f}s</title>'
+                     f'</circle>')
+        if last:
+            gl = glow and tag in glow
+            P.append(f'<text x="{X(last[0]) + 6:.1f}" y="{Y(last[1]) + 4:.1f}" '
+                     f'font-size="10" font-weight="{"bold" if gl else "normal"}" '
+                     f'fill="{"#f4d35e" if gl else col}">'
+                     f'{"⌾ " if gl else ""}{_html.escape(tag)}</text>')
+    if elapsed < window:                      # sweep «now»
+        P.append(f'<line x1="{X(cut):.1f}" y1="{top}" x2="{X(cut):.1f}" '
+                 f'y2="{Y(0)}" stroke="#f4a259" stroke-width="1.5" '
+                 f'opacity="0.85"/>')
+    P.append(f'<text x="{w - right}" y="{top - 6}" text-anchor="end" '
+             f'font-size="12" font-weight="bold" fill="#e0a800" '
+             f'opacity="0.9">⚠ SYNTHETIC DEMO DATA</text>')
+    P.append("</svg>")
+    return "".join(P)
+
+
+def load_incident(path) -> dict:
+    """Load a historical demo incident (made by tools/make_demo_incident.py)
+    and shape it for the Control Room page: a shower-compatible dict plus
+    a trends dict matching synthetic_trends' format, so the whole pipeline
+    — watch log, auto-brief, trend panel, debrief — replays the recorded
+    incident unchanged. Raises FileNotFoundError/ValueError on bad data."""
+    import csv as _csv
+    import json as _json
+    from pathlib import Path as _P
+    p = _P(path)
+    meta = _json.loads((p / "incident.json").read_text(encoding="utf-8"))
+    timeline: dict[str, float] = {}
+    with (p / "alarms.csv").open(encoding="utf-8") as f:
+        for row in _csv.DictReader(f):
+            timeline[row["tag"]] = float(row["offset_s"])
+    if not timeline:
+        raise ValueError("alarms.csv contains no rows")
+    alarms = sorted(timeline, key=timeline.get)
+    window = max(timeline.values())
+    series: dict[str, dict[float, float]] = {}
+    with (p / "trends.csv").open(encoding="utf-8") as f:
+        for row in _csv.DictReader(f):
+            series.setdefault(row["tag"], {})[float(row["offset_s"])] = \
+                float(row["value_pct"])
+    ts = sorted(next(iter(series.values())).keys()) if series else []
+    lead = {}
+    for tag, t_a in timeline.items():
+        sv = series.get(tag, {})
+        base_ts = [t for t in sv if t < t_a and abs(sv[t] - 50) <= 3.0]
+        lead[tag] = max(4.0, min(15.0, t_a - max(base_ts))) if base_ts else 8.0
+    sol = meta.get("solution", {})
+    shower = {"alarms": alarms, "timeline": timeline, "window": window,
+              "first_up": meta.get("first_up", alarms[0]),
+              "cascade": sol.get("cascade", alarms),
+              "noise": sol.get("noise", []),
+              "exposed": len(alarms),
+              "step": max(1.0, window / max(1, len(alarms) - 1))}
+    trends = {"t": ts,
+              "series": {t: [series[t].get(tt, 50.0) for tt in ts]
+                         for t in series},
+              "hi": 80.0, "lo": 20.0, "lead": lead}
+    return {"meta": meta, "fault": sol.get("fault", alarms[0]),
+            "shower": shower, "trends": trends}
+
+
+def agent_watch_events(state: dict | None, active: list[str], briefs,
+                       by_tag, timeline: dict, window: float,
+                       first_up: str | None,
+                       flood_n: int = 10) -> tuple[dict, list[dict]]:
+    """The proactive agent: compare the CURRENT alarm picture against the
+    last observed state and emit commentary events when something material
+    changed — unprompted, while the shower rolls. Fully deterministic
+    (same structural analysis as the Situation Brief, narrated live);
+    call it every rerun and append the returned events to a session log.
+
+    Events (each {'t','icon','text'}, t = arrival offset that triggered):
+      watch start · leading-hypothesis change · consolidation (>=70 % of
+      the board explained) · alarm flood (ISA-18.2: >=10 alarms in a
+      short burst) · newly arrived alarms the current picture cannot
+      explain · sequence complete summary."""
+    n = len(active)
+    t_now = max((timeline.get(a, 0.0) for a in active), default=0.0)
+    leader = briefs[0]["tag"] if briefs else None
+    m = len(briefs[0]["explains"]) if briefs else 0
+    isolated = {b["tag"] for b in briefs if not b["explains"]} - {leader}
+    st_ = dict(state or {})
+    ev: list[dict] = []
+
+    def _e(icon, text):
+        ev.append({"t": t_now, "icon": icon, "text": text})
+
+    if not state:
+        _e("👁", f"Watch started — first-up **{first_up or active[0]}**. "
+                 f"Following the picture as it develops.")
+        st_ = {"leader": leader, "consol": False, "flood": False,
+               "isolated": set(), "complete": False}
+    else:
+        st_["isolated"] = set(st_.get("isolated") or set())
+        if leader and st_.get("leader") and leader != st_["leader"] and n >= 3:
+            _e("🔁", f"Hypothesis update: **{leader}** now explains "
+                     f"**{m}** of {n - 1} other active alarms — takes the "
+                     f"lead from {st_['leader']}.")
+        elif leader and not st_.get("leader"):
+            _e("🔍", f"First structural candidate: **{leader}**.")
+        st_["leader"] = leader
+
+        if (not st_["consol"] and leader and n >= 5
+                and m >= 0.7 * (n - 1)):
+            _e("📈", f"The picture is consolidating: **{leader}** explains "
+                     f"**{m}/{n - 1}** of the board. Verify before acting — "
+                     f"see the candidate brief.")
+            st_["consol"] = True
+
+        if not st_["flood"] and n >= flood_n:
+            _e("🌊", f"**{n} alarms** in one burst — alarm flood by the "
+                     f"ISA-18.2 yardstick (≥{flood_n}/10 min). Work "
+                     f"P1/P2 first; the candidate ranking is your map.")
+            st_["flood"] = True
+
+        new_iso = isolated - st_["isolated"]
+        if new_iso and n >= 3:
+            lst = ", ".join(f"**{t}**" for t in sorted(new_iso)[:4])
+            _e("❓", f"{lst} cannot be explained by any other active "
+                     f"alarm — independent fault or noise. Keep separate "
+                     f"from the main hypothesis.")
+        st_["isolated"] |= isolated
+
+    if not st_.get("complete") and t_now >= window and n >= 2:
+        iso_n = len(st_.get("isolated") or isolated)
+        _e("🏁", f"Sequence complete: **{n} alarms** in. Leading "
+                 f"hypothesis **{leader}** explains **{m}/{n - 1}**"
+                 + (f"; {iso_n} alarm(s) unexplained by it."
+                    if iso_n else " — the whole board.")
+                 + " Ready for your verification and decision.")
+        st_["complete"] = True
+    return st_, ev
 
 
 def shower_debrief(fault: str, chosen: str | None, noise: list[str],
