@@ -259,6 +259,28 @@ _qa_prev = st.session_state.get(_qa_hist_key) or []
 qa_glow = (set(_canon(_qa_prev[-1][2]["verified"], by_tag).values())
            if _qa_prev else set())
 
+# 📈 SYNTHETIC process trends — demo of the process-data layer the pilot
+# would get from a historian. Generated deterministically from the alarm
+# ARRIVAL ORDER only (no answer leakage), cached per scenario.
+from analysis.control_room import synthetic_trends, trend_svg
+_tr_key = f"syn_trends_{S['fault']}_{len(all_alarms)}"
+syn_tr = st.session_state.get(_tr_key)
+if syn_tr is None:
+    syn_tr = synthetic_trends(timeline, window, by_tag, seed=str(S["fault"]))
+    st.session_state[_tr_key] = syn_tr
+
+# ⚡ chatter: from the dataset in replay mode, synthesized for the noise
+# tags otherwise — the most common nuisance in real alarm management.
+from analysis.control_room import synthetic_chatter
+_ch_key = f"syn_chat_{S['fault']}_{len(all_alarms)}"
+chat = S["shower"].get("chatter")
+if chat is None:
+    chat = st.session_state.get(_ch_key)
+    if chat is None:
+        chat = synthetic_chatter(S["shower"]["noise"], timeline, window,
+                                 seed=str(S["fault"]))
+        st.session_state[_ch_key] = chat
+
 # 🛰️ proactive agent: deterministic watch log, appended as the shower
 # rolls (the page reruns every ~0.5 s during playback). No AI call —
 # the same structural analysis as the brief, narrated the moment the
@@ -270,17 +292,56 @@ _aw_state, _aw_new = agent_watch_events(
     _aw["state"], active, briefs, by_tag, timeline, window,
     S["shower"].get("first_up"))
 _aw = {"state": _aw_state, "log": _aw["log"] + _aw_new}
+
+# 📈 trend layer of the watch: early warnings BEFORE alarms ring, and —
+# when the sequence completes — the structure×time joint verdict plus
+# co-movement noise support. All computed on samples up to «now» only.
+from analysis.control_room import trend_watch_events, structure_time_verdict
+_tw_prev = st.session_state.get(_aw_key + "_tw")
+_tw_state, _tw_new = trend_watch_events(
+    _tw_prev, syn_tr, timeline,
+    elapsed if playing else window + 1.0)
+st.session_state[_aw_key + "_tw"] = _tw_state
+_aw["log"] += _tw_new
+from analysis.control_room import chatter_events
+_ce_prev = st.session_state.get(_aw_key + "_ch")
+_ce_state, _ce_new = chatter_events(
+    _ce_prev, chat, elapsed if playing else window + 1.0)
+st.session_state[_aw_key + "_ch"] = _ce_state
+_aw["log"] += _ce_new
+if any(e["icon"] == "🏁" for e in _aw_new):
+    _aw["log"] += structure_time_verdict(briefs, syn_tr, timeline)
 st.session_state[_aw_key] = _aw
 
-# 📈 SYNTHETIC process trends — demo of the process-data layer the pilot
-# would get from a historian. Generated deterministically from the alarm
-# ARRIVAL ORDER only (no answer leakage), cached per scenario.
-from analysis.control_room import synthetic_trends, trend_svg
-_tr_key = f"syn_trends_{S['fault']}_{len(all_alarms)}"
-syn_tr = st.session_state.get(_tr_key)
-if syn_tr is None:
-    syn_tr = synthetic_trends(timeline, window, by_tag, seed=str(S["fault"]))
-    st.session_state[_tr_key] = syn_tr
+# 🔗 publish the incident context so EVERY page in the app can work on
+# the same situation (topology, NeqSim, HAZOP, drawings, tag register).
+# The hidden fault is only published once the operator has ANSWERED —
+# before that the anchor is the top candidate / first-up, which the
+# operator already sees. Refreshed every rerun so 'top' stays current.
+from incident_context import set_incident
+_inc_top = briefs[0]["tag"] if briefs else None
+_inc_anchor = S["fault"] if done else (_inc_top or S["shower"].get("first_up"))
+set_incident({
+    "title": ((S.get("replay") or {}).get("title")
+              or f"Alarm shower — {len(active)} alarms"),
+    "fault": S["fault"] if done else None,
+    "top": _inc_top,
+    "first_up": S["shower"].get("first_up"),
+    "n_alarms": len(active),
+    "alarms": list(active_sorted),
+    "noise": list(S["shower"].get("noise", [])) if done else [],
+    "system": (str(_inc_anchor).split("-")[0] if _inc_anchor
+               and "-" in str(_inc_anchor) else ""),
+    "drawings": (sorted({d for t in active
+                         for d in drawings_of.get(t, [])})
+                 if plant_mode else []),
+    "source": choice,
+    "answered": done,
+})
+st.sidebar.caption("🔗 This incident is shared with the other pages "
+                   "(topology, NeqSim, HAZOP, drawing analysis, tag "
+                   "register) — they preselect it automatically.")
+
 
 
 m1, m2, m3, m4 = st.columns(4)
@@ -421,7 +482,7 @@ with tab_sit:
                    "debrief shows the shape of the incident at a glance.")
         components.html(
             f"<div style='background:#141820;border-radius:10px;padding:8px'>"
-            f"{alarm_timeline_svg(timeline, active, by_tag, S['shower']['cascade'], S['shower']['noise'], elapsed, window, reveal_roles=done, first_up=S['shower'].get('first_up'), drawings_of=drawings_of or None, glow=qa_glow)}"
+            f"{alarm_timeline_svg(timeline, active, by_tag, S['shower']['cascade'], S['shower']['noise'], elapsed, window, reveal_roles=done, first_up=S['shower'].get('first_up'), drawings_of=drawings_of or None, glow=qa_glow, chatter=chat)}"
             f"</div>",
             height=min(620, 110 + 30 * len(active)), scrolling=True)
 
@@ -540,11 +601,15 @@ with tab_sit:
                      f"the correct group; physical verification must separate them — precisely "
                      f"because direction across a stitch is not provided in the delivery.")
             for line in shower_debrief(S["fault"], S["chosen"], S["shower"]["noise"],
-                                       len(active))[-1:]:
+                                       len(active),
+                                       board=S["shower"]["alarms"],
+                                       first_up=S["shower"].get("first_up"))[-1:]:
                 st.write("• " + line)
         else:
             for line in shower_debrief(S["fault"], S["chosen"], S["shower"]["noise"],
-                                       len(active)):
+                                       len(active),
+                                       board=S["shower"]["alarms"],
+                                       first_up=S["shower"].get("first_up")):
                 st.write("• " + line)
         if plant_mode:
             drawn = sorted({d for t in active for d in drawings_of.get(t, [])})
@@ -778,6 +843,17 @@ with tab_chat:
                             f"~{_ld:.0f}s before its alarm (at "
                             f"+{_ta - _ld:.0f}s); crossed its alarm limit at "
                             f"+{_ta:.0f}s")
+                    _on = sorted((timeline[t] - syn_tr["lead"].get(t, 8.0), t)
+                                 for t in timeline)
+                    for _ct, _cd in (chat or {}).items():
+                        lines.append(
+                            f"- {_ct}: alarmed {len(_cd['alm'])}x within the "
+                            f"window (CHATTER) — unreliable, likely noise")
+                    lines.append(
+                        "- drift onset order (first mover first): "
+                        + " → ".join(f"{t} ({o:+.0f}s)"
+                                     for o, t in _on[:8])
+                        + (" …" if len(_on) > 8 else ""))
                 return "\n".join(lines)
 
             def _staged_generate(prompt: str, slot=None):

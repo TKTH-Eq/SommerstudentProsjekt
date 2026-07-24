@@ -1,6 +1,6 @@
 # Demo incident dataset (SYNTHETIC)
 
-One historical-style incident, 15 alarms over 39 s, anchored 2024-11-07T03:14:00+00:00 (fictive night shift).
+One historical-style incident, 15 alarms over 24 s, anchored 2024-11-07T03:14:00+00:00 (fictive night shift).
 
 | file | content |
 |---|---|

@@ -1,0 +1,558 @@
+{
+ "excerpt": {
+  "summary": "The drawing depicts a Gas Wellhead A4 system, showing the main wellhead tree, chemical injection facilities (Scale Inhibitor, MEOH, MEG), a multiphase flow meter with bypass, and various safety instrumentation. It details hydraulic power supply connections for valve actuation and also includes a slot allocation plan for production wells.",
+  "observations": [
+   {
+    "observation": "Chemical injection lines for Scale Inhibitor, MEOH, and MEG appear to lack clearly tagged individual isolation valves before entering the main well stream, potentially hindering precise control or safe isolation during maintenance.",
+    "deviation": "No flow (of chemical), Less flow (of chemical), Maintenance difficulty",
+    "tags": [
+     {
+      "tag": "H042-P-F-006",
+      "status": "suspect"
+     },
+     {
+      "tag": "H042-P-F-004",
+      "status": "suspect"
+     },
+     {
+      "tag": "H042-P-F-005",
+      "status": "suspect"
+     },
+     {
+      "tag": "42-2000CC",
+      "status": "verified"
+     },
+     {
+      "tag": "42-2000CA",
+      "status": "verified"
+     },
+     {
+      "tag": "42-2000CG",
+      "status": "verified"
+     }
+    ]
+   },
+   {
+    "observation": "A bypass line around the multiphase meter (13-XJ54) is present. While useful for maintenance, it creates a potential for unmeasured flow if the bypass is inadvertently opened or leaks, impacting production accounting and process control.",
+    "deviation": "More flow (unmeasured), Reverse flow",
+    "tags": [
+     {
+      "tag": "13-XJ54",
+      "status": "verified"
+     },
+     {
+      "tag": "13-PDI 2260",
+      "status": "verified"
+     },
+     {
+      "tag": "13-PI 2277",
+      "status": "verified"
+     },
+     {
+      "tag": "13-LL 2277",
+      "status": "new_candidate"
+     },
+     {
+      "tag": "13-PT 2277",
+      "status": "verified"
+     },
+     {
+      "tag": "13-2015PT",
+      "status": "verified"
+     },
+     {
+      "tag": "13-2075PT",
+      "status": "verified"
+     },
+     {
+      "tag": "13-2077PT",
+      "status": "verified"
+     },
+     {
+      "tag": "13-2076PT",
+      "status": "verified"
+     },
+     {
+      "tag": "13-2126PT",
+      "status": "verified"
+     },
+     {
+      "tag": "NOTE 15",
+      "status": "suspect"
+     }
+    ]
+   },
+   {
+    "observation": "Multiple pressure indicators (PI 2260, PI 2256A, PI 2255A, PI 2254A) are present on the wellhead, some with associated Dublok valves (Note 31). The specific pressure isolation philosophy and required integrity level for each tap are not explicitly detailed, posing a potential risk if isolation fails or is compromised.",
+    "deviation": "High pressure, Low pressure, No isolation",
+    "tags": [
+     {
+      "tag": "13-PI 2260",
+      "status": "verified_loose"
+     },
+     {
+      "tag": "13-PI 2256A",
+      "status": "verified"
+     },
+     {
+      "tag": "13-PI 2255A",
+      "status": "verified"
+     },
+     {
+      "tag": "13-PI 2254A",
+      "status": "verified"
+     },
+     {
+      "tag": "13-PI 2256B",
+      "status": "verified"
+     },
+     {
+      "tag": "13-PI 2255B",
+      "status": "verified"
+     },
+     {
+      "tag": "13-PI 2254B",
+      "status": "verified"
+     },
+     {
+      "tag": "NOTE 31",
+      "status": "suspect"
+     }
+    ]
+   },
+   {
+    "observation": "The choke valve is a 'step type valve' (Note 16) and on failure, it will remain in its set position. This design choice implies a potential for loss of flow control if the choke fails, relying on upstream (wing valve 13-ESV 2253) or downstream (quick dump valve 13-XY 2253) isolation for intervention.",
+    "deviation": "No flow, More flow, Less control",
+    "tags": [
+     {
+      "tag": "13-ESV 2253",
+      "status": "verified"
+     },
+     {
+      "tag": "13-XY 2253",
+      "status": "verified"
+     },
+     {
+      "tag": "NOTE 16",
+      "status": "suspect"
+     }
+    ]
+   },
+   {
+    "observation": "Emergency shut-off valves (ESV 2251, ESV 2252, ESV 2253) are critical safety barriers. Their actuation relies on hydraulic power supplied from a Hydraulic Power Unit (HPU). Lack of explicit redundancy or detailed failure modes for the hydraulic supply could compromise the wellhead's emergency shutdown capability.",
+    "deviation": "Failure to close (ESV), Failure to open (ESV), No emergency shutdown",
+    "tags": [
+     {
+      "tag": "13-ESV 2251",
+      "status": "verified"
+     },
+     {
+      "tag": "13-ESV 2252",
+      "status": "verified"
+     },
+     {
+      "tag": "13-ESV 2253",
+      "status": "verified"
+     },
+     {
+      "tag": "H013-P-E-001",
+      "status": "suspect"
+     },
+     {
+      "tag": "H013-P-E-008",
+      "status": "suspect"
+     },
+     {
+      "tag": "H013-P-E-013",
+      "status": "suspect"
+     }
+    ]
+   },
+   {
+    "observation": "Multiple sand detection instruments (SI 2805, SI 2902, SI 2804, SI 3001) and notes related to sand erosion (Notes 11, 12, 14, 15, 27) highlight a known risk. This indicates a potential for pipe/equipment thinning and possible loss of containment if sand production is not effectively monitored and managed, especially near bends and tees.",
+    "deviation": "Erosion, Leak, No detection (of sand)",
+    "tags": [
+     {
+      "tag": "SI 2805",
+      "status": "new_candidate"
+     },
+     {
+      "tag": "SI 2902",
+      "status": "new_candidate"
+     },
+     {
+      "tag": "SI 2804",
+      "status": "new_candidate"
+     },
+     {
+      "tag": "SI 3001",
+      "status": "new_candidate"
+     },
+     {
+      "tag": "13-XE 2270",
+      "status": "verified"
+     },
+     {
+      "tag": "NOTE 11",
+      "status": "suspect"
+     },
+     {
+      "tag": "NOTE 12",
+      "status": "suspect"
+     },
+     {
+      "tag": "NOTE 14",
+      "status": "suspect"
+     },
+     {
+      "tag": "NOTE 15",
+      "status": "suspect"
+     },
+     {
+      "tag": "NOTE 27",
+      "status": "suspect"
+     }
+    ]
+   }
+  ],
+  "possible_symbol_only": [
+   {
+    "tag": "13-XV 2271",
+    "symbol": "Actuated block valve",
+    "status": "verified"
+   },
+   {
+    "tag": "13-ZS 2272 L",
+    "symbol": "Level switch, low (local)",
+    "status": "verified_loose"
+   },
+   {
+    "tag": "13-ZL 2271 H",
+    "symbol": "Level switch, high (panel mounted)",
+    "status": "verified_loose"
+   },
+   {
+    "tag": "13-ZL 2272 L",
+    "symbol": "Level switch, low (panel mounted)",
+    "status": "verified_loose"
+   },
+   {
+    "tag": "13-PI 2260A",
+    "symbol": "Pressure indicator (panel mounted)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-XY 2253",
+    "symbol": "Actuated valve (Quick dump valve, local)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-TI 2263",
+    "symbol": "Temperature indicator (local)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-TT 2263",
+    "symbol": "Temperature transmitter (local)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-PX 2299",
+    "symbol": "Pressure transmitter (panel mounted)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-PDI 2299",
+    "symbol": "Pressure differential indicator (panel mounted)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-PDI 2260",
+    "symbol": "Pressure differential indicator (panel mounted)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-PI 2262A",
+    "symbol": "Pressure indicator (panel mounted)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-HY 2264B",
+    "symbol": "Manual valve",
+    "status": "verified"
+   },
+   {
+    "tag": "13-HY 2264A",
+    "symbol": "Manual valve",
+    "status": "verified"
+   },
+   {
+    "tag": "13-PT 2262",
+    "symbol": "Pressure transmitter (local)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-PI 2277",
+    "symbol": "Pressure indicator (panel mounted)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-LL 2277",
+    "symbol": "Level indicator (panel mounted)",
+    "status": "new_candidate"
+   },
+   {
+    "tag": "13-PT 2277",
+    "symbol": "Pressure transmitter (local)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-HIC 2264",
+    "symbol": "Hand indicator controller (panel mounted)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-ZI 2264",
+    "symbol": "Level indicator (panel mounted)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-ZS 2264 L",
+    "symbol": "Level switch, low (local)",
+    "status": "verified_loose"
+   },
+   {
+    "tag": "13-SI 2805",
+    "symbol": "Sand indicator (panel mounted)",
+    "status": "new_candidate"
+   },
+   {
+    "tag": "13-SI 2902",
+    "symbol": "Sand indicator (panel mounted)",
+    "status": "new_candidate"
+   },
+   {
+    "tag": "13-PI 2282",
+    "symbol": "Pressure indicator (local)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-PI 2260B",
+    "symbol": "Pressure indicator (local)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-ESV 2252",
+    "symbol": "Emergency shut-off valve (master valve)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-XY 2252",
+    "symbol": "Actuated valve (master valve)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-ESV 2253",
+    "symbol": "Emergency shut-off valve (wing valve)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-PI 2285",
+    "symbol": "Pressure indicator (local)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-SI 2701",
+    "symbol": "Sand indicator (local)",
+    "status": "new_candidate"
+   },
+   {
+    "tag": "13-ZS 2279 L",
+    "symbol": "Level switch, low (local)",
+    "status": "verified_loose"
+   },
+   {
+    "tag": "13-ZL 2279 H",
+    "symbol": "Level switch, high (local)",
+    "status": "verified_loose"
+   },
+   {
+    "tag": "13-XV 2279",
+    "symbol": "Actuated block valve",
+    "status": "verified"
+   },
+   {
+    "tag": "13-XY 2279",
+    "symbol": "Actuated valve",
+    "status": "verified"
+   },
+   {
+    "tag": "13-XE 2270",
+    "symbol": "Analyser (local)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-XI 2270",
+    "symbol": "Indicator (local)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-TI 2273",
+    "symbol": "Temperature indicator (local)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-FI 2274",
+    "symbol": "Flow indicator (oil, panel mounted)",
+    "status": "new_candidate"
+   },
+   {
+    "tag": "13-FI 2275A",
+    "symbol": "Flow indicator (water, panel mounted)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-FI 2275B",
+    "symbol": "Flow indicator (gas, panel mounted)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-FI 2275C",
+    "symbol": "Flow indicator (gas, panel mounted)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-NE 2269",
+    "symbol": "Noise element (local)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-PI 2014",
+    "symbol": "Pressure indicator (panel mounted)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-PDI 2014",
+    "symbol": "Pressure differential indicator (panel mounted)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-ZL 2287 H",
+    "symbol": "Level switch, high (local)",
+    "status": "verified_loose"
+   },
+   {
+    "tag": "13-ZS 2287 L",
+    "symbol": "Level switch, low (local)",
+    "status": "verified_loose"
+   },
+   {
+    "tag": "13-HS 2287",
+    "symbol": "Hand switch (local)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-HV 2287",
+    "symbol": "Manual valve",
+    "status": "verified"
+   },
+   {
+    "tag": "13-PI 2286",
+    "symbol": "Pressure indicator (local)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-TI 2286",
+    "symbol": "Temperature indicator (local)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-ESV 2251",
+    "symbol": "Emergency shut-off valve (SSSV)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-XT 2286",
+    "symbol": "Transmitter (general, local)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-PI 2284",
+    "symbol": "Pressure indicator (local)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-SI 3902",
+    "symbol": "Sand indicator (panel mounted)",
+    "status": "new_candidate"
+   },
+   {
+    "tag": "13-SI 3903",
+    "symbol": "Sand indicator (panel mounted)",
+    "status": "new_candidate"
+   },
+   {
+    "tag": "13-SC 2280",
+    "symbol": "Safety controller (panel mounted)",
+    "status": "new_candidate"
+   },
+   {
+    "tag": "13-TI 2280",
+    "symbol": "Temperature indicator (panel mounted)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-TT 2280",
+    "symbol": "Temperature transmitter (local)",
+    "status": "verified"
+   },
+   {
+    "tag": "13-SI 3001",
+    "symbol": "Sand indicator (panel mounted)",
+    "status": "new_candidate"
+   },
+   {
+    "tag": "13-SI 2804",
+    "symbol": "Sand indicator (panel mounted)",
+    "status": "new_candidate"
+   },
+   {
+    "tag": "13-DT 2276",
+    "symbol": "Density transmitter (local)",
+    "status": "new_candidate"
+   },
+   {
+    "tag": "13-FE 2275",
+    "symbol": "Flow element (local)",
+    "status": "new_candidate"
+   },
+   {
+    "tag": "13-PIT 2274",
+    "symbol": "Pressure indicating transmitter (panel mounted)",
+    "status": "new_candidate"
+   },
+   {
+    "tag": "13-FE 2278",
+    "symbol": "Flow element (local)",
+    "status": "new_candidate"
+   },
+   {
+    "tag": "13-FIT 2278",
+    "symbol": "Flow indicating transmitter (panel mounted)",
+    "status": "new_candidate"
+   },
+   {
+    "tag": "13-TIT 2273",
+    "symbol": "Temperature indicating transmitter (panel mounted)",
+    "status": "new_candidate"
+   }
+  ],
+  "tag_totals": {
+   "verified": 66,
+   "verified_loose": 9,
+   "new_candidate": 21,
+   "suspect": 14
+  }
+ },
+ "saved_at": "2026-07-24 10:38"
+}

@@ -113,7 +113,12 @@ if not systems:
     st.error("No system found with both a P&ID and an SCD in data/raw/.")
     st.stop()
 
-system = st.sidebar.selectbox("System", list(systems), format_func=lambda s: f"System {s}")
+from incident_context import incident_banner, match_index
+_inc = incident_banner("system preselected — prepare HAZOP for the "
+                       "incident area", key="hazop")
+system = st.sidebar.selectbox(
+    "System", list(systems), format_func=lambda s: f"System {s}",
+    index=match_index(list(systems), _inc and _inc.get("system")))
 pid_path, scd_path = systems[system]
 
 # lagrede arbeidsark på tvers av systemer — synlig bevis på at arbeidet

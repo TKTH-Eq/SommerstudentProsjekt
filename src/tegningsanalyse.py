@@ -128,8 +128,14 @@ if not drawings:
 
 c1, c2, c3 = st.columns([3, 1, 1])
 with c1:
-    choice = st.selectbox("Drawing", drawings,
-                          format_func=lambda p: p.name)
+    from incident_context import incident_banner, match_index
+    _inc = incident_banner("drawing preselected from the incident",
+                           key="tegn")
+    choice = st.selectbox(
+        "Drawing", drawings, format_func=lambda p: p.name,
+        index=match_index([p.name for p in drawings],
+                          *((_inc.get("drawings") or []) if _inc else []),
+                          _inc and _inc.get("system")))
 with c2:
     dpi = st.number_input("DPI", 100, 300, 200, step=50)
 with c3:

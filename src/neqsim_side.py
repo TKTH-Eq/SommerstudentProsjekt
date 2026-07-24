@@ -366,7 +366,14 @@ if not drawings:
     st.stop()
 
 st.sidebar.title("NeqSim simulation")
-drawing = st.sidebar.selectbox("Drawing (DEXPI-covered only)", drawings)
+from incident_context import incident_banner, match_index
+_inc = incident_banner("drawing preselected — run the fault simulation "
+                       "for the incident component", key="neqsim")
+drawing = st.sidebar.selectbox(
+    "Drawing (DEXPI-covered only)", drawings,
+    index=match_index(drawings,
+                      *((_inc.get("drawings") or []) if _inc else []),
+                      _inc and _inc.get("system")))
 pressure = st.sidebar.number_input("Representative pressure [bara]", value=60.0, step=5.0,
                                    help="The DEXPI export does not contain actual operating pressure — "
                                         "this is an assumed value you can adjust.")

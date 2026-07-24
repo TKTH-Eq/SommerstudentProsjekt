@@ -193,7 +193,13 @@ if not files:
              "'Semantum Huldra P&IDS').")
     st.stop()
 
-choice = st.sidebar.selectbox("Drawing (system · document)", sorted(files))
+from incident_context import incident_banner, match_index, anchor_tag
+_inc = incident_banner("drawing and focus preselected below", key="topo")
+choice = st.sidebar.selectbox(
+    "Drawing (system · document)", sorted(files),
+    index=match_index(sorted(files),
+                      *((_inc.get("drawings") or []) if _inc else []),
+                      _inc and _inc.get("system")))
 xml_path = files[choice]
 topo = parse_topology(str(xml_path), xml_path.stat().st_mtime)
 g = build_graph(topo, source=xml_path.name)
@@ -216,8 +222,10 @@ if g.number_of_edges() == 0:
     st.stop()
 
 st.sidebar.divider()
-focus = st.sidebar.selectbox("Focus on tag",
-                             ["(entire graph)"] + sorted(connected))
+focus = st.sidebar.selectbox(
+    "Focus on tag", ["(entire graph)"] + sorted(connected),
+    index=match_index(["(entire graph)"] + sorted(connected),
+                      anchor_tag(_inc)))
 
 if focus != "(entire graph)":
     st.markdown(f"**{focus}** &nbsp; "

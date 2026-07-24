@@ -95,7 +95,7 @@ def _real_model():
 
 def build(args) -> dict:
     from analysis.alarm_priority import alarm_semantics
-    from analysis.control_room import alarm_shower, synthetic_trends
+    from analysis.control_room import alarm_shower, synthetic_trends, synthetic_chatter, eng_of
 
     if args.fallback:
         g, by_tag, fault = _fallback_model()
@@ -104,18 +104,30 @@ def build(args) -> dict:
     else:
         g, by_tag = _real_model()
         fault = args.fault
-        if not fault:  # pick a fault with a rich, but not absurd, cascade
-            from analysis.control_room import scenario_order, alarm_capable
+        if not fault:  # pick a fault with a rich, but not absurd, cascade —
+            # and REQUIRE the root itself to be alarm-capable: a silent
+            # root (e.g. a hand valve) never rings, never reaches the
+            # board, and the operator could never point at it.
+            from analysis.control_room import (scenario_order, alarm_capable)
             best = None
             for n in g.nodes:
+                if not alarm_capable(by_tag.get(n)):
+                    continue
                 k = sum(1 for t in scenario_order(g, n)
                         if alarm_capable(by_tag.get(t)))
                 if 8 <= k <= args.alarms and (best is None or k > best[1]):
                     best = (n, k)
             if not best:
-                sys.exit("No fault with a suitable cascade found; "
-                         "pass --fault explicitly.")
+                sys.exit("No alarm-capable fault with a suitable cascade "
+                         "found; pass --fault explicitly.")
             fault = best[0]
+        else:
+            from analysis.control_room import alarm_capable
+            if not args.fallback and not alarm_capable(by_tag.get(fault)):
+                print(f"WARNING: {fault} is not alarm-capable — it will "
+                      f"never ring, so the operator cannot point at it. "
+                      f"The debrief will explain this, but consider an "
+                      f"alarming root for training scenarios.")
 
     # size the noise so the board lands on ~args.alarms
     shower = alarm_shower(g, fault, noise=2, seed=args.seed, by_tag=by_tag,
@@ -127,6 +139,8 @@ def build(args) -> dict:
     timeline = {t: shower["timeline"][t] for t in alarms}
     window = max(timeline.values())
     trends = synthetic_trends(timeline, window, by_tag, seed=str(args.seed))
+    chatter = synthetic_chatter([t for t in shower["noise"] if t in timeline],
+                                timeline, window, seed=str(args.seed))
 
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -135,24 +149,34 @@ def build(args) -> dict:
         wcsv = csv.writer(f)
         wcsv.writerow(["time_iso", "offset_s", "tag", "type_code",
                        "priority", "direction", "message", "state"])
-        for tag in sorted(timeline, key=timeline.get):
+        events = []                      # (t, tag, state)
+        for tag in timeline:
+            if tag in chatter:
+                for a in chatter[tag]["alm"]:
+                    events.append((a, tag, "ALM"))
+                for r in chatter[tag]["rtn"]:
+                    events.append((r, tag, "RTN"))
+            else:
+                events.append((timeline[tag], tag, "ALM"))
+        for t, tag, state in sorted(events):
             o = by_tag.get(tag)
             sem = alarm_semantics(getattr(o, "type_code", "")) if o else {}
-            t = timeline[tag]
             wcsv.writerow([(START + timedelta(seconds=t)).isoformat(),
                            f"{t:.1f}", tag,
                            getattr(o, "type_code", ""),
                            f"P{sem.get('priority', '?')}",
                            sem.get("direction") or "",
-                           _msg(tag, sem), "ALM"])
+                           _msg(tag, sem), state])
 
     with (out / "trends.csv").open("w", newline="", encoding="utf-8") as f:
         wcsv = csv.writer(f)
-        wcsv.writerow(["time_iso", "offset_s", "tag", "value_pct"])
+        wcsv.writerow(["time_iso", "offset_s", "tag", "value_pct",
+                       "value_eng", "unit"])
         for tag in sorted(timeline, key=timeline.get):
             for tt, v in zip(trends["t"], trends["series"][tag]):
+                ev, eu = eng_of(tag, v, by_tag)
                 wcsv.writerow([(START + timedelta(seconds=tt)).isoformat(),
-                               f"{tt:.1f}", tag, v])
+                               f"{tt:.1f}", tag, v, f"{ev:.2f}", eu])
 
     meta = {
         "title": "Demo incident — 1st stage separator pressure excursion",
@@ -166,6 +190,7 @@ def build(args) -> dict:
         "alarm_count": len(alarms),
         "first_up": shower.get("first_up"),
         "sample_rate_hz": 1,
+        "chatter": {t: len(d["alm"]) for t, d in chatter.items()},
         "generator": {"seed": args.seed, "step_s": args.step,
                       "mode": "fallback" if args.fallback else "real-model"},
         "solution": {"fault": fault,

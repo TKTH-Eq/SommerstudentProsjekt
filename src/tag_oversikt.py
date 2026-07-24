@@ -164,8 +164,16 @@ sel_status = st.sidebar.multiselect("Status", status_opts, default=status_opts,
                                     format_func=lambda s: STATUS_LABELS[s])
 only_safety = st.sidebar.checkbox("Safety-related tags only")
 query = st.sidebar.text_input("Search tag", placeholder="e.g., PT48 or XV")
+from incident_context import incident_banner, tag_in_incident
+_inc = incident_banner("tick the filter below to see only the incident tags",
+                       key="tagreg")
+_inc_only = bool(_inc) and st.sidebar.checkbox(
+    f"🔗 Only incident tags ({_inc['n_alarms']})" if _inc else "",
+    value=False)
 
 view = df[df["system"].isin(sel_systems) & df["status"].isin(sel_status)]
+if _inc_only:
+    view = view[view["tag"].apply(lambda t: tag_in_incident(t, _inc))]
 if sel_types:
     view = view[view["type"].isin(sel_types)]
 if only_safety:

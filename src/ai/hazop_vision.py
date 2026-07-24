@@ -138,7 +138,7 @@ def vision_hazop_excerpt(pdf_path: Path, known_tags, dpi: int = 200,
     schema and the tag rules are NOT user-editable, because the verification
     layer depends on them. Steering changes attention, never the contract."""
     from google.genai import types
-    from extraction.vision_extract import _render_png
+    from extraction.vision_extract import render_png as _render_png
     from ai.gemini_client import generate
 
     prompt = PROMPT
@@ -234,7 +234,7 @@ def vision_check_finding(pdf_path: Path, finding: dict, known_tags,
     """
     import json as _json
     from google.genai import types
-    from extraction.vision_extract import _render_png
+    from extraction.vision_extract import render_png as _render_png
     from ai.gemini_client import generate
 
     _, target = _CHECK_TARGETS.get(finding.get("rule", ""),

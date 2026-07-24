@@ -71,20 +71,21 @@ def assist(graph: nx.DiGraph, by_tag, active: list[str]) -> dict:
         ch = out["checks"]
         if ch["loop_mates"]:
             out["advice"].append(
-                f"Kryssjekk redundante målinger i samme løkke før aksjon: "
-                f"{', '.join(ch['loop_mates'])} — er avviket reelt?")
+                f"Cross-check redundant measurements in the same loop before "
+                f"acting: {', '.join(ch['loop_mates'])} — is the deviation real?")
         if ch["upstream_sensors"]:
             out["advice"].append(
-                f"Verifiser oppstrøms: {', '.join(ch['upstream_sensors'])} — "
-                f"kommer forstyrrelsen derfra, er {primary} et symptom, "
-                f"ikke årsaken.")
+                f"Verify upstream: {', '.join(ch['upstream_sensors'])} — if the "
+                f"disturbance comes from there, {primary} is a symptom, "
+                f"not the cause.")
         if out["barriers"]:
             out["advice"].append(
-                f"Relevante barrierer i kjeden: {', '.join(out['barriers'])} — "
-                f"bekreft status/tilgjengelighet.")
+                f"Relevant barriers in the chain: {', '.join(out['barriers'])} — "
+                f"confirm status/availability.")
         out["advice"].append(
-            "Grafen viser strukturell nåbarhet, ikke prosesskonsekvens — "
-            "bekreft mot tegning, redundans og driftsmodus før inngrep.")
+            "The graph shows structural reachability, not process consequence — "
+            "confirm against the drawing, redundancy and operating mode "
+            "before intervening.")
     return out
 
 
@@ -625,9 +626,19 @@ def synthetic_trends(timeline: dict, window: float, by_tag,
         ts.append(round(t, 2))
         t += step
     series, lead = {}, {}
-    for tag, t_a in timeline.items():
+    prev_onset = None
+    for tag in sorted(timeline, key=timeline.get):   # arrival order
+        t_a = timeline[tag]
         rng = random.Random(f"{seed}|{tag}")
         ld = rng.uniform(6.0, 13.0)
+        # temporal coherence: drift ONSET order must follow arrival order
+        # (earlier alarm ⇒ earlier or equal onset) — still derived from
+        # arrival only, so nothing about the hidden fault leaks.
+        onset = t_a - ld
+        if prev_onset is not None and onset < prev_onset + 0.5:
+            onset = prev_onset + 0.5
+            ld = max(1.5, t_a - onset)
+        prev_onset = onset
         lead[tag] = ld
         o = by_tag.get(tag)
         sem = alarm_semantics(getattr(o, "type_code", "")) if o else {}
@@ -709,10 +720,12 @@ def trend_svg(trends: dict, timeline: dict, elapsed: float, window: float,
                      f'</circle>')
         if last:
             gl = glow and tag in glow
+            _ev, _eu = eng_of(tag, last[1], by_tag)
             P.append(f'<text x="{X(last[0]) + 6:.1f}" y="{Y(last[1]) + 4:.1f}" '
                      f'font-size="10" font-weight="{"bold" if gl else "normal"}" '
                      f'fill="{"#f4d35e" if gl else col}">'
-                     f'{"⌾ " if gl else ""}{_html.escape(tag)}</text>')
+                     f'{"⌾ " if gl else ""}{_html.escape(tag)} · '
+                     f'{_ev:.0f} {_eu}</text>')
     if elapsed < window:                      # sweep «now»
         P.append(f'<line x1="{X(cut):.1f}" y1="{top}" x2="{X(cut):.1f}" '
                  f'y2="{Y(0)}" stroke="#f4a259" stroke-width="1.5" '
@@ -736,9 +749,19 @@ def load_incident(path) -> dict:
     p = _P(path)
     meta = _json.loads((p / "incident.json").read_text(encoding="utf-8"))
     timeline: dict[str, float] = {}
+    _alm: dict[str, list[float]] = {}
+    _rtn: dict[str, list[float]] = {}
     with (p / "alarms.csv").open(encoding="utf-8") as f:
         for row in _csv.DictReader(f):
-            timeline[row["tag"]] = float(row["offset_s"])
+            t = float(row["offset_s"])
+            if row.get("state", "ALM").upper() == "RTN":
+                _rtn.setdefault(row["tag"], []).append(t)
+                continue
+            _alm.setdefault(row["tag"], []).append(t)
+            if row["tag"] not in timeline or t < timeline[row["tag"]]:
+                timeline[row["tag"]] = t
+    chatter = {t: {"alm": sorted(a), "rtn": sorted(_rtn.get(t, []))}
+               for t, a in _alm.items() if len(a) >= 3}
     if not timeline:
         raise ValueError("alarms.csv contains no rows")
     alarms = sorted(timeline, key=timeline.get)
@@ -760,6 +783,7 @@ def load_incident(path) -> dict:
               "cascade": sol.get("cascade", alarms),
               "noise": sol.get("noise", []),
               "exposed": len(alarms),
+              "chatter": chatter,
               "step": max(1.0, window / max(1, len(alarms) - 1))}
     trends = {"t": ts,
               "series": {t: [series[t].get(tt, 50.0) for tt in ts]
@@ -767,6 +791,164 @@ def load_incident(path) -> dict:
               "hi": 80.0, "lo": 20.0, "lead": lead}
     return {"meta": meta, "fault": sol.get("fault", alarms[0]),
             "shower": shower, "trends": trends}
+
+
+ENG_RANGES = {"P": (0.0, 120.0, "barg"), "T": (0.0, 200.0, "°C"),
+              "F": (0.0, 500.0, "m³/h"), "L": (0.0, 100.0, "%")}
+
+
+def eng_of(tag: str, pct: float, by_tag=None) -> tuple[float, str]:
+    """Map a normalized 0–100 % value to plausible ENGINEERING UNITS by
+    tag type (P→barg, T→°C, F→m³/h, L→%). Display cosmetics only — the
+    underlying synthetic values stay normalized; this just removes the
+    most obvious 'this is simulated' signal from labels and exports."""
+    import re as _re
+    tc = getattr(by_tag.get(tag), "type_code", "") if by_tag else ""
+    letter = (tc or "").strip()[:1].upper()
+    if not letter:
+        m = _re.search(r"([A-Z])[A-Z]*\d", tag.replace("-", ""))
+        letter = m.group(1) if m else "L"
+    lo, hi, unit = ENG_RANGES.get(letter, (0.0, 100.0, "%"))
+    return lo + (hi - lo) * pct / 100.0, unit
+
+
+def synthetic_chatter(noise_tags: list[str], timeline: dict, window: float,
+                      seed: str = "") -> dict:
+    """SYNTHETIC alarm chatter — the most common nuisance in real alarm
+    management, absent from clean demos: pick ~half of the NOISE tags and
+    give them repeated ALM→RTN→ALM activations after their first alarm.
+    Deterministic per seed; cascade tags never chatter (their alarms are
+    'real'). Returns {tag: {'alm': [t...], 'rtn': [t...]}} — 'alm'[0] is
+    the original activation from the timeline."""
+    import random
+    rng = random.Random(f"{seed}|chatter")
+    picks = [t for t in sorted(noise_tags) if t in timeline]
+    picks = picks[:max(1, len(picks) // 2)] if picks else []
+    out = {}
+    for tag in picks:
+        t0 = timeline[tag]
+        alm, rtn = [t0], []
+        cur = t0
+        for _ in range(rng.randint(2, 4)):          # re-activations
+            r = cur + rng.uniform(1.5, 4.0)
+            a = r + rng.uniform(1.0, 3.0)
+            if a > window + 8.0:
+                break
+            rtn.append(round(r, 1))
+            alm.append(round(a, 1))
+            cur = a
+        if len(alm) >= 3:                           # only real chatterers
+            out[tag] = {"alm": alm, "rtn": rtn}
+    return out
+
+
+def chatter_events(state: dict | None, chatter: dict,
+                   elapsed: float) -> tuple[dict, list[dict]]:
+    """Watch layer for chatter: when a tag reaches its 3rd activation
+    within the window, flag it once — with the ISA-18.2 remedy (shelving)
+    and the operational advice (treat as unreliable until it holds)."""
+    st_ = {"flagged": set(state.get("flagged") or set()) if state else set()}
+    ev: list[dict] = []
+    for tag, d in (chatter or {}).items():
+        if tag in st_["flagged"]:
+            continue
+        n = sum(1 for a in d["alm"] if a <= elapsed)
+        if n >= 3:
+            span = elapsed - d["alm"][0]
+            ev.append({"t": elapsed, "icon": "⚡", "text":
+                       f"**{tag}** has alarmed {n}× in {span:.0f} s — "
+                       f"CHATTERING. Shelving candidate per ISA-18.2; "
+                       f"treat as unreliable noise until it holds."})
+            st_["flagged"].add(tag)
+    return st_, ev
+
+
+def trend_watch_events(state: dict | None, trends: dict, timeline: dict,
+                       elapsed: float) -> tuple[dict, list[dict]]:
+    """EARLY WARNING from the (synthetic) trends: while the shower rolls,
+    detect tags that are drifting from baseline but have NOT alarmed yet,
+    and estimate time-to-limit from the current slope. Uses ONLY samples
+    up to «now» — the agent never peeks ahead. Deterministic; one warning
+    per tag. This is the pilot capability real historian data unlocks:
+    the agent runs AHEAD of the alarm list instead of reacting to it."""
+    st_ = {"warned": set(state.get("warned") or set()) if state else set()}
+    ev: list[dict] = []
+    ts = trends["t"]
+    for tag, t_a in timeline.items():
+        if t_a <= elapsed or tag in st_["warned"]:
+            continue                      # already alarmed / already warned
+        vis = [(tt, v) for tt, v in zip(ts, trends["series"][tag])
+               if tt <= elapsed]
+        if len(vis) < 4:
+            continue
+        v = vis[-1][1]
+        dev = v - 50.0
+        if abs(dev) < 6.0:
+            continue                      # still within baseline noise
+        (ta_, va_), (tb_, vb_) = vis[-4], vis[-1]
+        slope = (vb_ - va_) / max(0.5, tb_ - ta_)     # %/s
+        thr = trends["hi"] if dev > 0 else trends["lo"]
+        eta = ((thr - v) / slope
+               if slope and (thr - v) * slope > 0 else None)
+        if eta is not None and 0 < eta <= 30:
+            txt = (f"**{tag}** is drifting from baseline ({v:.0f} %) — "
+                   f"at this rate it reaches its alarm limit in "
+                   f"~{eta:.0f} s. *(synthetic trend)*")
+        else:
+            txt = (f"**{tag}** is drifting from baseline ({v:.0f} %) — "
+                   f"no alarm yet; watch it. *(synthetic trend)*")
+        ev.append({"t": elapsed, "icon": "📈" if dev > 0 else "📉",
+                   "text": txt})
+        st_["warned"].add(tag)
+    return st_, ev
+
+
+def structure_time_verdict(briefs, trends: dict, timeline: dict) -> list[dict]:
+    """At sequence completion: combine STRUCTURAL evidence (explains-count)
+    with TEMPORAL evidence (who moved first, from drift onsets) into a
+    joint verdict — agreement is confirming, disagreement is exactly when
+    the operator should slow down. Also flags alarmed tags whose drift
+    window is uncorrelated with the main development (noise support).
+    Deterministic; trends are synthetic and said to be."""
+    if not timeline:
+        return []
+    onset = {t: timeline[t] - trends.get("lead", {}).get(t, 8.0)
+             for t in timeline}
+    first_mover = min(onset, key=onset.get)
+    w_end = max(timeline.values())
+    ev: list[dict] = []
+    leader = briefs[0]["tag"] if briefs else None
+    if leader:
+        if first_mover == leader:
+            ev.append({"t": w_end, "icon": "🤝", "text":
+                       f"Structure and time point the same way: "
+                       f"**{leader}** explains most of the board AND moved "
+                       f"first (drift onset {onset[leader]:+.0f} s). "
+                       f"*(synthetic trend)*"})
+        else:
+            ev.append({"t": w_end, "icon": "⚖️", "text":
+                       f"Structural evidence favours **{leader}**, but "
+                       f"**{first_mover}** moved FIRST (onset "
+                       f"{onset[first_mover]:+.0f} s vs "
+                       f"{onset.get(leader, 0):+.0f} s). With real data this "
+                       f"split is exactly when to slow down and verify. "
+                       f"*(synthetic trend)*"})
+        # co-movement: isolated candidates far from the main cluster
+        main = sorted(onset[t] for t in
+                      [leader, *briefs[0]["explains"]] if t in onset)
+        if main:
+            med = main[len(main) // 2]
+            for b in briefs[1:]:
+                t = b["tag"]
+                if not b["explains"] and t in onset \
+                        and abs(onset[t] - med) > 8.0:
+                    ev.append({"t": w_end, "icon": "🔬", "text":
+                               f"**{t}**'s drift window is uncorrelated "
+                               f"with the main development (onset "
+                               f"{onset[t]:+.0f} s vs cluster ~{med:+.0f} s)"
+                               f" — supports the noise hypothesis. "
+                               f"*(synthetic trend)*"})
+    return ev
 
 
 def agent_watch_events(state: dict | None, active: list[str], briefs,
@@ -843,24 +1025,43 @@ def agent_watch_events(state: dict | None, active: list[str], briefs,
 
 
 def shower_debrief(fault: str, chosen: str | None, noise: list[str],
-                   n_active: int) -> list[str]:
-    lines = [f"Faktisk feilkilde: {fault}."]
+                   n_active: int, board: list[str] | None = None,
+                   first_up: str | None = None) -> list[str]:
+    lines = [f"Actual fault origin: {fault}."]
+    silent_root = board is not None and fault not in board
+    if silent_root:
+        lines[0] = (f"Actual fault origin: {fault} — NOT alarm-capable "
+                    f"(e.g. a manual valve/equipment without "
+                    f"instrumentation). The source itself NEVER rings and "
+                    f"was therefore not on the board — a realistic and "
+                    f"difficult case: the root is silent, only the "
+                    f"symptoms speak.")
+        if chosen == fault:
+            pass  # unreachable via the board, but keep the standard branch
+        elif chosen is not None and chosen == first_up:
+            lines.append(f"You pointed at {chosen} — the source's FIRST "
+                         f"alarming symptom, as close to the root as an "
+                         f"operator can get from the board alone. Counts "
+                         f"as a hit: the next step in the field would be "
+                         f"to inspect upstream of {chosen}, where {fault} "
+                         f"sits.")
+            chosen = None  # verdict delivered; skip the generic branches
     if chosen == fault:
-        lines.append("Riktig — du identifiserte kilden i alarmdusjen.")
+        lines.append("Correct — you identified the source in the alarm shower.")
     elif chosen in noise:
-        lines.append(f"{chosen} var en STØYALARM uten kobling til hendelsen — "
-                     f"i en ekte dusj er nettopp urelatert skravling den "
-                     f"vanligste fellen.")
+        lines.append(f"{chosen} was a NOISE ALARM with no connection to the "
+                     f"incident — in a real shower, unrelated chatter is "
+                     f"precisely the most common trap.")
     elif chosen is not None:
-        lines.append(f"{chosen} var et nedstrøms SYMPTOM av {fault} — "
-                     f"strukturbeviset å se etter: kilden forklarer flest av "
-                     f"de andre alarmene, symptomet forklarer få.")
+        lines.append(f"{chosen} was a downstream SYMPTOM of {fault} — the "
+                     f"structural evidence to look for: the source explains "
+                     f"most of the other alarms, the symptom explains few.")
     if noise:
-        lines.append(f"Støyalarmer i bildet: {', '.join(noise)} — uavhengige "
-                     f"av hendelsen.")
-    lines.append(f"Totalt {n_active} samtidige alarmer. Treningsscenario på "
-                 f"syntetiske data — assistentens brief var strukturell, "
-                 f"vurderingen var din.")
+        lines.append(f"Noise alarms in the picture: {', '.join(noise)} — "
+                     f"independent of the incident.")
+    lines.append(f"A total of {n_active} concurrent alarms. Training "
+                 f"scenario on synthetic data — the assistant's brief was "
+                 f"structural, the judgment was yours.")
     return lines
 
 
@@ -868,18 +1069,20 @@ def debrief(fault: str, isolated: str | None, alarms_seen: int,
             total_cascade: int) -> list[str]:
     """Post-scenario feedback: did the operator isolate the true origin,
     and how early?"""
-    lines = [f"Faktisk feilkilde i scenariet: {fault}."]
+    lines = [f"Actual fault origin in the scenario: {fault}."]
     if isolated is None:
-        lines.append("Ingen isolasjon ble utført — kaskaden løp "
-                     f"{alarms_seen} av {total_cascade} mulige alarmer.")
+        lines.append("No isolation was performed — the cascade ran "
+                     f"{alarms_seen} of {total_cascade} possible alarms.")
     elif isolated == fault:
-        lines.append(f"Riktig komponent isolert ({isolated}) etter "
-                     f"{alarms_seen} alarm(er) — kaskaden stoppet ved kilden.")
+        lines.append(f"Correct component isolated ({isolated}) after "
+                     f"{alarms_seen} alarm(s) — the cascade stopped at "
+                     f"the source.")
     else:
-        lines.append(f"Isolerte {isolated}, men kilden var {fault} — "
-                     f"nedstrøms isolasjon stopper symptomer, ikke årsaken.")
-    lines.append("Treningsscenario på syntetiske data — assistentens forslag "
-                 "var strukturelle, operatørens dømmekraft avgjorde.")
+        lines.append(f"Isolated {isolated}, but the source was {fault} — "
+                     f"downstream isolation stops symptoms, not the cause.")
+    lines.append("Training scenario on synthetic data — the assistant's "
+                 "suggestions were structural, the operator's judgment "
+                 "decided.")
     return lines
 
 def alarm_timeline_svg(timeline: dict, shown: list[str], by_tag,
@@ -889,6 +1092,7 @@ def alarm_timeline_svg(timeline: dict, shown: list[str], by_tag,
                        first_up: str | None = None,
                        drawings_of: dict | None = None,
                        glow: set | None = None,
+                       chatter: dict | None = None,
                        w: int = 1100) -> str:
     """Arrival timeline of the alarm shower: one row per alarm (in arrival
     order), a dot at its +t offset, colored by tag category. While the
@@ -958,6 +1162,14 @@ def alarm_timeline_svg(timeline: dict, shown: list[str], by_tag,
             P.append(f'<circle cx="{x:.1f}" cy="{y}" r="12" fill="none" '
                      f'stroke="#f4d35e" stroke-width="2" opacity="0.85" '
                      f'stroke-dasharray="3 2"/>')
+        if chatter and t in chatter:      # re-activations: hollow dots
+            for _a in chatter[t]["alm"][1:]:
+                if _a <= elapsed or reveal_roles:
+                    P.append(f'<circle cx="{px(_a):.1f}" cy="{y}" r="4" '
+                             f'fill="none" stroke="{dot_color(t)}" '
+                             f'stroke-width="1.5" opacity="0.8">'
+                             f'<title>{t} re-alarmed at +{_a:.0f}s '
+                             f'(chatter)</title></circle>')
         ring = (' stroke="#f4d35e" stroke-width="2.5"'
                 if reveal_roles and t == first_up and t in cascade_set else
                 ' stroke="#f4a259" stroke-width="1.5"'
@@ -1090,8 +1302,9 @@ def layered_cause_svg(graph: nx.DiGraph, center: str, active: list[str],
     P = [f'<svg viewBox="0 0 {w} {h}" xmlns="http://www.w3.org/2000/svg" '
          f'style="width:100%;height:auto;font-family:sans-serif">']
     for ci, d in enumerate(xs):
-        label = ("valgt" if d == 0 else
-                 f"{abs(d)} hopp {'nedstrøms' if d > 0 else 'oppstrøms'}")
+        label = ("selected" if d == 0 else
+                 f"{abs(d)} hop{'s' if abs(d) > 1 else ''} "
+                 f"{'downstream' if d > 0 else 'upstream'}")
         P.append(f'<text x="{60 + ci * colw + colw // 2}" y="30" '
                  f'text-anchor="middle" font-size="12" fill="#888">'
                  f'{label}</text>')
@@ -1100,8 +1313,8 @@ def layered_cause_svg(graph: nx.DiGraph, center: str, active: list[str],
         mid = (x1 + x2) / 2
         P.append(f'<path d="M{x1} {y1} Q{mid} {(y1 + y2) / 2 - 26} {x2} {y2}" '
                  f'fill="none" stroke="#9aa" stroke-width="1.6" opacity="0.7" '
-                 f'marker-end="url(#ar)"><title>{u} → {v}: {l} hopp '
-                 f'(mellomledd alarmerer ikke)</title></path>')
+                 f'marker-end="url(#ar)"><title>{u} → {v}: {l} hops '
+                 f'(intermediates do not alarm)</title></path>')
     P.append('<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" '
              'markerWidth="6" markerHeight="6" orient="auto">'
              '<path d="M0 0L10 5L0 10z" fill="#9aa"/></marker></defs>')
@@ -1120,7 +1333,7 @@ def layered_cause_svg(graph: nx.DiGraph, center: str, active: list[str],
                  f'font-size="10" fill="#ddd">{_html.escape(n)}</text></g>')
     if trunc:
         P.append(f'<text x="{w - 10}" y="{h - 8}" text-anchor="end" '
-                 f'font-size="11" fill="#888">+{trunc} alarmer utenfor '
-                 f'visningen (maks {per_col} per kolonne)</text>')
+                 f'font-size="11" fill="#888">+{trunc} alarms outside '
+                 f'the view (max {per_col} per column)</text>')
     P.append("</svg>")
     return "".join(P)

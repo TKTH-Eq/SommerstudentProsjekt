@@ -4,35 +4,40 @@
   "synthetic": true,
   "note": "Alarm ORDER and cascade come from the structural model (real in real-model mode); timestamps and process values are generated. Not measured plant data.",
   "start_iso": "2024-11-07T03:14:00+00:00",
-  "window_s": 38.91,
+  "window_s": 23.52,
   "alarm_count": 15,
-  "first_up": "20-PSHH2022",
+  "first_up": "13-2104PT",
   "sample_rate_hz": 1,
+  "chatter": {
+    "13-2430PT": 3,
+    "24-LY2162A": 3,
+    "27-PT4823": 3
+  },
   "generator": {
     "seed": 42,
     "step_s": 3.0,
     "mode": "real-model"
   },
   "solution": {
-    "fault": "20-2031VF",
+    "fault": "13-2104PT",
     "cascade": [
-      "20-2004PT",
-      "20-TT2010",
-      "20-2002PT",
-      "20-TI2010",
-      "20-PT2012",
-      "20-2005PT",
-      "20-PT2018",
-      "20-PT2019",
-      "20-2003PT",
-      "20-PSE2018",
-      "20-PSHH2021",
-      "20-PI2019",
-      "20-PSHH2022",
-      "20-PSE2019"
+      "13-2101PT",
+      "13-2102PT",
+      "13-2103PT",
+      "13-2099PT",
+      "13-2104PT",
+      "13-2098PT",
+      "13-2097PT",
+      "13-2096PT",
+      "13-2100PT"
     ],
     "noise": [
-      "71-PI2007"
+      "45-ZL4805",
+      "71-XY2015",
+      "45-PT4831",
+      "13-2430PT",
+      "27-PT4823",
+      "24-LY2162A"
     ]
   }
 }

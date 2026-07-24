@@ -23,7 +23,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from extraction.tag_extractor import extract_tags
-from extraction.vision_extract import _render_png
+from extraction.vision_extract import render_png as _render_png
 from ai.hazop_vision import vision_hazop_excerpt
 from ai.ai_cache import save_vision
 
