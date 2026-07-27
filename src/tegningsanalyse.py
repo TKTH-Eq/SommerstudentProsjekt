@@ -42,15 +42,17 @@ CLASS_INFO = {
     "gate_open":       ("Gate valve, open",   "gate_open.png",      "green"),
     "gate_closed":     ("Gate valve, closed", "gate_closed.png",    "red"),
     "ball_valve":      ("Ball valve",         "cand_ball.png",      "orange"),
+    "ball_open":       ("Ball valve, open",   "cand_ball.png",      "orange"),
+    "ball_closed":     ("Ball valve, closed", "cand_ball_closed.png", "dark orange"),
     "globe_valve":     ("Globe valve",        "cand_globe.png",     "purple"),
     "check_valve":     ("Check valve",        "cand_check.png",     "turquoise"),
     "butterfly_valve": ("Butterfly valve",    "cand_butterfly.png", "pink"),
     "reducer":         ("Reducer",            "cand_reducer.png",   "brown"),
     "other_valve":     ("Other valves",       None,                 "blue"),
 }
-COLOR_LEGEND = ("green = gate open · red = gate closed · orange = ball · "
-                "purple = globe · turquoise = check · pink = butterfly · "
-                "brown = reducer · blue = other valves")
+COLOR_LEGEND = ("green = gate open · red = gate closed · orange = ball open · "
+                "dark orange = ball closed · purple = globe · turquoise = check · "
+                "pink = butterfly · brown = reducer · blue = other valves")
 
 
 # ------------------------------------------------------------ helpers (UI-free)
@@ -187,6 +189,36 @@ if st.session_state.get("analyzed") == str(choice) and verdict_p.exists():
     st.subheader("Where on the drawing?")
     st.image(str(proof_p), use_container_width=True)
     st.caption("Color legend: " + COLOR_LEGEND)
+
+    with st.expander("🔤 Line codes → Model Broker attributes"):
+        try:
+            sys.path.insert(0, str(GATEVALVE_DIR))
+            import line_labels as LL
+            labels, sizes = LL.extract_line_labels(str(choice), int(dpi))
+            st.write(f"{len(labels)} line codes and {len(sizes)} "
+                     f"size markers found in the text layer.")
+            if det_p.exists() and labels:
+                dets = json.loads(det_p.read_text(encoding="utf-8"))
+                att = LL.attach_to_detections(labels, sizes, dets)
+                st.dataframe(
+                    [{"Class": CLASS_INFO.get(a["cls"], (a["cls"],))[0],
+                      "Confidence": a.get("conf"),
+                      "Model Broker attributes": LL.broker_hint(a),
+                      "Distance (px)": a.get("line_dist_px")}
+                     for a in att],
+                    use_container_width=True)
+                st.caption("The fluid-code table is a STARTER TABLE (codes "
+                           "marked «antatt» must be confirmed against the "
+                           "line numbering standard). The attributes are "
+                           "suggested Model Broker configuration: size, "
+                           "system, fluid and piping class.")
+            elif labels:
+                for lab in labels[:12]:
+                    st.write(f'`{lab["raw"]}` — system {lab["system"]}, '
+                             f'DN {lab["size_in"]:g}", {lab["fluid"]} '
+                             f'({lab["fluid_desc"]}), class {lab["spec"]}')
+        except Exception as e:  # noqa: BLE001
+            st.warning(f"Line-code interpretation unavailable: {e}")
 
     if det_p.exists():
         with st.expander("All findings (table)"):

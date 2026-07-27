@@ -24,6 +24,32 @@ import cv2
 # Gjenbruk validert forbehandling og merkelogikk
 from train_classifier import canonicalize, pseudo_state, REAL_MAP, CLASSES, SIZE
 
+# Ball valve splittes i open/closed (som gate). Klassene finnes ikke i den
+# gamle CLASSES-listen, så de godkjennes eksplisitt her.
+EXTRA_CLASSES = ("ball_open", "ball_closed")
+
+
+def _fill_after_erosion(img):
+    """Andel blekk som overlever erosjon med strektykkelsen. Omriss og
+    rørlinjer (bredde ~ strek) forsvinner; fylte flater overlever.
+    Oppløsningsuavhengig — samme prinsipp som gate-tilstanden i
+    check_drawing."""
+    ink = (img < 128).astype(np.uint8)
+    n = int(ink.sum())
+    if n < 30:
+        return 0.0
+    dt = cv2.distanceTransform(ink, cv2.DIST_L2, 3)
+    stroke = 2.0 * float(np.median(dt[ink > 0]))
+    k = max(int(round(stroke)), 2)
+    survived = int(cv2.erode(ink, np.ones((k, k), np.uint8)).sum())
+    return survived / n
+
+
+def ball_pseudo_state(img, threshold=0.18):
+    """Pseudo-merk ball-utsnitt: fylt sløyfe -> closed, omriss -> open.
+    Kontroller fordelingen i dataset/ball_state_pseudolabels.csv."""
+    return "ball_closed" if _fill_after_erosion(img) > threshold else "ball_open"
+
 
 # ---------------------------------------------------------------- data
 def load_folder_as_images(root, mapping=None):
@@ -31,7 +57,8 @@ def load_folder_as_images(root, mapping=None):
     ikke HOG-vektorer."""
     X, y, srcs = [], [], []
     for cls in sorted(os.listdir(root)):
-        label = (mapping or {}).get(cls, cls if cls in CLASSES else None)
+        label = (mapping or {}).get(
+            cls, cls if (cls in CLASSES or cls in EXTRA_CLASSES) else None)
         if label is None:
             continue
         for fp in glob.glob(os.path.join(root, cls, "*.png")):
@@ -46,7 +73,7 @@ def load_folder_as_images(root, mapping=None):
 
 def load_real_as_images(root):
     X, y, srcs = [], [], []
-    gate_log = []
+    gate_log, ball_log = [], []
     for cls in sorted(os.listdir(root)):
         d = os.path.join(root, cls)
         if not os.path.isdir(d) or cls == "yolo":
@@ -58,6 +85,10 @@ def load_real_as_images(root):
             if cls == "GateValve":
                 label = pseudo_state(img)
                 gate_log.append((os.path.basename(fp), label))
+            elif cls == "BallValve":
+                label = ball_pseudo_state(img)
+                ball_log.append((os.path.basename(fp), label,
+                                 round(_fill_after_erosion(img), 3)))
             else:
                 label = REAL_MAP.get(cls)
                 if label is None:
@@ -65,14 +96,31 @@ def load_real_as_images(root):
             X.append(canonicalize(img))
             y.append(label)
             srcs.append(os.path.basename(fp).split("_")[0])
-    return X, y, srcs, gate_log
+    # kontroll-logg for pseudo-merkingen av ball-tilstand
+    if ball_log:
+        with open(os.path.join(root, "ball_state_pseudolabels.csv"),
+                  "w", encoding="utf-8") as fh:
+            fh.write("fil,pseudo_state,fyll_etter_erosjon\n")
+            for name, lab, frac in ball_log:
+                fh.write(f"{name},{lab},{frac}\n")
+    return X, y, srcs, gate_log, ball_log
 
 
 def load_all_data(synth_dir, real_dir, holdout_sources=3, seed=0, holdout_list=None):
     """Returnerer (Xtr, ytr, Xva, yva, Xte, yte, labels, info) som numpy.
     Testbar uten torch."""
-    Xs, ys, _ = load_folder_as_images(synth_dir)
-    labels = sorted(set(ys))
+    # gammel synth/ball_valve blander open+closed -> hoppes over; regenerer
+    # med make_synthetic.py som naa lager ball_open/ og ball_closed/
+    Xs, ys, _ = load_folder_as_images(synth_dir, mapping={"ball_valve": None})
+    if not any(l in ("ball_open", "ball_closed") for l in ys):
+        print("    [!] synth mangler ball_open/ball_closed — kjør "
+              "make_synthetic.py på nytt (gamle synth/ball_valve ignoreres)")
+
+    Xr, yr, sr, gate_log, ball_log = [], [], [], [], []
+    if real_dir and os.path.isdir(real_dir):
+        Xr, yr, sr, gate_log, ball_log = load_real_as_images(real_dir)
+
+    labels = sorted(set(ys) | set(yr))
     li = {l: i for i, l in enumerate(labels)}
 
     rng = np.random.default_rng(seed)
@@ -83,11 +131,11 @@ def load_all_data(synth_dir, real_dir, holdout_sources=3, seed=0, holdout_list=N
     Xva = [Xs[i] for i in sorted(va_i)]; yva = [li[ys[i]] for i in sorted(va_i)]
 
     Xte, yte, info = [], [], {}
-    if real_dir and os.path.isdir(real_dir):
-        Xr, yr, sr, gate_log = load_real_as_images(real_dir)
+    if yr:
         from collections import Counter
         info["real_counts"] = dict(Counter(yr))
         info["pseudo"] = dict(Counter(l for _, l in gate_log))
+        info["ball_pseudo"] = dict(Counter(l for _, l, _ in ball_log))
         uniq = sorted(set(sr))
         if holdout_list:
             hold = {h.strip() for h in holdout_list.split(",") if h.strip()}
@@ -167,6 +215,8 @@ def main():
           f"ekte holdout: {len(yte)}  klasser: {labels}")
     if "pseudo" in info:
         print(f"    GateValve pseudo-merket: {info['pseudo']}")
+        print(f"    BallValve pseudo-merket: {info.get('ball_pseudo')}  "
+              f"(kontroller dataset/ball_state_pseudolabels.csv)")
         print(f"    holdout-tegninger: {info.get('holdout')}")
 
     import torch

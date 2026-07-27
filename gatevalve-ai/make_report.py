@@ -24,7 +24,7 @@ def norm(name):
     return re.sub(r"[^A-Za-z0-9]", "", name).upper()
 
 # deteksjonsklasse -> DEXPI-fasitklasse(r)
-DET2GT = {"gate": ["GateValve"], "ball_valve": ["BallValve"],
+DET2GT = {"gate": ["GateValve"], "ball": ["BallValve"],
           "globe_valve": ["GlobeValve"], "check_valve": ["CheckValve"],
           "butterfly_valve": ["ButterflyValve"], "reducer": ["PipeReducer"],
           "other_valve": ["NeedleValve", "PlugValve", "AngleValve"]}
@@ -69,6 +69,11 @@ def main():
     ap.add_argument("--holdout-only", default="",
                     help="evaluer KUN disse tegningene (komma)")
     ap.add_argument("--results-dir", default="results")
+    # videresendes til classify_drawing (forslagssteget)
+    ap.add_argument("--cand-threshold", type=float, default=None)
+    ap.add_argument("--cand-scales", default=None)
+    ap.add_argument("--cand-mirror", action="store_true")
+    ap.add_argument("--cand-components", action="store_true")
     args = ap.parse_args()
 
     exclude = {norm(s) for s in args.exclude.split(",") if s.strip()}
@@ -95,22 +100,39 @@ def main():
         if key is None or key in exclude or (only and key not in only):
             continue
         det_path = os.path.join(args.results_dir, f"{stem}_detections.json")
-        r = subprocess.run([sys.executable, os.path.join(here, "classify_drawing.py"),
-                            fp, "--dpi", str(args.dpi), "--model", args.model,
-                            "--out-dir", args.results_dir, "--dump-detections"],
-                           capture_output=True, text=True)
+        cmd = [sys.executable, os.path.join(here, "classify_drawing.py"),
+               fp, "--dpi", str(args.dpi), "--model", args.model,
+               "--out-dir", args.results_dir, "--dump-detections"]
+        if args.cand_threshold is not None:
+            cmd += ["--cand-threshold", str(args.cand_threshold)]
+        if args.cand_scales:
+            cmd += ["--cand-scales", args.cand_scales]
+        if args.cand_mirror:
+            cmd += ["--cand-mirror"]
+        if args.cand_components:
+            cmd += ["--cand-components"]
+        r = subprocess.run(cmd, capture_output=True, text=True)
         if not os.path.exists(det_path):
             print(f"    {stem}: FEIL — ingen detections ({r.returncode})")
             continue
         dets = json.load(open(det_path, encoding="utf-8"))
 
-        # slå sammen gate open/closed; noter tilstandsfordeling
+        # slå sammen gate og ball open/closed mot tilstandsløs XML-fasit;
+        # noter tilstandsfordelingene som tilleggsinfo
         byc = defaultdict(list)
         for d in dets:
             c = d["cls"]
-            byc["gate" if c in ("gate_open", "gate_closed") else c].append(d)
+            if c in ("gate_open", "gate_closed"):
+                bucket = "gate"
+            elif c in ("ball_open", "ball_closed", "ball_valve"):
+                bucket = "ball"
+            else:
+                bucket = c
+            byc[bucket].append(d)
         states = f'{sum(1 for d in byc["gate"] if d["cls"]=="gate_open")}o/' \
                  f'{sum(1 for d in byc["gate"] if d["cls"]=="gate_closed")}c'
+        ball_states = f'{sum(1 for d in byc["ball"] if d["cls"]=="ball_open")}o/' \
+                      f'{sum(1 for d in byc["ball"] if d["cls"]=="ball_closed")}c'
 
         line = [f"    {stem}"]
         for cls, gcls in DET2GT.items():
@@ -123,7 +145,8 @@ def main():
                 rows.append({"drawing": key, "class": cls, "gt": len(pts),
                              "tp_strong": tps, "fp_strong": fps, "fn_strong": fns,
                              "tp_all": tpa, "fp_all": fpa, "fn_all": fna,
-                             "gate_states": states if cls == "gate" else ""})
+                             "gate_states": states if cls == "gate" else "",
+                             "ball_states": ball_states if cls == "ball" else ""})
                 a = agg[cls]
                 for i, v in enumerate((tps, fps, fns, tpa, fpa, fna)):
                     a[i] += v
@@ -135,7 +158,8 @@ def main():
     with open(out, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=["drawing", "class", "gt",
                                           "tp_strong", "fp_strong", "fn_strong",
-                                          "tp_all", "fp_all", "fn_all", "gate_states"])
+                                          "tp_all", "fp_all", "fn_all",
+                                          "gate_states", "ball_states"])
         w.writeheader()
         w.writerows(rows)
 
