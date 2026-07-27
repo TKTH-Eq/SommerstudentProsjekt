@@ -22,6 +22,7 @@ PAGES = {
     "anlegg":      st.Page("anleggsoversikt.py", title="Plant overview", icon="🏭"),
     "neqsim":      st.Page("neqsim_side.py", title="NeqSim simulation", icon="🧪"),
     "tegning":     st.Page("tegningsanalyse.py", title="Drawing analysis", icon="🔍"),
+    "pid_struktur": st.Page("pid_struktur.py", title="PDF → structure", icon="🧩"),
 }
 
 NAV = [
@@ -37,4 +38,5 @@ NAV = [
     PAGES["kontrollrom"],
     PAGES["neqsim"],
     PAGES["tegning"],
+    PAGES["pid_struktur"],
 ]

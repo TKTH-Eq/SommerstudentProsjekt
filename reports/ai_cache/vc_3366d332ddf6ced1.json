@@ -1,0 +1,10 @@
+{
+ "result": {
+  "ok": true,
+  "seen": false,
+  "evidence": "There is no PSV (Pressure Safety Valve) or PSE (Pressure Safety Element) symbol visibly drawn near the anchor tags 13-2014PT, 13-2015PT, 13-2075PT, 13-2076PT, 13-2077PT, 13-2126PT. The area contains pressure indicators/transmitters (PI, PT, PDI) and connections to a nitrogen purge system and a PSD (",
+  "tags": "",
+  "verdict": "Vision så det heller ikke — men fravær kan ikke bevises (målt varians), så funnet står som screeningkandidat."
+ },
+ "saved_at": "2026-07-27 10:07"
+}

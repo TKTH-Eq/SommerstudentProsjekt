@@ -26,6 +26,11 @@ sizing, no process judgement):
                              reachable downstream in the graph
   R3  BLIND SECTION          section with ≥4 members but no pressure
                              measurement at all
+  R8  VALVE WITHOUT FEEDBACK an actuated shutdown valve (XV/ESV) whose loop
+                             has no position switch (ZS/ZL) — the safety
+                             logic cannot confirm the valve reached position
+  R9  TRIP WITHOUT VOTING     a trip sensor (SHH/SLL) that is the only leg in
+                             its loop — no redundant sensor for voting
 
 Each finding lists the REAL tags that triggered it, so the viewer can mark
 the location on the drawing.
@@ -44,8 +49,10 @@ _VERIFY = "Veiledende referanse — fagingeniør må bekrefte funn og klausul."
 
 _PRESSURE_TYPES = {"PT", "PI", "PIC", "PIT", "PDI", "PDT", "PV", "PSH", "PSL"}
 _RELIEF_TYPES = {"PSV", "PSE"}
-_TRIP_TYPES = {"LSHH", "PSHH", "LSH", "PSH", "LSL", "FSH"}
+_TRIP_TYPES = {"LSHH", "PSHH", "LSH", "PSH", "LSL", "FSH", "LSLL", "PSLL"}
 _ACTION_TYPES = {"XV", "ESV", "XY"}
+_ONOFF_VALVES = {"XV", "ESV"}               # actuated on/off (shutdown) valves
+_POS_FEEDBACK = {"ZS", "ZL", "ZSH", "ZSL", "ZI", "ZT"}   # valve position switch/indication
 
 
 def screen(graph: nx.DiGraph, objects, sections: dict) -> list[dict]:
@@ -111,6 +118,53 @@ def screen(graph: nx.DiGraph, objects, sections: dict) -> list[dict]:
                             "utganger og innganger (parafrasert). "
                             "Klausul verifisert mot standardteksten.",
             })
+
+    # ---- R8 + R9: per loop (redundancy legs A/B/C share a loop) -------------
+    from collections import defaultdict
+    loops: dict[str, list] = defaultdict(list)
+    for o in objects:
+        loops[o.loop].append(o)
+
+    for o in objects:
+        # R8: actuated shutdown valve with no position feedback in its loop.
+        if o.type_code in _ONOFF_VALVES:
+            sibling_types = {s.type_code for s in loops[o.loop]}
+            if not (sibling_types & _POS_FEEDBACK):
+                findings.append({
+                    "rule": "R8",
+                    "title": "Aktuert ventil uten posisjonstilbakemelding",
+                    "severity": "middels", "section": o.loop,
+                    "tags": [o.tag],
+                    "description": f"{o.tag} ({o.type_code}) er en aktuert "
+                                   f"avstengningsventil, men sløyfen har ingen "
+                                   f"posisjonsbryter (ZS/ZL) — logikken kan da "
+                                   f"ikke bekrefte at ventilen nådde stilling.",
+                    "recommendation": "Posisjonsbryteren kan være symbol-only "
+                                      "(mangler i tekstlaget) eller på annet "
+                                      "ark — verifiser på tegningen at ZS/ZL "
+                                      "finnes, ev. at feedback ikke er påkrevd.",
+                    "standard": f"NORSOK I-001 / I-005 (posisjonsindikering "
+                                f"for SIS-ventiler). {_VERIFY}",
+                })
+        # R9: trip sensor that is the only leg in its loop (no voting).
+        if o.type_code in _TRIP_TYPES:
+            legs = [s for s in loops[o.loop] if s.type_code == o.type_code]
+            if len(legs) < 2:
+                findings.append({
+                    "rule": "R9",
+                    "title": "Nødavstengningsfunksjon uten redundans",
+                    "severity": "lav", "section": o.loop,
+                    "tags": [o.tag],
+                    "description": f"{o.tag} ({o.type_code}) er eneste "
+                                   f"{o.type_code}-giver i sløyfen — ingen "
+                                   f"redundant giver for voting (1oo1).",
+                    "recommendation": "Om voting er påkrevd avhenger av "
+                                      "SIL-klassifiseringen (IEC 61511) — "
+                                      "bekreft mot SRS/SIL-analyse at 1oo1 er "
+                                      "akseptabelt for denne funksjonen.",
+                    "standard": f"IEC 61511 / NORSOK I-002 (redundans og "
+                                f"voting etter SIL). {_VERIFY}",
+                })
 
     order = {"høy": 0, "middels": 1, "lav": 2}
     return sorted(findings, key=lambda f: (order[f["severity"]], f["rule"]))
@@ -211,13 +265,53 @@ FLUID_MEANINGS = {  # subset of Table 1; basis/confidence per report
 }
 
 
+# ---------------------------------------------------------------------------
+# Triage: rank + de-duplicate findings so a reviewer sees the worst first.
+# ---------------------------------------------------------------------------
+# Fluid hazard weight (relative, for ranking ONLY — not an ISO 17776 rating).
+# Hydrocarbon/flare service dominates the consequence of a missing safeguard;
+# utilities (water, air) sit lowest. Unknown codes get a neutral-ish weight so
+# an unclassified line never silently sinks a finding.
+FLUID_HAZARD = {
+    "PV": 1.0, "PL": 1.0, "VF": 1.0, "GF": 1.0, "GI": 1.0, "OL": 1.0,
+    "OF": 1.0, "GL": 1.0,                       # hydrocarbon / flare / fuel
+    "AI": 0.5, "AP": 0.5,                        # instrument / plant air
+    "WS": 0.3, "WF": 0.3, "WI": 0.3, "WC": 0.3, "WD": 0.3,   # water services
+    "DC": 0.6,                                   # closed drain (may carry HC)
+}
+_SEV_BASE = {"høy": 3.0, "middels": 2.0, "lav": 1.0}
+
+
+def hazard_score(finding: dict, fluid_codes: list[str] | None = None) -> float:
+    """Screening priority 1.0–5.0: severity, lifted by the hazard of the
+    fluid on the finding's connected lines. Ranking aid only — never a
+    substitute for the discipline engineer's consequence assessment."""
+    base = _SEV_BASE.get(finding.get("severity", "lav"), 1.0)
+    worst = max((FLUID_HAZARD.get(c, 0.6) for c in (fluid_codes or [])),
+                default=0.5)
+    return round(min(base * (1.0 + worst), 5.0), 2)
+
+
+def dedupe(findings: list[dict]) -> list[dict]:
+    """Drop exact duplicates — same rule, section and tag set. Different
+    rules on the same tags are kept: they say different things."""
+    seen, out = set(), []
+    for f in findings:
+        key = (f["rule"], f.get("section", ""), tuple(sorted(f["tags"])))
+        if key not in seen:
+            seen.add(key)
+            out.append(f)
+    return out
+
+
 def fluids_for_tags(xml_path, tags: list[str]) -> list[str]:
     """Fluid codes on lines anchored by these tags, via the plant-model
     line-anchor helper. Codes come from the line tags themselves
     (4\"-PV-274599 -> PV)."""
+    from pathlib import Path as _Path
     from analysis.plant_model import _line_anchor_tags
     import re as _re
-    anchors = _line_anchor_tags(xml_path, set(tags))
+    anchors = _line_anchor_tags(_Path(xml_path), set(tags))
     codes = []
     for line, ts in anchors.items():
         if any(t in tags for t in ts):

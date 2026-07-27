@@ -45,17 +45,23 @@ def _png_b64(path: str, mtime: float) -> str:
     return base64.b64encode(Path(path).read_bytes()).decode()
 
 
-def _zoomable_image(png_path: str, height: int = 620, markers=None):
+def _zoomable_image(png_path: str, height: int = 620, markers=None,
+                    focus=None):
     """Inline pan/zoom viewer (scrollhjul = zoom mot pekeren, dra = panorer,
     dobbeltklikk = tilbakestill). Ingen ekstra avhengigheter — ren HTML/JS i
-    en components-iframe, samme teknikk som DEXPI-demoen."""
+    en components-iframe, samme teknikk som DEXPI-demoen.
+
+    focus = (x, y, w, h) i BILDE-piksler: vieweren åpner zoomet inn på det
+    området (brukes av «vis funn på tegning»). None = start utzoomet."""
     import streamlit.components.v1 as components
     b64 = _png_b64(png_path, Path(png_path).stat().st_mtime)
     # markører i BILDE-prosent (skalerer med bredden uansett zoom):
     marker_html = ""
-    if markers:
+    iw = ih = None
+    if markers or focus:
         from PIL import Image
         iw, ih = Image.open(png_path).size
+    if markers:
         for m in markers:
             # 6-tuple (x, y, w, h, color, label) as before; an optional 7th
             # element -> dashed border (used for estimated positions).
@@ -72,6 +78,22 @@ def _zoomable_image(png_path: str, height: int = 620, markers=None):
                 f'height:{h_:.2f}%;border:2px {style} {color};'
                 f'border-radius:3px;box-shadow:0 0 6px {color};'
                 f'pointer-events:auto"></div>')
+    # åpne zoomet inn på ett funn: regn ut start-transform i JS ut fra
+    # boksens bilde-fraksjoner (oppløsningsuavhengig)
+    focus_js = ""
+    if focus and iw and ih:
+        fx, fy = focus[0] / iw, focus[1] / ih
+        fw, fh = max(focus[2] / iw, 1e-3), max(focus[3] / ih, 1e-3)
+        focus_js = f"""
+(function(){{
+  const fx={fx:.5f},fy={fy:.5f},fw={fw:.5f},fh={fh:.5f};
+  const r=vp.getBoundingClientRect();
+  const wrapH=r.width*{ih}/{iw};            // wrap-høyde i CSS-px (img=100% bredde)
+  const cx=(fx+fw/2)*r.width, cy=(fy+fh/2)*wrapH;   // boks-senter, wrap-lokalt
+  let ns=Math.min(0.8/fw, 0.55*r.height/(fh*wrapH));
+  s=Math.min(Math.max(ns,1.5),18);
+  tx=r.width/2-cx*s; ty=r.height/2-cy*s; apply();
+}})();"""
     components.html(f"""
 <div id="vp" style="width:100%;height:{height - 20}px;overflow:hidden;
      border:1px solid #444;border-radius:8px;background:#1a1a1a;
@@ -104,6 +126,7 @@ window.addEventListener("mousemove",e=>{{if(!drag)return;
   tx=e.clientX-sx;ty=e.clientY-sy;apply();}});
 window.addEventListener("mouseup",()=>{{drag=false;vp.style.cursor="grab";}});
 vp.addEventListener("dblclick",()=>{{s=1;tx=0;ty=0;apply();}});
+{focus_js}
 </script>""", height=height)
 
 
@@ -269,6 +292,38 @@ m3.metric("Rows with a found safeguard", f"{_with_sg}/{_n_rows}",
 m4.metric("Reviewed", f"{_done}/{_n_rows}",
           help="Rows set to reviewed or rejected in the worksheet.")
 st.progress(_done / _n_rows if _n_rows else 0.0)
+
+# ---- rule-finding review log (all drawings) --------------------------------
+# A cross-drawing overview of the dispositions saved in the «Rule findings»
+# tab, surfaced here on the page's first screen so decisions don't stay
+# buried one drawing at a time. Only shown once something has been saved.
+try:
+    from analysis.finding_disposition import load_all as _load_disp
+    _disp_rows = _load_disp()
+except Exception:                                           # noqa: BLE001
+    _disp_rows = []
+if _disp_rows:
+    _emoji = {"accepted": "🔴", "verified": "🟢", "rejected": "⚪",
+              "open": "⬜"}
+    _n = {s: sum(1 for r in _disp_rows if r["status"] == s)
+          for s in ("accepted", "verified", "rejected")}
+    with st.expander(
+            f"📋 Rule-finding review log — {len(_disp_rows)} saved across "
+            f"{len({r['drawing'] for r in _disp_rows})} drawing(s) "
+            f"(🔴 {_n['accepted']} · 🟢 {_n['verified']} · ⚪ {_n['rejected']})"):
+        st.caption("Dispositions saved in the «Rule findings on the drawing» "
+                   "tab, across every drawing — stored under "
+                   "reports/finding_dispositions/.")
+        st.dataframe(
+            [{"Status": f"{_emoji.get(r['status'], '')} {r['status']}",
+              "Drawing": r["drawing"], "Rule": r["rule"],
+              "Tags": r["tags"], "Note": r["note"], "Saved": r["at"]}
+             for r in _disp_rows],
+            use_container_width=True, hide_index=True)
+        st.download_button(
+            "⬇️ Download the review log (CSV)",
+            pd.DataFrame(_disp_rows).to_csv(index=False).encode("utf-8-sig"),
+            file_name="rule_finding_review_log.csv", mime="text/csv")
 
 tab_ark, tab_vision, tab_funn, tab_ai = st.tabs(
     ["📋 Worksheet", "👁️ Vision excerpt", "📐 Rule findings on the drawing",
@@ -513,6 +568,9 @@ with tab_funn:
     coverage = _screen_coverage(str(pid_path), str(scd_path))
     findings = (findings or []) + coverage if (findings or coverage) \
         else findings
+    if findings:
+        from analysis.rule_screening import dedupe as _dedupe
+        findings = _dedupe(findings)
     if findings is None:
         st.info("This drawing has no DEXPI XML — rule screening requires "
                 "structured data (which is the point).")
@@ -536,29 +594,95 @@ with tab_funn:
         rules = sorted({f["rule"] for f in findings})
         pick_rules = st.multiselect("Show rules", rules, default=rules,
                                     help="R1 relief · R2 action path · "
-                                         "R3 pressure monitoring · R4-R7 "
-                                         "I-005 Annex B coverage P&ID↔SCD "
-                                         "(verified clauses)")
+                                         "R3 pressure monitoring · R8 valve "
+                                         "position feedback · R9 trip voting "
+                                         "· R4-R7 I-005 Annex B coverage "
+                                         "P&ID↔SCD (verified clauses)")
         shown = [f for f in findings if f["rule"] in pick_rules]
 
+        # ---- triage: fluid hazard -> screening priority, worst first -------
+        from analysis.rule_screening import (hazard_score, fluids_for_tags,
+                                             FLUID_MEANINGS)
+
+        @st.cache_data(show_spinner=False)
+        def _fluids_cached(xml_str: str, tags_t: tuple):
+            try:
+                return fluids_for_tags(xml_str, list(tags_t))
+            except Exception:                                # noqa: BLE001
+                return []
+
+        _fluids = {}
         for f in shown:
+            fc = (_fluids_cached(str(_dx[0]), tuple(f["tags"]))
+                  if _dx and f["rule"] in ("R1", "R2", "R3", "R8", "R9")
+                  else [])
+            _fluids[id(f)] = fc
+            f["_score"] = hazard_score(f, fc)
+        shown.sort(key=lambda f: -f["_score"])
+
+        # locating tags opens the PDF with pdfplumber — expensive, and it
+        # re-runs on EVERY widget interaction (e.g. saving a disposition).
+        # Cache on (pdf, tag set) so those reruns are instant.
+        @st.cache_data(show_spinner=False)
+        def _locate_cached(pdf_str: str, tags_t: tuple, dpi: int = 200):
+            from extraction.tag_locator import locate_tags
+            return locate_tags(pdf_str, list(tags_t), dpi)
+
+        # ---- CNN symbol crosscheck: load detections + locate valve tags ----
+        from analysis import symbol_crosscheck as _cc
+        from config import ROOT as _ROOT
+        _RESULTS = _ROOT / "gatevalve-ai" / "results"
+        _dets = _cc.load_detections(Path(pid_path).stem, _RESULTS)
+        _valve_types = {"XV", "ESV", "PV", "LV", "FV", "HV", "TV", "PCV"}
+        _valve_boxes = {}
+        if _dets:
+            _valve_boxes = _locate_cached(
+                str(pid_path),
+                tuple(sorted(o.tag for o in objs
+                             if o.type_code in _valve_types)))
+
+        # ---- disposition record (per drawing) ------------------------------
+        from analysis import finding_disposition as _fd
+        _stem = Path(pid_path).stem
+        _disp = _fd.load_dispositions(_stem)
+
+        for f in shown:
+            _fid = _fd.finding_id(f)
+            _cur = _disp.get(_fid, {})
+            _badge = {"accepted": "🔴", "rejected": "⚪",
+                      "verified": "🟢"}.get(_cur.get("status"), "")
             with st.expander(f"{'🔴' if f['severity']=='høy' else '🟡'} "
                              f"[{f['rule']}] {f['title']} — "
-                             f"{', '.join(f['tags'][:3])}"):
+                             f"{', '.join(f['tags'][:3])}  "
+                             f"· prioritet {f['_score']:.1f}{'  '+_badge if _badge else ''}"):
                 st.write(f["description"])
                 st.write("**Recommended follow-up:** " + f["recommendation"])
                 st.caption("📖 " + f["standard"])
-                if f["rule"] in ("R1", "R2", "R3") and _dx:
-                    from analysis.rule_screening import (fluids_for_tags,
-                                                         FLUID_MEANINGS)
-                    if True:
-                        _fc = fluids_for_tags(_dx[0], f["tags"])
-                        if _fc:
-                            st.caption("🧪 Fluid on connected lines "
-                                       "(from line tags, assumed meaning): "
-                                       + " · ".join(
-                                           f"{c} = {FLUID_MEANINGS.get(c, 'unknown')}"
-                                           for c in _fc))
+                _fc = _fluids.get(id(f), [])
+                if _fc:
+                    st.caption("🧪 Fluid on connected lines "
+                               "(from line tags, assumed meaning): "
+                               + " · ".join(
+                                   f"{c} = {FLUID_MEANINGS.get(c, 'unknown')}"
+                                   for c in _fc)
+                               + f" — screening priority {f['_score']:.1f}/5 "
+                               "(severity × fluid hazard).")
+
+                # ---- local CNN second opinion (offline, deterministic) -----
+                if _dets and f["rule"] == "R2":
+                    _aboxes = _locate_cached(str(pid_path),
+                                             tuple(sorted(f["tags"])))
+                    cc = _cc.crosscheck_finding(f, _dets, _aboxes,
+                                                _valve_boxes)
+                    if cc["applies"]:
+                        (st.warning if cc["seen"] else st.info)(
+                            "🤖 " + cc["note"])
+
+                # ---- jump the drawing to this finding ----------------------
+                if st.button("🔍 Show on the drawing below",
+                             key=f"focus_{_fid}"):
+                    st.session_state["funn_focus"] = _fid
+
                 if os.getenv("GEMINI_API_KEY"):
                     ck = f"vcheck_{f['rule']}_{'_'.join(f['tags'][:2])}"
                     target_pdf = scd_path if f["rule"] in ("R4", "R5", "R6", "R7") \
@@ -602,11 +726,67 @@ with tab_funn:
                         st.caption("Exculpatory only: a sighting can weaken "
                                    "the finding; absence never strengthens it.")
 
+                # ---- reviewer disposition (all saved together below) -------
+                st.divider()
+                _opts = list(_fd.STATUSES)
+                st.radio(
+                    "Reviewer disposition",
+                    _opts, index=_opts.index(_cur.get("status", "open")),
+                    format_func=lambda s: _fd.STATUS_LABEL[s],
+                    horizontal=True, key=f"disp_{_fid}")
+                st.text_input(
+                    "Note (optional)", value=_cur.get("note", ""),
+                    key=f"note_{_fid}",
+                    placeholder="why rejected / where the safeguard is / who to ask")
+                if _cur.get("at"):
+                    st.caption(f"Last saved {_cur['at']}"
+                               + (f" — “{_cur['note']}”" if _cur.get("note")
+                                  else ""))
+
+        # one common save for the whole review pass: read every finding's
+        # radio/note from session_state and persist in a single write. The
+        # widgets keep their state across reruns via their keys, so you can
+        # review all findings first and save once.
+        _pending = 0
+        for f in shown:
+            _fid = _fd.finding_id(f)
+            _cur = _disp.get(_fid, {})
+            if (st.session_state.get(f"disp_{_fid}", "open")
+                    != _cur.get("status", "open")
+                    or st.session_state.get(f"note_{_fid}", "").strip()
+                    != _cur.get("note", "")):
+                _pending += 1
+        _lbl = (f"💾 Save all dispositions ({_pending} unsaved change"
+                f"{'s' if _pending != 1 else ''})" if _pending
+                else "💾 Save all dispositions")
+        if st.button(_lbl, type="primary", disabled=not _pending):
+            for f in shown:
+                _fid = _fd.finding_id(f)
+                _disp = _fd.set_disposition(
+                    _stem, _fid,
+                    st.session_state.get(f"disp_{_fid}", "open"),
+                    st.session_state.get(f"note_{_fid}", ""))
+            st.toast(f"Saved {_pending} disposition change"
+                     f"{'s' if _pending != 1 else ''}.", icon="💾")
+            st.rerun()
+
+        # review progress across ALL findings on this drawing (not just shown)
+        _sum = _fd.summarise(_disp)
+        if any(_sum[s] for s in ("accepted", "rejected", "verified")):
+            st.caption(f"📋 Review progress: 🔴 {_sum['accepted']} accepted · "
+                       f"🟢 {_sum['verified']} verified · "
+                       f"⚪ {_sum['rejected']} rejected — "
+                       f"stored in reports/finding_dispositions/{_stem}.json.")
+
         _exp = pd.DataFrame([{
             "rule": f["rule"], "severity": f["severity"],
+            "priority": f["_score"],
             "title": f["title"], "section": f.get("section", ""),
             "tags": ", ".join(f["tags"]), "description": f["description"],
             "recommendation": f["recommendation"], "standard": f["standard"],
+            "fluid_codes": ", ".join(_fluids.get(id(f), [])),
+            "disposition": _disp.get(_fd.finding_id(f), {}).get("status", "open"),
+            "disposition_note": _disp.get(_fd.finding_id(f), {}).get("note", ""),
         } for f in shown])
         st.download_button("⬇️ Download the findings (CSV)",
                            _exp.to_csv(index=False).encode("utf-8-sig"),
@@ -614,9 +794,8 @@ with tab_funn:
                            mime="text/csv")
 
         # markører: funn-tags -> bokser fra det posisjonerte tekstlaget
-        from extraction.tag_locator import locate_tags
         all_tags = sorted({t for f in shown for t in f["tags"]})
-        boxes = locate_tags(pid_path, all_tags, dpi=200)
+        boxes = dict(_locate_cached(str(pid_path), tuple(all_tags)))
         markers = []
         for f in shown:
             for t in f["tags"]:
@@ -659,6 +838,43 @@ with tab_funn:
                    f"drawing (hover a box to see the finding). "
                    f"Unlocated tags are typically symbol-only or on an "
                    f"adjacent sheet.")
+
+        # CNN overlay: valve symbols the model saw that carry no text tag —
+        # the extraction gap that underlies every "missing X" finding.
+        if _dets:
+            _untag = _cc.untagged_valves(_dets, _valve_boxes)
+            if _untag and st.checkbox(
+                    f"🤖 Show {len(_untag)} valve symbol(s) the CNN sees "
+                    f"with no readable tag nearby", value=False,
+                    help="Many hand valves are symbol-only by design, so this "
+                         "is not proof of an extraction error — it shows WHERE "
+                         "the sheet holds valve symbols the text model can't "
+                         "read, i.e. where a 'missing valve' finding could be "
+                         "symbol-only rather than a real gap."):
+                for d in _untag:
+                    markers.append((d["cx"] - 45, d["cy"] - 45, 90, 90,
+                                    "#00e5ff",
+                                    f"CNN: untagged {d['cls']} "
+                                    f"(conf {d.get('conf', 0):.2f})", True))
+
+        # focus: did the user press «Show on the drawing» for a finding?
+        _focus_box = None
+        _ff = st.session_state.get("funn_focus")
+        _ff_match = next((f for f in shown if _fd.finding_id(f) == _ff), None)
+        if _ff_match:
+            _bs = [b for t in _ff_match["tags"] for b in boxes.get(t, [])]
+            if _bs:
+                xs = [b[0] for b in _bs] + [b[0] + b[2] for b in _bs]
+                ys = [b[1] for b in _bs] + [b[1] + b[3] for b in _bs]
+                _focus_box = (min(xs) - 60, min(ys) - 60,
+                              max(xs) - min(xs) + 120,
+                              max(ys) - min(ys) + 120)
+                st.caption("🔍 Zoomed to the selected finding — double-click "
+                           "the viewer to reset.")
+            else:
+                st.caption("🔍 The selected finding's tags are not locatable "
+                           "in the text layer, so the view cannot zoom to it.")
+
         png = st.session_state.get(f"vision_png_{system}")
         if not (png and Path(png).exists()):
             try:
@@ -669,7 +885,7 @@ with tab_funn:
                 png = None
                 st.caption(f"Could not rasterise the drawing: {e}")
         if png and markers:
-            _zoomable_image(str(png), markers=markers)
+            _zoomable_image(str(png), markers=markers, focus=_focus_box)
         elif png:
             st.caption("None of the finding tags could be located in the text "
                        "layer — showing the drawing without markers.")

@@ -47,6 +47,7 @@ nøkkelspørsmål i oppgaven hver side svarer på.
 | ⚠️ HAZOP-forberedelse | Deterministisk arbeidsark (noder → avvik → årsaker → konsekvenser → barrierer) forankret i uttrekte tags; redigerbart med review-status og **autolagring mellom møter**; Excel-eksport i møteformat; valgfri AI-omskriving og **vision-utdrag** der Gemini leser selve tegningen og hvert tag-forslag verifiseres mot registeret | Prosjektfase: HAZID/HAZOP-støtte |
 | ⚖️ HAZOP: PDF vs DEXPI | Samme arbeidsark-maskineri på samme tegning, to inputformater — barriere-andelen tallfester sikkerhetsargumentet for DEXPI | PDF vs DEXPI + HAZOP |
 | 🎛️ Kontrollrom-assistent | Alarmdusj-scenario: skjult feil + støyalarmer fyres samtidig; assistenten gir strukturell brief per kandidat (uten å kåre vinner), operatøren beslutter, debrief skiller rot/symptom/støy; graf med opp-/nedstrøms-markering; valgfri forankret Gemini-Q&A | Drift: beslutningsstøtte i kontrollrom, alarm-rotårsak |
+| 🧩 PDF → struktur | Rekonstruerer en maskinlesbar komponent- og topologimodell fra PDF-en alene (tekst-tags + CNN-ventilsymboler + rørløp sporet fra rasteret), legger grafen oppå tegningen, tilbyr «DEXPI-lite»-eksport, og måler mot DEXPI. Konstruktiv motpart til formatargumentet — se [`PID_TO_STRUCTURE.md`](PID_TO_STRUCTURE.md) | Data/LCI: hva som kan gjenskapes fra legacy-PDF, og grensene |
 
 I tillegg: NeqSim-broen (`src/neqsim_tools/`) plotter hydratkurver med
 MEG-inhibering og animerer en trykkavlastning mot hydratgrensen — koblingen
