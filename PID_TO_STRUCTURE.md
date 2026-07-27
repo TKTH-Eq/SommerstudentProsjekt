@@ -1,12 +1,33 @@
 # PDF → structure lifter (prototype)
 
+> ## Verdict (read first)
+>
+> **Two halves, one works and one does not — kept together as a documented result.**
+>
+> - ✅ **Component inventory from PDF — WORKS.** Pure-PDF lift recovers ~62 % of
+>   DEXPI tags **plus ~33 symbol-only valves per drawing** the text layer cannot
+>   see, and emits them as a structured, downloadable list. This stands on its
+>   own and answers *"what can legacy PDF give you"*.
+> - ❌ **Topology / edge tracing — DOES NOT WORK on this data. Abandoned.** The
+>   raster pipe-tracer cannot recover DEXPI-comparable connectivity: of 249
+>   tag-to-tag process adjacencies across 16 drawings, only **4** are even
+>   scoreable, and the edges it does draw do not align with the DEXPI graph.
+>   **Going from a legacy PDF to a connected DEXPI model is not achievable with
+>   this approach.** The edge output is retained only as an illustration of the
+>   attempt and its failure modes — do not treat it as recovered topology.
+>
+> Why keep the failing half? Because *why* it fails is a finding (see
+> [The connectivity finding](#the-connectivity-finding-why-topology-failed)) and
+> feeds the *minimum requirements for machine-readable deliverables*.
+
 *The constructive side of the format argument.* The rest of the repo **measures**
 what legacy PDF P&IDs lose (87 % precision / 55 % recall, symbol-only tags, a
 loop-based topology that only *assumes* connections). This prototype tries to
 **manufacture** the missing structure from the drawing itself and attaches a
 measured accuracy to it — answering the brief's Data/LCI question *"what can be
 achieved with legacy PDFs, and what are the practical limitations?"* with
-numbers rather than assertions.
+numbers rather than assertions. The honest answer it produced: **components yes,
+topology no.**
 
 Code: [`src/extraction/pid_topology.py`](src/extraction/pid_topology.py) (the
 lift + export), [`src/extraction/eval_topology.py`](src/extraction/eval_topology.py)
@@ -47,11 +68,12 @@ which the CNN sees and the lift places into the structured model. That is the
 55 %-recall gap being partially *filled*, not just measured — exactly the
 content a machine-readable deliverable is supposed to carry.
 
-## The connectivity finding (the important part)
+## The connectivity finding (why topology failed)
 
-Edge recovery is reported as a **capability count, not a precision/recall score
-against DEXPI** — deliberately, and the reason is itself a result worth putting
-in the report:
+Edge tracing was **abandoned** — it cannot produce DEXPI-comparable topology.
+Edge output is reported as a **capability count, not a precision/recall score
+against DEXPI**, and the reason edge scoring is impossible here is itself the
+result worth putting in the report:
 
 > Across the 16 drawings, the DEXPI export contains **249 tag-to-tag *process*
 > adjacencies**, but only **4** of them have *both* endpoints recoverable from
@@ -89,11 +111,32 @@ future machine-readable P&ID/SCD deliverables"*:
   valves, equipment) today; **topology** from legacy PDFs needs symbol-anchored
   node positions and full line-following, and is the harder, later step.
 
+## Symbol anchoring — attempted, and what it revealed
+
+A text-tagged component's node is placed at its **tag text**, but a pipe attaches
+at the **symbol**. For valves the two can be far apart, so the lifter tries to
+snap a tagged valve to the centre of a nearby CNN valve detection
+(`build_nodes(anchor_valves=True)`). Measuring it on this export produced a
+clean negative result worth recording:
+
+- Tagged on/off valves are **sparse** (XV/ESV ≈ 1–3 per drawing; most CNN-detected
+  valves are *untagged hand valves*).
+- Those few valve tags sit **220–370 px from the nearest CNN detection**, and that
+  nearest detection is usually a *different* valve — so distance-based anchoring
+  would **mis-associate**, not fix position. The snap therefore uses a
+  conservative radius and, on this dataset, rarely fires (it never wrongly snaps).
+
+The real fix is **leader-line following** (trace the dashed line from the tag to
+its symbol) or an explicit symbol↔tag association, not nearest-neighbour. This is
+also why the earlier "nodes at text position" caveat is *narrower* than it first
+appears: symbol-only valves are already at their symbol centre, and instrument
+tags sit inside the bubble the line meets — so most nodes are already reasonably
+placed; the offset mainly affects the handful of tagged on/off valves.
+
 ## Limitations / future work
 
-- Node positions come from the **tag text**, not the component symbol where pipes
-  attach — the main reason physical tracing under-connects. Anchoring valve
-  nodes to CNN symbol centres (already available) is the next improvement.
+- **Leader-line following** for tagged-valve → symbol association (above) is the
+  next real improvement; nearest-neighbour anchoring is insufficient here.
 - Line **crossings without a junction dot** merge two runs into one component;
   flagged as `junction` edges, not resolved.
 - Connectivity is **undirected** — flow direction is not recovered from pixels.

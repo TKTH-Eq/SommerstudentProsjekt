@@ -37,6 +37,10 @@ _VALVE_CLASSES = {
     "gate_open", "gate_closed", "ball_valve", "ball_open", "ball_closed",
     "globe_valve", "butterfly_valve", "check_valve", "other_valve",
 }
+# type codes that ARE valves — a tagged one of these should be anchored to the
+# CNN symbol centre (where the pipe attaches), not left on its tag text.
+_VALVE_TYPES = {"XV", "ESV", "PV", "LV", "FV", "HV", "TV", "PCV", "FCV", "LCV",
+                "TCV", "BV", "GV", "CV"}
 
 
 @dataclass
@@ -76,8 +80,14 @@ def _words(pdf_path: str | Path, dpi: int) -> list[tuple[int, int, int, int]]:
 
 # ------------------------------------------------------------------- node build
 def build_nodes(pdf_path, dpi, detections, dpi_scale=1.0,
-                tag_match_px=90.0) -> list[Node]:
-    """Text tags (located) + CNN valves that no text tag explains. PURE PDF."""
+                tag_match_px=90.0, anchor_valves=True) -> list[Node]:
+    """Text tags (located) + CNN valves that no text tag explains. PURE PDF.
+
+    anchor_valves: a text-tagged VALVE is snapped to the centre of the nearest
+    CNN valve detection — the tag text sits beside the symbol, but the pipe
+    attaches at the SYMBOL, so tracing must start there. Instruments keep their
+    text position (their tag sits inside the bubble the pipe/signal meets, and
+    the CNN does not detect bubbles)."""
     from extraction.tag_extractor import extract_tags, create_objects
     from extraction.tag_locator import locate_tags
 
@@ -86,17 +96,16 @@ def build_nodes(pdf_path, dpi, detections, dpi_scale=1.0,
     boxes = locate_tags(pdf_path, tags, dpi=dpi)
 
     nodes: list[Node] = []
-    tag_centres: list[tuple[float, float]] = []
+    tag_centre_idx: list[tuple[float, float, int]] = []   # (cx, cy, node index)
     for tag, bs in boxes.items():
         x, y, w, h = bs[0]
         cx, cy = x + w / 2, y + h / 2
-        tag_centres.append((cx, cy))
+        tag_centre_idx.append((cx, cy, len(nodes)))
         nodes.append(Node(id=tag, kind=(objs[tag].type_code or "?"),
                           tag=tag, x=cx, y=cy, source="text"))
 
-    # CNN valves with no text tag nearby = symbol-only components (the gap).
     n_sym = 0
-    for i, d in enumerate(detections or []):
+    for d in detections or []:
         if d.get("cls") not in _VALVE_CLASSES:
             continue
         if d.get("tier", "sikker") != "sikker":
@@ -104,9 +113,21 @@ def build_nodes(pdf_path, dpi, detections, dpi_scale=1.0,
         x0, y0, x1, y1 = d["bbox_orig"]
         cx = (x0 + x1) / 2 * dpi_scale
         cy = (y0 + y1) / 2 * dpi_scale
-        if any((cx - tx) ** 2 + (cy - ty) ** 2 <= tag_match_px ** 2
-               for tx, ty in tag_centres):
-            continue                                   # already a tagged node
+        # nearest text tag to this detection
+        near = None
+        best = tag_match_px ** 2
+        for tx, ty, idx in tag_centre_idx:
+            dd = (cx - tx) ** 2 + (cy - ty) ** 2
+            if dd <= best:
+                best, near = dd, idx
+        if near is not None:
+            # a text tag explains this symbol. If that tag is a VALVE, snap it
+            # to the symbol centre (pipe attaches here, not at the label).
+            nd = nodes[near]
+            if anchor_valves and nd.tag and objs[nd.tag].type_code in _VALVE_TYPES \
+                    and nd.source == "text":
+                nd.x, nd.y, nd.source = cx, cy, "text+cnn"
+            continue
         n_sym += 1
         nodes.append(Node(id=f"sym{n_sym}:{d['cls']}", kind=d["cls"],
                           tag=None, x=cx, y=cy, source="cnn"))
@@ -209,6 +230,12 @@ def lift(pdf_path, detections, dpi: int = 200, dpi_scale: float = 1.0,
     nb = [(n.x - 26, n.y - 26, n.x + 26, n.y + 26) for n in nodes]
     mask = pipe_mask(gray, _words(pdf_path, dpi), nb)
     edges, pstats = trace_edges(mask, nodes, dilate_iter=dilate_iter)
+
+    deg: dict[str, int] = {}
+    for e in edges:
+        deg[e["a"]] = deg.get(e["a"], 0) + 1
+        deg[e["b"]] = deg.get(e["b"], 0) + 1
+    valves = [n for n in nodes if n.source in ("text+cnn", "cnn")]
     return {
         "drawing": Path(pdf_path).stem,
         "dpi": dpi,
@@ -216,11 +243,17 @@ def lift(pdf_path, detections, dpi: int = 200, dpi_scale: float = 1.0,
         "edges": edges,
         "stats": {
             "nodes": len(nodes),
-            "nodes_text": sum(1 for n in nodes if n.source == "text"),
+            # tagged components (text label; valves anchored to the CNN symbol)
+            "nodes_text": sum(1 for n in nodes if n.source in ("text", "text+cnn")),
+            "nodes_anchored": sum(1 for n in nodes if n.source == "text+cnn"),
             "nodes_symbol_only": sum(1 for n in nodes if n.source == "cnn"),
             "edges": len(edges),
             "edges_segment": sum(1 for e in edges if e["kind"] == "segment"),
             "edges_junction": sum(1 for e in edges if e["kind"] == "junction"),
+            # connectivity: how many components are actually wired into a pipe
+            "nodes_connected": sum(1 for n in nodes if deg.get(n.id, 0) > 0),
+            "valves_connected": sum(1 for n in valves if deg.get(n.id, 0) > 0),
+            "valves_total": len(valves),
             **pstats,
         },
     }

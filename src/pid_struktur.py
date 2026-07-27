@@ -77,7 +77,7 @@ def _overlay(base: Image.Image, model: dict) -> Image.Image:
             d.line([a, b], fill=col, width=3)
     r = 7
     for n in model["nodes"]:
-        col = _TEXT_COL if n["source"] == "text" else _SYM_COL
+        col = _SYM_COL if n["source"] == "cnn" else _TEXT_COL   # text/anchored=blue
         x, y = n["x"], n["y"]
         d.ellipse([x - r, y - r, x + r, y + r], fill=col, outline="white")
     return im
@@ -85,13 +85,16 @@ def _overlay(base: Image.Image, model: dict) -> Image.Image:
 
 # --------------------------------------------------------------------- page
 page_header("PDF → structure",
-            "Reconstruct a machine-readable model from a legacy PDF — and "
-            "measure it")
-st.caption("The constructive side of the format argument: instead of only "
-           "*measuring* what PDF loses, the lifter *manufactures* structure "
-           "from the drawing alone — text tags + CNN valve symbols + pipe runs "
-           "traced off the raster — and attaches a measured accuracy. A draft "
-           "for engineering review, not an authoritative source.")
+            "Component inventory from a legacy PDF — topology attempt kept as a "
+            "documented failure")
+st.caption("Two halves, one works and one does not. ✅ **Component inventory** "
+           "— pure-PDF recovers most tags PLUS the symbol-only valves the text "
+           "layer cannot see, exported as a structured list. ❌ **Topology / "
+           "edge tracing** — does NOT work on this data and was abandoned; going "
+           "from a legacy PDF to a *connected* DEXPI model is not achievable "
+           "with this approach. The graph overlay below is kept only to show the "
+           "attempt (see PID_TO_STRUCTURE.md). A draft for review, not an "
+           "authoritative source.")
 
 drawings = sorted(p for p in Path(PID_DIR).rglob("*") if p.suffix.lower() == ".pdf")
 if not drawings:
@@ -129,8 +132,21 @@ if st.session_state.get("pid_lifted") == stem:
     m4.metric("Pipe edges traced", s["edges"],
               help=f"{s['edges_segment']} clean segments · "
                    f"{s['edges_junction']} junction/header")
+    st.caption(f"🔌 {s['valves_connected']}/{s['valves_total']} valve symbols "
+               f"wired into a pipe · {s.get('nodes_anchored', 0)} tagged valve(s) "
+               f"anchored to their CNN symbol centre (rare on this export — "
+               f"tagged on/off valves are sparse and their labels sit far from "
+               f"the symbol; see PID_TO_STRUCTURE.md).")
 
-    st.subheader("Recovered graph on the drawing")
+    st.subheader("Pipe-tracing experiment (abandoned — not real topology)")
+    st.warning(
+        "⚠️ **Edge tracing does not work on this data and was abandoned.** The "
+        "raster pipe-tracer cannot recover DEXPI-comparable connectivity — the "
+        "lines below are the *attempt*, not verified topology, and should not be "
+        "read as recovered pipe runs. Going from a legacy PDF to a *connected* "
+        "DEXPI model is not achievable with this approach; see "
+        "PID_TO_STRUCTURE.md. The working output of this page is the **component "
+        "inventory and export** above/below, not the graph.")
     st.markdown(
         f"<span style='color:{_TEXT_COL};font-weight:700'>● text-tagged</span> "
         f"&nbsp; <span style='color:{_SYM_COL};font-weight:700'>● symbol-only "
