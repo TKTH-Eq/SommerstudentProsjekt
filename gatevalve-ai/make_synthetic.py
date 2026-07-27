@@ -14,13 +14,14 @@ Klasser:
 Bruk:
   python make_synthetic.py --templates ../pid-symbol-ai/templates --n 800
 """
-import argparse, glob, os, random
+import argparse, glob, os, random, shutil
 import numpy as np
 import cv2
 
 SIZE = 64
 # templatelister per klasse — VERIFISERT mot legendeteksten (PT-111):
-BALL   = ["VAL022", "VAL027"]            # BALL VALVE, OPEN / CLOSED
+BALL_O = ["VAL022"]                      # BALL VALVE, OPEN
+BALL_C = ["VAL027"]                      # BALL VALVE, CLOSED (fylt)
 GLOBE  = ["VAL017", "VAL023"]            # GLOBE VALVE, OPEN / CLOSED
 CHECK  = ["VAL033"]                      # CHECK VALVE
 BFLY   = ["VAL028"]                      # BUTTERFLY VALVE
@@ -237,14 +238,40 @@ def main():
     # gate-symbolene: bruk de RENE sløyfene lært av learn_from_legend.py
     gate_o = cv2.imread("gate_open.png", cv2.IMREAD_GRAYSCALE)
     gate_c = cv2.imread("gate_closed.png", cv2.IMREAD_GRAYSCALE)
+    have_templates = os.path.isdir(args.templates)
+    if not have_templates:
+        print(f"[i] templates-mappen mangler ({args.templates}) — bruker "
+              f"lokale cand_*.png som symbolkilder i stedet")
+
     def tpls(codes):
-        out = [t for t in (load_tpl(os.path.join(args.templates, f"{c}.png")) for c in codes)
-               if t is not None]
-        return out
-    ball, globe_, check, bfly, others = tpls(BALL), tpls(GLOBE), tpls(CHECK), tpls(BFLY), tpls(OTHER)
-    reducers = tpls(RED)
-    if gate_o is None or gate_c is None or not others:
-        raise SystemExit("fant ikke maler — pek --templates til pid-symbol-ai/templates")
+        if not have_templates:
+            return []
+        return [t for t in (load_tpl(os.path.join(args.templates, f"{c}.png"))
+                            for c in codes) if t is not None]
+
+    def local(fn):
+        """Fallback: rensede symbolkjerner som allerede ligger i gatevalve-ai
+        (lagd av make_candidate_templates/make_closed_templates)."""
+        t = cv2.imread(fn, cv2.IMREAD_GRAYSCALE)
+        return [t] if t is not None else []
+
+    ball_o = tpls(BALL_O) or local("cand_ball.png")
+    ball_c = tpls(BALL_C) or local("cand_ball_closed.png")
+    globe_ = tpls(GLOBE) or local("cand_globe.png")
+    check = tpls(CHECK) or local("cand_check.png")
+    bfly = tpls(BFLY) or local("cand_butterfly.png")
+    reducers = tpls(RED) or local("cand_reducer.png")
+    others = tpls(OTHER)
+    if gate_o is None or gate_c is None:
+        raise SystemExit("fant ikke gate_open.png/gate_closed.png i gatevalve-ai")
+    missing = [n for n, lst in [("ball (cand_ball.png)", ball_o),
+                                ("ball closed (cand_ball_closed.png)", ball_c),
+                                ("globe (cand_globe.png)", globe_),
+                                ("check (cand_check.png)", check),
+                                ("butterfly (cand_butterfly.png)", bfly),
+                                ("reducer (cand_reducer.png)", reducers)] if not lst]
+    if missing:
+        raise SystemExit("mangler symbolkilder: " + ", ".join(missing))
 
     # "symbol-men-ikke-ventil": fittings og linjesymboler -> background
     import glob as _g
@@ -264,14 +291,29 @@ def main():
 
     plan = {"gate_open": lambda: place(gate_o, rng),
             "gate_closed": lambda: place(gate_c, rng),
-            "ball_valve": lambda: place(rng.choice(ball), rng),
+            "ball_open": lambda: place(rng.choice(ball_o), rng),
+            "ball_closed": lambda: place(rng.choice(ball_c), rng),
             "globe_valve": lambda: place(rng.choice(globe_), rng),
             "check_valve": lambda: place(rng.choice(check), rng),
             "butterfly_valve": lambda: place(rng.choice(bfly), rng),
             "reducer": lambda: place(rng.choice(reducers), rng),
             "other_valve": lambda: place(rng.choice(others), rng)}
-    for cls in list(plan) + ["background"]:
-        d = os.path.join(args.out, cls); os.makedirs(d, exist_ok=True)
+    gen_classes = list(plan) + ["background"]
+    if not others:
+        gen_classes.remove("other_valve")
+        print("[i] other_valve beholdes som før — needle/plug/angle-malene "
+              "finnes kun i templates-mappen")
+    if not non_valves:
+        gen_classes.remove("background")
+        print("[i] background beholdes som før — ikke-ventil-symbolene "
+              "(fittings-vaksinen) finnes kun i templates-mappen")
+    for cls in gen_classes:
+        d = os.path.join(args.out, cls)
+        if os.path.isdir(d):
+            n_old = len(glob.glob(os.path.join(d, "*.png")))
+            shutil.rmtree(d)
+            print(f"[i] tømte {d} ({n_old} gamle filer)")
+        os.makedirs(d, exist_ok=True)
         for i in range(args.n):
             if cls == "background":
                 r = rng.random()

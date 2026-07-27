@@ -124,14 +124,34 @@ def nms(dets, iou=0.35):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("drawing")
-    ap.add_argument("--model", default="model.joblib")
+    ap.add_argument("--model", default="model_cnn.pt",
+                    help="model_cnn.pt (CNN, standard); .joblib gir gammel HOG+SVM")
     ap.add_argument("--dpi", type=int, default=200)
     ap.add_argument("--workwidth", type=int, default=2400)
-    ap.add_argument("--cand-threshold", type=float, default=0.50)
+    ap.add_argument("--cand-threshold", type=float, default=0.50,
+                    help="malmatch-terskel for kandidater; senk (0.35-0.45) "
+                         "hvis små symboler ikke foreslås")
+    ap.add_argument("--cand-scales", default="0.006,0.0075,0.0095,0.012,0.015",
+                    help="malbredder som andel av tegningsbredden; legg til "
+                         "mindre verdier (f.eks. 0.004,0.005) for små symboler")
+    ap.add_argument("--cand-mirror", action="store_true",
+                    help="sveip også speilvendte maler (retningsbestemte "
+                         "symboler som check-klaffen; dobler sveipetiden)")
+    import argparse as _ap
+    ap.add_argument("--cand-components", action=_ap.BooleanOptionalAction,
+                    default=True,
+                    help="stilagnostisk forslagskilde i tillegg til malene: "
+                         "fjern lange rørlinjer og foreslå alle gjenværende "
+                         "blekklustre i symbolstørrelse (CNN+verifikatorer "
+                         "filtrerer). Standard PÅ; slå av med "
+                         "--no-cand-components")
     ap.add_argument("--out-dir", default="results",
                     help="mappe for verdict/proof/detections (lages automatisk)")
     ap.add_argument("--dump-detections", action="store_true",
                     help="skriv alle funn (alle klasser, orig-koordinater) til <navn>_detections.json")
+    ap.add_argument("--dump-candidates", action="store_true",
+                    help="diagnose: skriv ALLE klassifiserte kandidater (også "
+                         "background/avviste) til <navn>_candidates.json")
     ap.add_argument("--only-gates", action="store_true",
                     help="rapporter kun gate valve open/closed")
     ap.add_argument("--keep-text", action="store_true",
@@ -142,8 +162,9 @@ def main():
                     help="recall: finn mest mulig (standard). precision: geometrisk portvakt, få men sikre")
     ap.add_argument("--min-conf", type=float, default=None,
                     help="overstyr terskel; standard = modellens egne kalibrerte terskler")
-    ap.add_argument("--verifiers", default="non_gate_verifiers.pt",
-                    help="binære andretrinnsmodeller for ball/globe/check/butterfly; tom streng slår av")
+    ap.add_argument("--verifiers", default="verifiers.pt",
+                    help="binære andretrinnsmodeller per ventilklasse; tom "
+                         "streng slår av (fallback: non_gate_verifiers.pt)")
     ap.add_argument("--no-non-gate-verifier", action="store_true",
                     help="slå av andretrinnsverifisering (nyttig under hard-negative mining)")
     args = ap.parse_args()
@@ -182,6 +203,10 @@ def main():
         if not os.path.isabs(vp):
             local = os.path.join(here, vp)
             vp = local if os.path.exists(local) else vp
+        if not os.path.exists(vp) and args.verifiers == "verifiers.pt":
+            legacy = os.path.join(here, "non_gate_verifiers.pt")   # gammelt navn
+            if os.path.exists(legacy):
+                vp = legacy
         if os.path.exists(vp):
             vck = torch.load(vp, map_location="cpu")
             verifier_thresholds = vck.get("thresholds", {})
@@ -192,17 +217,24 @@ def main():
         else:
             print(f"  [andretrinn: ingen fil {vp!r}; kjører bare hovedmodellen]")
 
-    def verify_non_gate(cls, crop):
+    # ball og gate open/closed er samme fysiske klasse for sin verifikator
+    VERIFIER_ALIAS = {"ball_open": "ball_valve", "ball_closed": "ball_valve",
+                      "gate_open": "gate_valve", "gate_closed": "gate_valve"}
+
+    def verify_second_stage(cls, crop):
         """Returner (godkjent, sannsynlighet, terskel). Kun ikke-gate."""
-        vn = verifier_nets.get(cls)
+        vcls = VERIFIER_ALIAS.get(cls, cls)
+        vn = verifier_nets.get(vcls)
         if vn is None:
             return True, None, None
         with torch.no_grad():
             p = float(vn(canonical_tensor(crop)).softmax(1).numpy()[0, 1])
-        t = float(verifier_thresholds.get(cls, 0.80))
+        t = float(verifier_thresholds.get(vcls, 0.80))
         return p >= t, p, t
     cand_files = ["gate_open.png", "gate_closed.png",
-                  "cand_ball.png", "cand_globe.png", "cand_check.png", "cand_butterfly.png", "cand_reducer.png"]
+                  "cand_ball.png", "cand_ball_closed.png",
+                  "cand_globe.png", "cand_check.png", "cand_check2.png",
+                  "cand_butterfly.png", "cand_reducer.png"]
     tpls = []
     for fn in cand_files:
         t = cv2.imread(os.path.join(here, fn), 0)
@@ -229,13 +261,16 @@ def main():
     target = prep(wbw); H, W = wbw.shape
 
     cand = []
-    for frac in (0.006, 0.0075, 0.0095, 0.012, 0.015):
+    scales = tuple(float(s) for s in args.cand_scales.split(",") if s.strip())
+    for frac in scales:
         tw = max(int(W * frac), 11)
         for t in tpls:
             tt = cv2.resize(t, None, fx=tw / t.shape[1], fy=tw / t.shape[1],
                             interpolation=cv2.INTER_AREA)
-            for rot in (0, 1):
-                tr = np.ascontiguousarray(np.rot90(tt)) if rot else tt
+            variants = [tt, np.ascontiguousarray(np.rot90(tt))]
+            if args.cand_mirror:
+                variants += [np.ascontiguousarray(v[:, ::-1]) for v in variants]
+            for tr in variants:
                 tf = prep(tr)
                 if tf.shape[0] >= H or tf.shape[1] >= W: continue
                 res = cv2.matchTemplate(target, tf, cv2.TM_CCOEFF_NORMED)
@@ -246,9 +281,41 @@ def main():
                 for y, x in zip(ys, xs):
                     cand.append({"score": float(res[y, x]),
                                  "bbox": [int(x), int(y), int(x+tf.shape[1]), int(y+tf.shape[0])]})
+    if args.cand_components:
+        # KOMPONENTFORSLAG: malene er blinde for stiler de ikke ligner
+        # (fylte baller, klaff-checks, ...). Fjern lange linjer, og foreslå
+        # hvert gjenværende blekkluster i symbolstørrelse som kandidat.
+        smin = min(scales); smax = max(scales)
+        lo = max(int(W * smin * 0.5), 8)          # halv minste malbredde
+        hi = int(W * smax * 1.6)                  # 1.6x største
+        klen = max(int(W * 0.02), 25)             # "lang linje" ~2% av bredden
+        horiz = cv2.morphologyEx(wbw, cv2.MORPH_OPEN,
+                                 cv2.getStructuringElement(cv2.MORPH_RECT, (klen, 1)))
+        vert = cv2.morphologyEx(wbw, cv2.MORPH_OPEN,
+                                cv2.getStructuringElement(cv2.MORPH_RECT, (1, klen)))
+        sym = cv2.subtract(wbw, cv2.bitwise_or(horiz, vert))
+        # sy sammen strøk som hørte til samme symbol etter linjefjerningen
+        sym = cv2.morphologyEx(sym, cv2.MORPH_CLOSE, np.ones((3, 3), np.uint8))
+        ncc, lab, stats, cents = cv2.connectedComponentsWithStats((sym > 0).astype(np.uint8))
+        added = 0
+        for i in range(1, ncc):
+            x, y, w2, h2, a = stats[i]
+            side = max(w2, h2)
+            if not (lo <= side <= hi) or a < 12:
+                continue
+            # kvadratisk boks rundt komponentens senter, litt romsligere
+            s2 = int(side * 1.25)
+            cx, cy = int(cents[i][0]), int(cents[i][1])
+            bx0, by0 = max(cx - s2 // 2, 0), max(cy - s2 // 2, 0)
+            bx1, by1 = min(bx0 + s2, W), min(by0 + s2, H)
+            cand.append({"score": 0.45, "bbox": [bx0, by0, bx1, by1]})
+            added += 1
+        print(f"  [komponentforslag: {added} klustre i symbolstørrelse]")
+
     cand = nms(cand)
 
     counts = {c: [] for c in classes}
+    cand_log = []
     pad = 0.35
     for d in cand:
         x0, y0, x1, y1 = [v / f for v in d["bbox"]]
@@ -260,14 +327,21 @@ def main():
         proba = predict_proba_one(crop)
         i = int(np.argmax(proba))
         d["cls"], d["conf"] = classes[i], float(proba[i])
+        if args.dump_candidates:
+            cand_log.append({"bbox_orig": [round(x0), round(y0),
+                                           round(x1), round(y1)],
+                             "match_score": round(d.get("score", 0), 3),
+                             "cls": d["cls"], "conf": round(d["conf"], 3)})
         if d["cls"] == "background":
             continue
 
         # Binær class-vs-rest-verifikasjon for de nye ventilklassene.
         # Dette stopper f.eks. en reducer som hoved-CNN-en kaller ball valve
         # med høy softmax. Gate-klassene hoppes eksplisitt over.
-        if d["cls"] not in ("gate_open", "gate_closed", "other_valve"):
-            accepted, vconf, vthr = verify_non_gate(d["cls"], crop)
+        # gate går nå også gjennom verifikator (finnes gate_valve i
+        # verifikator-filen); mangler den, slipper gate gjennom som før
+        if d["cls"] != "other_valve":
+            accepted, vconf, vthr = verify_second_stage(d["cls"], crop)
             if vconf is not None:
                 d["verifier_conf"], d["verifier_threshold"] = vconf, vthr
             if not accepted:
@@ -293,12 +367,16 @@ def main():
             if roi.size == 0 or roi.shape[1] < 8:
                 continue
             ink = (roi > 0).mean()
-            if not (0.06 <= ink <= 0.92):
+            ink_lo = 0.03 if d["cls"] == "check_valve" else 0.06
+            if not (ink_lo <= ink <= 0.92):
                 continue
-            lh = (roi[:, :roi.shape[1]//2] > 0).mean()
-            rh = (roi[:, roi.shape[1]//2:] > 0).mean()
-            if abs(lh - rh) > 0.35 * max(lh, rh, 1e-6):
-                continue
+            # symmetrikravet gjelder sløyfeformene — check-klaffen er
+            # asymmetrisk MED HENSIKT (den viser strømningsretningen)
+            if d["cls"] != "check_valve":
+                lh = (roi[:, :roi.shape[1]//2] > 0).mean()
+                rh = (roi[:, roi.shape[1]//2:] > 0).mean()
+                if abs(lh - rh) > 0.35 * max(lh, rh, 1e-6):
+                    continue
         else:
             if d["conf"] < thr_for(d["cls"]):
                 continue
@@ -349,7 +427,9 @@ def main():
         verdict[cls] = {"present": present, "confident": len(strong),
                         "possible": len(weak), "best_conf": round(best, 3)}
         label = {"gate_open": "gate valve OPEN", "gate_closed": "gate valve CLOSED",
-                 "ball_valve": "ball valve", "globe_valve": "globe valve",
+                 "ball_valve": "ball valve",
+                 "ball_open": "ball valve OPEN", "ball_closed": "ball valve CLOSED",
+                 "globe_valve": "globe valve",
                  "check_valve": "check valve", "butterfly_valve": "butterfly valve",
                  "reducer": "reducer", "other_valve": "andre ventiler"}.get(cls, cls)
         extra = f" + {len(weak)} mulige" if weak else ""
@@ -370,10 +450,16 @@ def main():
                 dump.append(item)
         json.dump(dump, open(outp(f"{stem}_detections.json"), "w"), indent=2)
         print(f"  -> {args.out_dir}/{stem}_detections.json ({len(dump)} funn)")
+    if args.dump_candidates:
+        json.dump(cand_log, open(outp(f"{stem}_candidates.json"), "w"), indent=2)
+        print(f"  -> {args.out_dir}/{stem}_candidates.json "
+              f"({len(cand_log)} klassifiserte kandidater)")
 
     vis = cv2.cvtColor(work, cv2.COLOR_GRAY2BGR)
     cols = {"gate_open": (0, 170, 0), "gate_closed": (0, 0, 255),
-            "ball_valve": (0, 140, 255), "globe_valve": (200, 0, 200),
+            "ball_valve": (0, 140, 255),
+            "ball_open": (0, 140, 255), "ball_closed": (0, 60, 215),
+            "globe_valve": (200, 0, 200),
             "check_valve": (180, 180, 0), "butterfly_valve": (255, 0, 120),
             "reducer": (19, 69, 139), "other_valve": (200, 120, 0)}
     for cls, col in cols.items():
