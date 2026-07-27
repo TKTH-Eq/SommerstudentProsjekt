@@ -27,6 +27,8 @@ from PIL import Image
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+from tegningsvisning import save_run_meta, view_panel   # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[1]
 GATEVALVE_DIR = ROOT / "gatevalve-ai"
 RESULTS_DIR = GATEVALVE_DIR / "results"
@@ -163,6 +165,9 @@ if st.button("Analyze drawing", type="primary"):
         if not ok or not verdict_p.exists():
             st.error("Classification failed — see log above.")
             st.stop()
+        # remember the DPI: bbox_orig is in pixels, so the overlay only
+        # lines up if the original is re-rendered at the same scale
+        save_run_meta(RESULTS_DIR, choice, int(dpi))
     st.session_state["analyzed"] = str(choice)
 
 if st.session_state.get("analyzed") == str(choice) and verdict_p.exists():
@@ -187,8 +192,9 @@ if st.session_state.get("analyzed") == str(choice) and verdict_p.exists():
                "«Possible» = 0.55 threshold (thin box) — checklist for humans.")
 
     st.subheader("Where on the drawing?")
-    st.image(str(proof_p), use_container_width=True)
-    st.caption("Color legend: " + COLOR_LEGEND)
+    view_panel(choice, proof_p, det_p, RESULTS_DIR,
+               fallback_dpi=int(dpi), class_info=CLASS_INFO,
+               color_legend=COLOR_LEGEND)
 
     with st.expander("🔤 Line codes → Model Broker attributes"):
         try:
