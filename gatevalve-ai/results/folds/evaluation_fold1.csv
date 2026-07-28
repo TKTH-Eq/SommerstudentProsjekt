@@ -1,0 +1,12 @@
+drawing,class,gt,tp_strong,fp_strong,fn_strong,tp_all,fp_all,fn_all,gate_states,ball_states
+25VHO64PU00101,gate,0,0,1,0,0,1,0,0o/1c,
+25VHO64PU00101,reducer,5,2,0,3,3,1,2,,
+25VHO71PW00101,check_valve,0,0,2,0,0,2,0,,
+25VHO71PW00101,reducer,19,12,14,7,13,42,6,,
+25WHO71PW00101,gate,15,14,22,1,14,22,1,33o/3c,
+25WHO71PW00101,ball,0,0,0,0,0,1,0,,1o/0c
+25WHO71PW00101,globe_valve,0,0,1,0,0,3,0,,
+25WHO71PW00101,check_valve,7,7,19,0,7,20,0,,
+25WHO71PW00101,butterfly_valve,17,2,0,15,3,0,14,,
+25WHO71PW00101,reducer,25,19,5,6,20,8,5,,
+25WHO71PW00101,other_valve,4,2,8,2,3,14,1,,
