@@ -1,32 +1,15 @@
 [
   {
-    "cls": "gate_open",
-    "conf": 0.668,
-    "bbox_orig": [
-      4227,
-      2924,
-      4247,
-      2963
-    ]
-  },
-  {
     "cls": "reducer",
-    "conf": 0.975,
+    "conf": 0.994,
+    "tier": "sikker",
     "bbox_orig": [
       4321,
       2902,
       4360,
       2935
-    ]
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.892,
-    "bbox_orig": [
-      4547,
-      2902,
-      4586,
-      2935
-    ]
+    ],
+    "verifier_conf": 0.919,
+    "verifier_threshold": 0.469
   }
 ]
