@@ -1,0 +1,42 @@
+{
+  "ok": true,
+  "summary": "This P&ID illustrates the Export Booster Compressor system, designated 27-KA50, which is critical for boosting gas pressure for export. The drawing highlights the compressor's anti-surge control system and various instrumentation for monitoring pressure, temperature, and level, as well as connections to seal gas, cooling, and vent systems.",
+  "key_equipment": [
+    "EXPORT BOOSTER COMPRESSOR (27-KA50)",
+    "ANTI-SURGE CONTROL",
+    "GAS TURBINE/GENERATOR"
+  ],
+  "main_hazards": [
+    "Overpressure",
+    "Compressor Surge",
+    "Gas Release/Loss of Containment",
+    "High Temperature"
+  ],
+  "tags": [
+    {
+      "tag": "27-KA50",
+      "status": "verified"
+    },
+    {
+      "tag": "PIC 4803",
+      "status": "verified_loose"
+    },
+    {
+      "tag": "PSV 4809",
+      "status": "verified_loose"
+    },
+    {
+      "tag": "PDI 4812",
+      "status": "verified_loose"
+    },
+    {
+      "tag": "TT 4806",
+      "status": "verified_loose"
+    },
+    {
+      "tag": "PIC 4825A",
+      "status": "verified_loose"
+    }
+  ],
+  "saved_at": "now (live)"
+}

@@ -190,3 +190,54 @@ def prio_badge(priority: int, direction: str | None = None) -> str:
     return (f"<span style='background:{c};color:#fff;border-radius:4px;"
             f"padding:1px 7px;font-size:11px;font-weight:600;"
             f"font-family:IBM Plex Mono,monospace'>P{priority}{arrow}</span>")
+
+# --------------------------------------------------------------------------- #
+#  Zoomable image viewer (shared)                                             #
+# --------------------------------------------------------------------------- #
+from pathlib import Path as _Path
+
+
+@st.cache_data(show_spinner=False)
+def _png_b64(path: str, mtime: float) -> str:
+    import base64
+    return base64.b64encode(_Path(path).read_bytes()).decode()
+
+
+def zoomable_image(png_path: str, height: int = 640) -> None:
+    """Inline pan/zoom image viewer — scroll = zoom toward the pointer, drag =
+    pan, double-click = reset. Pure HTML/JS in a components iframe, no extra
+    dependencies. Shared so any page can show a zoomable drawing."""
+    import streamlit.components.v1 as components
+    b64 = _png_b64(png_path, _Path(png_path).stat().st_mtime)
+    components.html(f"""
+<div id="vp" style="width:100%;height:{height - 20}px;overflow:hidden;
+     border:1px solid #d0d5da;border-radius:8px;background:#fafbfc;
+     cursor:grab;position:relative;user-select:none">
+  <div id="wrap" style="transform-origin:0 0;position:absolute;left:0;top:0;
+       width:100%">
+    <img id="im" src="data:image/png;base64,{b64}" draggable="false"
+         style="max-width:none;width:100%;display:block"/>
+  </div>
+  <div style="position:absolute;right:8px;bottom:8px;color:#555;
+       font:11px sans-serif;background:#ffffffcc;padding:3px 8px;
+       border-radius:6px;pointer-events:none">
+    scroll = zoom &nbsp;·&nbsp; drag = pan &nbsp;·&nbsp; double-click = reset
+  </div>
+</div>
+<script>
+const vp=document.getElementById("vp"),im=document.getElementById("wrap");
+let s=1,tx=0,ty=0,drag=false,sx=0,sy=0;
+function apply(){{im.style.transform=`translate(${{tx}}px,${{ty}}px) scale(${{s}})`;}}
+vp.addEventListener("wheel",e=>{{
+  e.preventDefault();
+  const r=vp.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+  const f=e.deltaY<0?1.25:0.8,ns=Math.min(Math.max(s*f,1),40);
+  tx=mx-(mx-tx)*(ns/s); ty=my-(my-ty)*(ns/s); s=ns; apply();
+}},{{passive:false}});
+vp.addEventListener("mousedown",e=>{{drag=true;sx=e.clientX-tx;sy=e.clientY-ty;
+  vp.style.cursor="grabbing";}});
+window.addEventListener("mousemove",e=>{{if(!drag)return;
+  tx=e.clientX-sx;ty=e.clientY-sy;apply();}});
+window.addEventListener("mouseup",()=>{{drag=false;vp.style.cursor="grab";}});
+vp.addEventListener("dblclick",()=>{{s=1;tx=0;ty=0;apply();}});
+</script>""", height=height)

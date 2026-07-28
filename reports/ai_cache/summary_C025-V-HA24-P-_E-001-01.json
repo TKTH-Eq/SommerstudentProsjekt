@@ -1,0 +1,42 @@
+{
+  "ok": true,
+  "summary": "This P&ID illustrates the Gas Treatment System, specifically focusing on the Scrubber Pump 24-PA001 and its associated piping, instrumentation, and controls. The pump handles liquid from a wet gas scrubber, moving it towards condensate export or a sample receiver, with a dedicated seal flush system and minimum flow recirculation.",
+  "key_equipment": [
+    "Scrubber Pump 24-PA001"
+  ],
+  "main_hazards": [
+    "Overpressure (indicated by various pressure instruments and setpoints)",
+    "Loss of Containment (due to pump and piping handling process fluids)",
+    "Loss of Liquid Seal for 24-PA001 (explicitly noted as an alarm condition)",
+    "Pump damage due to low flow/cavitation (implied by minimum flow line and valve setting)",
+    "Hydrocarbon release (as part of a gas treatment system, from a wet gas scrubber)",
+    "High/Low level excursions (monitored by LSH 2005)"
+  ],
+  "tags": [
+    {
+      "tag": "24-PA001",
+      "status": "verified"
+    },
+    {
+      "tag": "24-FV2100",
+      "status": "verified"
+    },
+    {
+      "tag": "24-PI2160",
+      "status": "verified"
+    },
+    {
+      "tag": "24-LSH2005",
+      "status": "verified"
+    },
+    {
+      "tag": "24-LV2162A",
+      "status": "verified"
+    },
+    {
+      "tag": "24-XV2163A",
+      "status": "verified"
+    }
+  ],
+  "saved_at": "now (live)"
+}

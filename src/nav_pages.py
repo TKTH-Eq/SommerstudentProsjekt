@@ -24,6 +24,9 @@ PAGES = {
     "tegning":     st.Page("tegningsanalyse.py", title="Drawing analysis", icon="🔍"),
     "pid_struktur": st.Page("pid_struktur.py", title="PDF → structure", icon="🧩"),
     "graf_qa":     st.Page("graf_qa.py", title="Plant Q&A (GraphRAG)", icon="💬"),
+    "sammendrag":  st.Page("tegning_sammendrag.py", title="30-sec summary", icon="📝"),
+    "compliance":  st.Page("compliance_dashboard.py", title="Compliance dashboard", icon="📊"),
+    "finn":        st.Page("finn_tegning.py", title="Find the drawing", icon="🔎"),
 }
 
 NAV = [
@@ -41,4 +44,7 @@ NAV = [
     PAGES["tegning"],
     PAGES["pid_struktur"],
     PAGES["graf_qa"],
+    PAGES["sammendrag"],
+    PAGES["compliance"],
+    PAGES["finn"],
 ]

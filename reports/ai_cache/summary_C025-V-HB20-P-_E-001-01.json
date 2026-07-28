@@ -1,0 +1,40 @@
+{
+  "ok": true,
+  "summary": "This P&ID sheet details the piping and instrumentation for the 20-PA001 separator pump within a production separation and stabilization system. Its purpose is to illustrate the control and safety logic associated with the pump's operation and its connection to upstream separation and downstream condensate export.",
+  "key_equipment": [
+    "20-PA001 (Separator Pump)"
+  ],
+  "main_hazards": [
+    "Overpressure (indicated by multiple pressure instruments with alarms)",
+    "High temperature (indicated by temperature instruments with alarms and a pump trip interlock)",
+    "Loss of containment (inherent to hydrocarbon processing)",
+    "Loss of flow/cavitation (related to pump operation and flow control)"
+  ],
+  "tags": [
+    {
+      "tag": "20-PA001",
+      "status": "verified"
+    },
+    {
+      "tag": "PI 2016",
+      "status": "verified_loose"
+    },
+    {
+      "tag": "TT 2060",
+      "status": "verified_loose"
+    },
+    {
+      "tag": "FIC 2000",
+      "status": "verified_loose"
+    },
+    {
+      "tag": "LV 2200A",
+      "status": "verified_loose"
+    },
+    {
+      "tag": "HS 2202",
+      "status": "verified_loose"
+    }
+  ],
+  "saved_at": "now (live)"
+}

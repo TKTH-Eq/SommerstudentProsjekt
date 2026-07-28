@@ -304,6 +304,33 @@ def dedupe(findings: list[dict]) -> list[dict]:
     return out
 
 
+def screen_all(raw_dir) -> list[dict]:
+    """Run the DEXPI structural rules (R1–R3, R8–R9) over EVERY drawing that
+    has a DEXPI model, tagging each finding with its drawing and system — the
+    plant-wide roll-up behind the compliance dashboard. Coverage rules (R4–R7)
+    need a P&ID↔SCD pair and are left to the per-drawing view."""
+    import re as _re
+    from pathlib import Path as _P
+    from analysis.hazop_dexpi import load_dexpi_model
+    rows: list[dict] = []
+    for xml in sorted(_P(raw_dir).rglob("*.DGN.xml")):
+        try:
+            m = load_dexpi_model(xml)
+            fs = dedupe(screen(m["tag_graph"], m["objects"], m["sections"]))
+        except Exception:                                   # noqa: BLE001
+            continue
+        stem = xml.stem.replace(".DGN", "")
+        for f in fs:
+            sysn = "?"
+            for t in f.get("tags", []):
+                mm = _re.match(r"^(\d{2})", str(t))
+                if mm:
+                    sysn = mm.group(1)
+                    break
+            rows.append({**f, "drawing": stem, "system": sysn})
+    return rows
+
+
 def fluids_for_tags(xml_path, tags: list[str]) -> list[str]:
     """Fluid codes on lines anchored by these tags, via the plant-model
     line-anchor helper. Codes come from the line tags themselves
