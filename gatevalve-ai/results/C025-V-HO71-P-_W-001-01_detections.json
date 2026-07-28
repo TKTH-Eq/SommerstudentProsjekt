@@ -1,56 +1,151 @@
 [
   {
-    "cls": "check_valve",
-    "conf": 0.557,
+    "cls": "ball_open",
+    "conf": 0.603,
     "tier": "mulig",
+    "bbox_orig": [
+      279,
+      1816,
+      312,
+      1854
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.836,
+    "tier": "sikker",
+    "bbox_orig": [
+      2307,
+      3201,
+      2340,
+      3234
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.814,
+    "tier": "sikker",
+    "bbox_orig": [
+      3179,
+      1521,
+      3204,
+      1570
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.769,
+    "tier": "sikker",
+    "bbox_orig": [
+      3196,
+      1493,
+      3218,
+      1532
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.75,
+    "tier": "sikker",
     "bbox_orig": [
       3270,
       414,
       3309,
       436
-    ],
-    "verifier_conf": 0.944,
-    "verifier_threshold": 0.729
+    ]
   },
   {
     "cls": "check_valve",
-    "conf": 0.557,
-    "tier": "mulig",
+    "conf": 0.75,
+    "tier": "sikker",
     "bbox_orig": [
       3002,
       414,
       3041,
       436
-    ],
-    "verifier_conf": 0.944,
-    "verifier_threshold": 0.729
-  },
-  {
-    "cls": "gate_open",
-    "conf": 0.647,
-    "tier": "mulig",
-    "bbox_orig": [
-      4092,
-      3403,
-      4131,
-      3425
     ]
   },
   {
-    "cls": "gate_open",
-    "conf": 0.678,
-    "tier": "mulig",
-    "bbox_orig": [
-      4092,
-      3025,
-      4131,
-      3047
-    ]
-  },
-  {
-    "cls": "gate_open",
-    "conf": 0.925,
+    "cls": "check_valve",
+    "conf": 0.738,
     "tier": "sikker",
+    "bbox_orig": [
+      3165,
+      1490,
+      3187,
+      1529
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.703,
+    "tier": "sikker",
+    "bbox_orig": [
+      3245,
+      3162,
+      3265,
+      3201
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.65,
+    "tier": "sikker",
+    "bbox_orig": [
+      5721,
+      257,
+      5732,
+      295
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.649,
+    "tier": "sikker",
+    "bbox_orig": [
+      2194,
+      224,
+      2219,
+      273
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.644,
+    "tier": "sikker",
+    "bbox_orig": [
+      3209,
+      3160,
+      3229,
+      3198
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.614,
+    "tier": "sikker",
+    "bbox_orig": [
+      2009,
+      237,
+      2028,
+      276
+    ]
+  },
+  {
+    "cls": "check_valve",
+    "conf": 0.562,
+    "tier": "mulig",
+    "bbox_orig": [
+      4065,
+      3198,
+      4095,
+      3259
+    ]
+  },
+  {
+    "cls": "gate_open",
+    "conf": 0.79,
+    "tier": "mulig",
     "bbox_orig": [
       5489,
       108,
@@ -60,834 +155,783 @@
   },
   {
     "cls": "reducer",
-    "conf": 0.673,
-    "tier": "mulig",
-    "bbox_orig": [
-      2293,
-      2757,
-      2332,
-      2779
-    ],
-    "verifier_conf": 0.734,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.713,
-    "tier": "mulig",
-    "bbox_orig": [
-      2255,
-      1399,
-      2293,
-      1421
-    ],
-    "verifier_conf": 0.773,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.965,
-    "tier": "sikker",
-    "bbox_orig": [
-      2500,
-      3339,
-      2539,
-      3361
-    ],
-    "verifier_conf": 0.977,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.925,
-    "tier": "sikker",
-    "bbox_orig": [
-      3369,
-      886,
-      3408,
-      908
-    ],
-    "verifier_conf": 0.952,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.957,
-    "tier": "sikker",
-    "bbox_orig": [
-      2500,
-      3797,
-      2539,
-      3819
-    ],
-    "verifier_conf": 0.984,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.944,
-    "tier": "sikker",
-    "bbox_orig": [
-      2500,
-      3568,
-      2539,
-      3590
-    ],
-    "verifier_conf": 0.97,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.971,
-    "tier": "sikker",
-    "bbox_orig": [
-      2357,
-      2757,
-      2395,
-      2779
-    ],
-    "verifier_conf": 0.974,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.985,
-    "tier": "sikker",
-    "bbox_orig": [
-      2263,
-      1656,
-      2301,
-      1678
-    ],
-    "verifier_conf": 0.988,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.975,
-    "tier": "sikker",
-    "bbox_orig": [
-      1570,
-      1918,
-      1609,
-      1940
-    ],
-    "verifier_conf": 0.988,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.992,
-    "tier": "sikker",
-    "bbox_orig": [
-      3066,
-      248,
-      3105,
-      270
-    ],
-    "verifier_conf": 0.983,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.93,
-    "tier": "sikker",
-    "bbox_orig": [
-      3069,
-      414,
-      3107,
-      436
-    ],
-    "verifier_conf": 0.986,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.909,
-    "tier": "sikker",
-    "bbox_orig": [
-      2290,
-      1107,
-      2340,
-      1131
-    ],
-    "verifier_conf": 0.898,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.993,
-    "tier": "sikker",
-    "bbox_orig": [
-      4164,
-      3093,
-      4197,
-      3132
-    ],
-    "verifier_conf": 0.589,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.987,
-    "tier": "sikker",
-    "bbox_orig": [
-      4164,
-      3847,
-      4197,
-      3885
-    ],
-    "verifier_conf": 0.555,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.993,
-    "tier": "sikker",
-    "bbox_orig": [
-      2188,
-      1319,
-      2221,
-      1358
-    ],
-    "verifier_conf": 0.529,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.939,
-    "tier": "sikker",
-    "bbox_orig": [
-      2290,
-      1043,
-      2340,
-      1068
-    ],
-    "verifier_conf": 0.822,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.973,
-    "tier": "sikker",
-    "bbox_orig": [
-      4164,
-      3480,
-      4197,
-      3518
-    ],
-    "verifier_conf": 0.466,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.825,
-    "tier": "mulig",
-    "bbox_orig": [
-      2290,
-      1170,
-      2340,
-      1195
-    ],
-    "verifier_conf": 0.823,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.745,
-    "tier": "mulig",
-    "bbox_orig": [
-      2920,
-      690,
-      2969,
-      715
-    ],
-    "verifier_conf": 0.712,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.82,
-    "tier": "mulig",
-    "bbox_orig": [
-      2290,
-      1388,
-      2340,
-      1413
-    ],
-    "verifier_conf": 0.68,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.901,
-    "tier": "sikker",
-    "bbox_orig": [
-      3394,
-      3151,
-      3419,
-      3201
-    ],
-    "verifier_conf": 0.861,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.962,
-    "tier": "sikker",
-    "bbox_orig": [
-      3116,
-      1521,
-      3140,
-      1570
-    ],
-    "verifier_conf": 0.564,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.944,
-    "tier": "sikker",
-    "bbox_orig": [
-      2180,
-      1752,
-      2202,
-      1791
-    ],
-    "verifier_conf": 0.591,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.916,
-    "tier": "sikker",
-    "bbox_orig": [
-      2379,
-      3665,
-      2401,
-      3703
-    ],
-    "verifier_conf": 0.666,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.979,
-    "tier": "sikker",
-    "bbox_orig": [
-      2583,
-      3894,
-      2605,
-      3932
-    ],
-    "verifier_conf": 0.739,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.988,
-    "tier": "sikker",
-    "bbox_orig": [
-      2304,
-      1057,
-      2335,
-      1118
-    ],
-    "verifier_conf": 0.893,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.847,
-    "tier": "mulig",
-    "bbox_orig": [
-      2290,
-      1231,
-      2340,
-      1256
-    ],
-    "verifier_conf": 0.796,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.982,
-    "tier": "sikker",
-    "bbox_orig": [
-      3833,
-      3866,
-      3855,
-      3905
-    ],
-    "verifier_conf": 0.734,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.974,
-    "tier": "sikker",
-    "bbox_orig": [
-      2379,
-      3894,
-      2401,
-      3932
-    ],
-    "verifier_conf": 0.697,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.869,
-    "tier": "mulig",
-    "bbox_orig": [
-      2856,
-      345,
-      2878,
-      384
-    ],
-    "verifier_conf": 0.869,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.774,
-    "tier": "mulig",
-    "bbox_orig": [
-      3234,
-      511,
-      3256,
-      549
-    ],
-    "verifier_conf": 0.73,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.915,
-    "tier": "sikker",
-    "bbox_orig": [
-      2967,
-      345,
-      2989,
-      384
-    ],
-    "verifier_conf": 0.788,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.95,
-    "tier": "sikker",
-    "bbox_orig": [
-      2644,
-      511,
-      2666,
-      549
-    ],
-    "verifier_conf": 0.798,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.741,
-    "tier": "mulig",
-    "bbox_orig": [
-      2856,
-      511,
-      2878,
-      549
-    ],
-    "verifier_conf": 0.822,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.989,
-    "tier": "sikker",
-    "bbox_orig": [
-      3124,
-      511,
-      3146,
-      549
-    ],
-    "verifier_conf": 0.655,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.923,
-    "tier": "sikker",
-    "bbox_orig": [
-      2967,
-      511,
-      2989,
-      549
-    ],
-    "verifier_conf": 0.781,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.938,
-    "tier": "sikker",
-    "bbox_orig": [
-      2379,
-      3436,
-      2401,
-      3474
-    ],
-    "verifier_conf": 0.878,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.981,
-    "tier": "sikker",
-    "bbox_orig": [
-      2583,
-      3436,
-      2605,
-      3474
-    ],
-    "verifier_conf": 0.603,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.981,
-    "tier": "sikker",
-    "bbox_orig": [
-      3132,
-      345,
-      3154,
-      384
-    ],
-    "verifier_conf": 0.551,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.991,
-    "tier": "sikker",
-    "bbox_orig": [
-      2304,
-      1184,
-      2335,
-      1245
-    ],
-    "verifier_conf": 0.77,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.979,
-    "tier": "sikker",
-    "bbox_orig": [
-      2583,
-      3665,
-      2605,
-      3703
-    ],
-    "verifier_conf": 0.546,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.963,
-    "tier": "sikker",
-    "bbox_orig": [
-      2139,
-      2853,
-      2161,
-      2892
-    ],
-    "verifier_conf": 0.56,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.826,
-    "tier": "mulig",
-    "bbox_orig": [
-      2434,
-      1752,
-      2456,
-      1791
-    ],
-    "verifier_conf": 0.693,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.997,
+    "conf": 1.0,
     "tier": "sikker",
     "bbox_orig": [
       2517,
       328,
       2550,
       367
-    ],
-    "verifier_conf": 1.0,
-    "verifier_threshold": 0.445
+    ]
   },
   {
     "cls": "reducer",
-    "conf": 0.789,
-    "tier": "mulig",
-    "bbox_orig": [
-      4057,
-      3681,
-      4095,
-      3703
-    ],
-    "verifier_conf": 0.774,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.904,
+    "conf": 0.997,
     "tier": "sikker",
     "bbox_orig": [
-      3049,
-      982,
-      3071,
-      1021
-    ],
-    "verifier_conf": 0.628,
-    "verifier_threshold": 0.445
+      2188,
+      1319,
+      2221,
+      1358
+    ]
   },
   {
     "cls": "reducer",
-    "conf": 0.767,
-    "tier": "mulig",
-    "bbox_orig": [
-      3538,
-      982,
-      3560,
-      1021
-    ],
-    "verifier_conf": 0.608,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.857,
-    "tier": "mulig",
-    "bbox_orig": [
-      2782,
-      982,
-      2804,
-      1021
-    ],
-    "verifier_conf": 0.654,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.839,
-    "tier": "mulig",
-    "bbox_orig": [
-      3160,
-      982,
-      3182,
-      1021
-    ],
-    "verifier_conf": 0.659,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.921,
+    "conf": 0.995,
     "tier": "sikker",
     "bbox_orig": [
-      2395,
-      982,
-      2417,
-      1021
-    ],
-    "verifier_conf": 0.869,
-    "verifier_threshold": 0.445
+      3066,
+      248,
+      3105,
+      270
+    ]
   },
   {
     "cls": "reducer",
-    "conf": 0.912,
+    "conf": 0.994,
     "tier": "sikker",
     "bbox_orig": [
-      2558,
-      2853,
-      2580,
-      2892
-    ],
-    "verifier_conf": 0.713,
-    "verifier_threshold": 0.445
+      4164,
+      3093,
+      4197,
+      3132
+    ]
   },
   {
     "cls": "reducer",
-    "conf": 0.813,
-    "tier": "mulig",
-    "bbox_orig": [
-      2671,
-      982,
-      2693,
-      1021
-    ],
-    "verifier_conf": 0.457,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.912,
+    "conf": 0.992,
     "tier": "sikker",
     "bbox_orig": [
-      2257,
-      2853,
-      2279,
-      2892
-    ],
-    "verifier_conf": 0.713,
-    "verifier_threshold": 0.445
+      4164,
+      3847,
+      4197,
+      3885
+    ]
   },
   {
     "cls": "reducer",
-    "conf": 0.781,
-    "tier": "mulig",
-    "bbox_orig": [
-      4054,
-      3033,
-      4092,
-      3055
-    ],
-    "verifier_conf": 0.795,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.849,
-    "tier": "mulig",
-    "bbox_orig": [
-      4054,
-      3411,
-      4092,
-      3433
-    ],
-    "verifier_conf": 0.751,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.923,
+    "conf": 0.991,
     "tier": "sikker",
     "bbox_orig": [
-      3392,
-      513,
-      3414,
-      552
-    ],
-    "verifier_conf": 0.826,
-    "verifier_threshold": 0.445
+      1570,
+      1918,
+      1609,
+      1940
+    ]
   },
   {
     "cls": "reducer",
-    "conf": 0.95,
+    "conf": 0.991,
     "tier": "sikker",
     "bbox_orig": [
-      2155,
-      3894,
-      2177,
-      3932
-    ],
-    "verifier_conf": 0.586,
-    "verifier_threshold": 0.445
+      4164,
+      3480,
+      4197,
+      3518
+    ]
   },
   {
     "cls": "reducer",
-    "conf": 0.82,
-    "tier": "mulig",
-    "bbox_orig": [
-      2506,
-      982,
-      2528,
-      1021
-    ],
-    "verifier_conf": 0.774,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.771,
-    "tier": "mulig",
-    "bbox_orig": [
-      2155,
-      3665,
-      2177,
-      3703
-    ],
-    "verifier_conf": 0.585,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.954,
+    "conf": 0.991,
     "tier": "sikker",
     "bbox_orig": [
-      3375,
-      511,
-      3397,
-      549
-    ],
-    "verifier_conf": 0.679,
-    "verifier_threshold": 0.445
+      2263,
+      1656,
+      2301,
+      1678
+    ]
   },
   {
     "cls": "reducer",
-    "conf": 0.808,
-    "tier": "mulig",
+    "conf": 0.986,
+    "tier": "sikker",
     "bbox_orig": [
+      2500,
+      3797,
+      2539,
+      3819
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.983,
+    "tier": "sikker",
+    "bbox_orig": [
+      3369,
+      886,
+      3408,
+      908
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.979,
+    "tier": "sikker",
+    "bbox_orig": [
+      2304,
+      1184,
+      2335,
+      1245
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.979,
+    "tier": "sikker",
+    "bbox_orig": [
+      2304,
+      1057,
+      2335,
+      1118
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.978,
+    "tier": "sikker",
+    "bbox_orig": [
+      3069,
+      414,
       3107,
+      436
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.974,
+    "tier": "sikker",
+    "bbox_orig": [
+      2500,
+      3568,
+      2539,
+      3590
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.974,
+    "tier": "sikker",
+    "bbox_orig": [
+      2136,
+      218,
+      2175,
+      251
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.972,
+    "tier": "sikker",
+    "bbox_orig": [
+      2500,
+      3339,
+      2539,
+      3361
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.968,
+    "tier": "sikker",
+    "bbox_orig": [
+      2301,
+      1120,
+      2332,
+      1181
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.968,
+    "tier": "sikker",
+    "bbox_orig": [
+      988,
+      1918,
+      1027,
+      1940
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.959,
+    "tier": "sikker",
+    "bbox_orig": [
+      2583,
+      3894,
+      2605,
+      3932
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.956,
+    "tier": "sikker",
+    "bbox_orig": [
+      3124,
       511,
-      3129,
+      3146,
       549
-    ],
-    "verifier_conf": 0.724,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.957,
-    "tier": "sikker",
-    "bbox_orig": [
-      2873,
-      982,
-      2895,
-      1021
-    ],
-    "verifier_conf": 0.55,
-    "verifier_threshold": 0.445
-  },
-  {
-    "cls": "reducer",
-    "conf": 0.926,
-    "tier": "sikker",
-    "bbox_orig": [
-      3518,
-      982,
-      3541,
-      1021
-    ],
-    "verifier_conf": 0.656,
-    "verifier_threshold": 0.445
+    ]
   },
   {
     "cls": "reducer",
     "conf": 0.955,
     "tier": "sikker",
     "bbox_orig": [
+      4054,
+      3411,
+      4092,
+      3433
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.951,
+    "tier": "sikker",
+    "bbox_orig": [
+      2357,
+      2757,
+      2395,
+      2779
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.946,
+    "tier": "sikker",
+    "bbox_orig": [
+      4054,
+      3033,
+      4092,
+      3055
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.933,
+    "tier": "sikker",
+    "bbox_orig": [
+      3833,
+      3866,
+      3855,
+      3905
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.923,
+    "tier": "sikker",
+    "bbox_orig": [
+      3132,
+      345,
+      3154,
+      384
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.922,
+    "tier": "sikker",
+    "bbox_orig": [
+      2920,
+      690,
+      2969,
+      715
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.917,
+    "tier": "sikker",
+    "bbox_orig": [
+      2583,
+      3436,
+      2605,
+      3474
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.913,
+    "tier": "sikker",
+    "bbox_orig": [
+      3518,
+      982,
+      3541,
+      1021
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.911,
+    "tier": "sikker",
+    "bbox_orig": [
+      2967,
+      345,
+      2989,
+      384
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.91,
+    "tier": "sikker",
+    "bbox_orig": [
+      4057,
+      3899,
+      4095,
+      3921
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.875,
+    "tier": "mulig",
+    "bbox_orig": [
+      2873,
+      982,
+      2895,
+      1021
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.861,
+    "tier": "mulig",
+    "bbox_orig": [
+      2139,
+      2853,
+      2161,
+      2892
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.859,
+    "tier": "mulig",
+    "bbox_orig": [
+      2583,
+      3665,
+      2605,
+      3703
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.856,
+    "tier": "mulig",
+    "bbox_orig": [
+      4057,
+      3681,
+      4095,
+      3703
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.853,
+    "tier": "mulig",
+    "bbox_orig": [
+      328,
+      1819,
+      362,
+      1857
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.847,
+    "tier": "mulig",
+    "bbox_orig": [
+      2255,
+      1115,
+      2293,
+      1137
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.845,
+    "tier": "mulig",
+    "bbox_orig": [
+      2379,
+      3665,
+      2401,
+      3703
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.837,
+    "tier": "mulig",
+    "bbox_orig": [
+      2180,
+      1752,
+      2202,
+      1791
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.837,
+    "tier": "mulig",
+    "bbox_orig": [
+      2395,
+      982,
+      2417,
+      1021
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.833,
+    "tier": "mulig",
+    "bbox_orig": [
+      2293,
+      2757,
+      2332,
+      2779
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.832,
+    "tier": "mulig",
+    "bbox_orig": [
+      2404,
+      3248,
+      2437,
+      3287
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.812,
+    "tier": "mulig",
+    "bbox_orig": [
+      2644,
+      511,
+      2666,
+      549
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.806,
+    "tier": "mulig",
+    "bbox_orig": [
       3251,
       982,
       3273,
       1021
-    ],
-    "verifier_conf": 0.594,
-    "verifier_threshold": 0.445
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.797,
+    "tier": "mulig",
+    "bbox_orig": [
+      3116,
+      1521,
+      3140,
+      1570
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.781,
+    "tier": "mulig",
+    "bbox_orig": [
+      2155,
+      3436,
+      2177,
+      3474
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.776,
+    "tier": "mulig",
+    "bbox_orig": [
+      2379,
+      3436,
+      2401,
+      3474
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.775,
+    "tier": "mulig",
+    "bbox_orig": [
+      3375,
+      511,
+      3397,
+      549
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.772,
+    "tier": "mulig",
+    "bbox_orig": [
+      4092,
+      3908,
+      4131,
+      3930
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.766,
+    "tier": "mulig",
+    "bbox_orig": [
+      3160,
+      982,
+      3182,
+      1021
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.76,
+    "tier": "mulig",
+    "bbox_orig": [
+      2379,
+      3894,
+      2401,
+      3932
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.747,
+    "tier": "mulig",
+    "bbox_orig": [
+      2782,
+      982,
+      2804,
+      1021
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.744,
+    "tier": "mulig",
+    "bbox_orig": [
+      2155,
+      3665,
+      2177,
+      3703
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.74,
+    "tier": "mulig",
+    "bbox_orig": [
+      2255,
+      1178,
+      2293,
+      1200
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.737,
+    "tier": "mulig",
+    "bbox_orig": [
+      2558,
+      2853,
+      2580,
+      2892
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.737,
+    "tier": "mulig",
+    "bbox_orig": [
+      2257,
+      2853,
+      2279,
+      2892
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.732,
+    "tier": "mulig",
+    "bbox_orig": [
+      3303,
+      886,
+      3342,
+      908
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.723,
+    "tier": "mulig",
+    "bbox_orig": [
+      1912,
+      201,
+      1954,
+      251
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.72,
+    "tier": "mulig",
+    "bbox_orig": [
+      2506,
+      982,
+      2528,
+      1021
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.717,
+    "tier": "mulig",
+    "bbox_orig": [
+      2199,
+      1656,
+      2238,
+      1678
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.716,
+    "tier": "mulig",
+    "bbox_orig": [
+      2255,
+      1399,
+      2293,
+      1421
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.709,
+    "tier": "mulig",
+    "bbox_orig": [
+      3571,
+      886,
+      3610,
+      908
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.704,
+    "tier": "mulig",
+    "bbox_orig": [
+      2856,
+      345,
+      2878,
+      384
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.703,
+    "tier": "mulig",
+    "bbox_orig": [
+      2967,
+      511,
+      2989,
+      549
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.696,
+    "tier": "mulig",
+    "bbox_orig": [
+      2290,
+      1388,
+      2340,
+      1413
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.677,
+    "tier": "mulig",
+    "bbox_orig": [
+      2155,
+      3894,
+      2177,
+      3932
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.638,
+    "tier": "mulig",
+    "bbox_orig": [
+      3234,
+      511,
+      3256,
+      549
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.628,
+    "tier": "mulig",
+    "bbox_orig": [
+      924,
+      1918,
+      963,
+      1940
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.625,
+    "tier": "mulig",
+    "bbox_orig": [
+      2856,
+      511,
+      2878,
+      549
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.624,
+    "tier": "mulig",
+    "bbox_orig": [
+      2434,
+      1752,
+      2456,
+      1791
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.59,
+    "tier": "mulig",
+    "bbox_orig": [
+      2884,
+      698,
+      2922,
+      720
+    ]
+  },
+  {
+    "cls": "reducer",
+    "conf": 0.559,
+    "tier": "mulig",
+    "bbox_orig": [
+      3394,
+      3151,
+      3419,
+      3201
+    ]
   }
 ]

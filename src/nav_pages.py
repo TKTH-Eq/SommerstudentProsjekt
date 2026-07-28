@@ -24,9 +24,14 @@ PAGES = {
     "tegning":     st.Page("tegningsanalyse.py", title="Drawing analysis", icon="🔍"),
     "pid_struktur": st.Page("pid_struktur.py", title="PDF → structure", icon="🧩"),
     "graf_qa":     st.Page("graf_qa.py", title="Plant Q&A (GraphRAG)", icon="💬"),
+<<<<<<< Updated upstream
     "sammendrag":  st.Page("tegning_sammendrag.py", title="30-sec summary", icon="📝"),
     "compliance":  st.Page("compliance_dashboard.py", title="Compliance dashboard", icon="📊"),
     "finn":        st.Page("finn_tegning.py", title="Find the drawing", icon="🔎"),
+=======
+    "dexpi_egenskaper": st.Page("dexpi_egenskaper.py", title="DEXPI properties", icon="🧬"),
+    "broker_konfig":    st.Page("broker_konfig.py",    title="Model Broker config", icon="⚙️"),
+>>>>>>> Stashed changes
 }
 
 NAV = [
@@ -44,7 +49,12 @@ NAV = [
     PAGES["tegning"],
     PAGES["pid_struktur"],
     PAGES["graf_qa"],
+<<<<<<< Updated upstream
     PAGES["sammendrag"],
     PAGES["compliance"],
     PAGES["finn"],
+=======
+    PAGES["dexpi_egenskaper"],
+    PAGES["broker_konfig"],
+>>>>>>> Stashed changes
 ]
