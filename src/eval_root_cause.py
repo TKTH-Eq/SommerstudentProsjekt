@@ -88,7 +88,8 @@ def _drop(alarms, cascade, p, rng):
 
 
 def run(g, by_tag, seeds: int, noises: list[int], max_faults: int,
-        drop: float = 0.0, dual: bool = False) -> dict:
+        drop: float = 0.0, dual: bool = False, offset: float = 0.0,
+        use_time: bool = False) -> dict:
     """One eval condition.
 
     drop  : probability each cascade alarm fails to ring. The scored root is
@@ -96,9 +97,18 @@ def run(g, by_tag, seeds: int, noises: list[int], max_faults: int,
             rang (if the true root's own alarm is lost, no ranking can name
             it; the fair question is whether the earliest observable symptom
             tops the list).
-    dual  : a second, independent fault fires simultaneously; both cascades
-            ring. hit1 = the #1 candidate is one of the two true roots;
+    dual  : a second, independent fault fires; both cascades ring.
+            hit1 = the #1 candidate is one of the two true roots;
             hit3 = BOTH roots are in the top 3.
+    offset: seconds between the two faults. The original harness started
+            both at t=0, which is the hardest case AND an unrealistic one —
+            two genuinely independent faults rarely begin in the same
+            second. Sweeping this is what makes the timing question
+            answerable instead of assumed.
+    use_time: pass the merged arrival timeline to candidate_brief, so time
+            can act as a tiebreaker. Run both ways on identical scenarios
+            (same seeds, same faults) — that paired design is what makes the
+            with/without comparison mean anything.
     """
     import random as _r
     faults = [n for n in g.nodes
@@ -114,6 +124,7 @@ def run(g, by_tag, seeds: int, noises: list[int], max_faults: int,
                                       by_tag=by_tag)
                 rng = _r.Random(seed * 7919 + fi)
                 alarms, casc = shower["alarms"], shower["cascade"]
+                timeline = dict(shower["timeline"])
                 if drop > 0:
                     alarms, casc = _drop(alarms, casc, drop, rng)
                 roots = []
@@ -130,13 +141,21 @@ def run(g, by_tag, seeds: int, noises: list[int], max_faults: int,
                         if drop > 0:
                             a2, c2 = _drop(a2, c2, drop, rng)
                         alarms = sorted(set(alarms) | set(a2))
+                        # the second fault starts `offset` seconds later —
+                        # an alarm shared by both cascades keeps its EARLIEST
+                        # arrival, which is what an operator would see
+                        for t, v in sh2["timeline"].items():
+                            shifted = round(v + offset, 2)
+                            timeline[t] = min(timeline.get(t, shifted), shifted)
                         eff2 = next((t for t in c2
                                      if alarm_capable(by_tag.get(t))), None)
                         if eff2 and eff2 not in roots:
                             roots.append(eff2)
                 if not roots:
                     continue
-                briefs = candidate_brief(g, by_tag, alarms)
+                briefs = candidate_brief(g, by_tag, alarms,
+                                         timeline=timeline if use_time else None,
+                                         cluster_gap=2.0 * shower["step"])
                 ranks = [root_rank(briefs, r) for r in roots]
                 n += 1
                 if any(r is None for r in ranks):
@@ -174,20 +193,79 @@ CONDITIONS = [
 ]
 
 
+# How far apart the two independent faults start, in seconds. The sweep has
+# to SPAN the cascade window to be informative: a cascade in this model runs
+# 40-115 s, so two faults 20 s apart still overlap in time and no amount of
+# timestamp reasoning can separate them — that is a fact about the incident,
+# not a shortcoming of the method. 0 s is the control (the original harness's
+# implicit assumption); a gain there would be an artefact, not a finding.
+TIMING_OFFSETS = [0.0, 15.0, 30.0, 60.0, 120.0, 240.0]
+
+
+def run_timing(g, by_tag, seeds, noises, max_faults, drop=0.0) -> list[dict]:
+    """Paired experiment: does arrival time help separate two faults?
+
+    Each offset is run TWICE over identical scenarios — same seeds, same
+    faults, same dropped alarms — once ranking structurally only, once with
+    the merged timeline available as a tiebreaker. Only the ranking input
+    differs, so the delta is attributable.
+    """
+    rows = []
+    for off in TIMING_OFFSETS:
+        base = run(g, by_tag, seeds, noises, max_faults,
+                   drop=drop, dual=True, offset=off, use_time=False)
+        timed = run(g, by_tag, seeds, noises, max_faults,
+                    drop=drop, dual=True, offset=off, use_time=True)
+        n = base["scenarios"] or 1
+        rows.append({
+            "offset_s": off,
+            "scenarios": base["scenarios"],
+            "hit1_struct": round(100 * base["hit1"] / n, 1),
+            "hit1_timed": round(100 * timed["hit1"] / n, 1),
+            "hit3_struct": round(100 * base["hit3"] / n, 1),
+            "hit3_timed": round(100 * timed["hit3"] / n, 1),
+        })
+    return rows
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--raw", default="data/raw", type=Path)
     ap.add_argument("--seeds", default=5, type=int)
     ap.add_argument("--noise", default=[0, 1, 2, 3], type=int, nargs="+")
     ap.add_argument("--max-faults", default=40, type=int)
-    ap.add_argument("--out", default="reports/eval_root_cause.json", type=Path,
+    # type=str, not Path: Path("") is Path("."), which is truthy AND a
+    # directory, so the documented `--out ''` skip crashed on write instead
+    # of skipping.
+    ap.add_argument("--out", default="reports/eval_root_cause.json", type=str,
                     help="Write the result here as JSON (read by the home page). Use --out '' to skip.")
+    ap.add_argument("--timing", action="store_true",
+                    help="Run the paired timing experiment (arrival time as "
+                         "evidence on double faults) instead of the standard "
+                         "conditions.")
     a = ap.parse_args()
 
     g, by_tag, label = load_or_synthetic(a.raw)
     print(f"\nRoot-cause eval  ({label})")
     print(f"  noise levels: {a.noise}   seeds/level: {a.seeds}   "
           f"max faults: {a.max_faults}\n")
+
+    if a.timing:
+        rows = run_timing(g, by_tag, a.seeds, a.noise, a.max_faults)
+        print("  Does arrival time help separate two independent faults?")
+        print("  Paired runs on identical scenarios; only the ranking input differs.\n")
+        print(f"  {'fault gap':>10}{'n':>7}{'hit1 struct':>13}{'hit1 +tid':>11}"
+              f"{'hit3 struct':>13}{'hit3 +tid':>11}")
+        for r in rows:
+            d1 = r["hit1_timed"] - r["hit1_struct"]
+            d3 = r["hit3_timed"] - r["hit3_struct"]
+            print(f"  {r['offset_s']:>8.1f} s{r['scenarios']:>7}"
+                  f"{r['hit1_struct']:>12.1f}%{r['hit1_timed']:>10.1f}%"
+                  f"{r['hit3_struct']:>12.1f}%{r['hit3_timed']:>10.1f}%"
+                  f"   ({d1:+.1f}/{d3:+.1f})")
+        print("\n  0 s is the control — simultaneous faults leave nothing for "
+              "timing to exploit,\n  so a gain there would be an artefact, not a finding.\n")
+        return
 
     rows = []
     for name, kw, desc in CONDITIONS:
@@ -206,17 +284,18 @@ def main():
               + (f"   (root not candidate: {row['not_candidate']})"
                  if row["not_candidate"] else ""))
 
-    if str(a.out):
+    if a.out.strip():
         import json
         from datetime import date
+        out_path = Path(a.out.strip())
         out = {"source": label, "date": str(date.today()),
                "seeds": a.seeds, "noise_levels": a.noise,
                "faults": rows[0]["scenarios"] // max(1, len(a.noise) * a.seeds),
                "conditions": rows}
-        a.out.parent.mkdir(parents=True, exist_ok=True)
-        a.out.write_text(json.dumps(out, indent=2, ensure_ascii=False),
-                         encoding="utf-8")
-        print(f"\n  written to {a.out} — displayed on the home page on next run")
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(json.dumps(out, indent=2, ensure_ascii=False),
+                            encoding="utf-8")
+        print(f"\n  written to {out_path} — displayed on the home page on next run")
     print()
 
 

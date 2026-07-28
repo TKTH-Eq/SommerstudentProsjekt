@@ -267,27 +267,6 @@ def load_dexpi_model(xml_path: Path,
     }
 
 
-if __name__ == "__main__":
-    # quick check:  python src/analysis/hazop_dexpi.py [path-to-DGN.xml]
-    import os, sys
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from analysis.hazop_prep import build_worksheet
-
-    default = next(Path("data/raw").rglob("*HO27-P-_E-002*.DGN.xml"), None)
-    xml = Path(sys.argv[1]) if len(sys.argv) > 1 else default
-    m = load_dexpi_model(xml)
-    print(f"{xml.name}: {m['stats']}\n")
-    for name, ms in m["sections"].items():
-        print(f"  {name}: {len(ms)} members "
-              f"({sum(1 for o in ms if o.type_code)} typed)")
-    rows = build_worksheet(m["tag_graph"], m["objects"], nodes=m["sections"])
-    print(f"\n{len(rows)} worksheet rows")
-    for r in rows[:4]:
-        print(f"\n[{r['node']}] {r['deviation']}\n"
-              f"   causes:      {r['causes']}\n"
-              f"   consequence: {r['consequences'][:160]}\n"
-              f"   safeguards:  {r['safeguards']}")
-
 def _loop_group_sections(objects: dict, tg, cap: int = 40) -> dict:
     """Fallback node basis when equipment anchors are missing or too
     coarse: merge functional loops that are DIRECTLY CONNECTED in the tag
@@ -357,3 +336,25 @@ def _cap_sections(sections: dict, tg, cap: int = SECTION_CAP):
             lab = k2.split("(", 1)[1].rstrip(")") if "(" in k2 else str(i)
             out[f"{name} · part {i} ({lab})"] = ms2
     return out, n_split
+
+
+if __name__ == "__main__":
+    # quick check:  python src/analysis/hazop_dexpi.py [path-to-DGN.xml]
+    import os, sys
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from analysis.hazop_prep import build_worksheet
+
+    default = next(Path("data/raw").rglob("*HO27-P-_E-002*.DGN.xml"), None)
+    xml = Path(sys.argv[1]) if len(sys.argv) > 1 else default
+    m = load_dexpi_model(xml)
+    print(f"{xml.name}: {m['stats']}\n")
+    for name, ms in m["sections"].items():
+        print(f"  {name}: {len(ms)} members "
+              f"({sum(1 for o in ms if o.type_code)} typed)")
+    rows = build_worksheet(m["tag_graph"], m["objects"], nodes=m["sections"])
+    print(f"\n{len(rows)} worksheet rows")
+    for r in rows[:4]:
+        print(f"\n[{r['node']}] {r['deviation']}\n"
+              f"   causes:      {r['causes']}\n"
+              f"   consequence: {r['consequences'][:160]}\n"
+              f"   safeguards:  {r['safeguards']}")

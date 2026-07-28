@@ -248,7 +248,12 @@ active = [a for a in all_alarms if timeline.get(a, 0.0) <= elapsed] or all_alarm
 active_sorted = sorted(active, key=lambda t: priority_sort_key(t, by_tag))
 playing = bool(S.get("playing")) and not done and elapsed < window
 
-briefs = candidate_brief(g, by_tag, active)   # på det som er avslørt så langt
+# Ankomsttidene er evidens, ikke bare avsløringsrekkefølge: en alarm som
+# ringte FØR alt som angivelig forklarer den kan ikke være deres konsekvens.
+# Uten timeline mistet kandidatlista den ene roten når to feil overlapper
+# strukturelt — målt til hele 5 %-tapet på dobbel feil (95 % -> 100 %).
+briefs = candidate_brief(g, by_tag, active, timeline=timeline,
+                         cluster_gap=2.0 * float(S["shower"].get("step", 2.5)))
 
 # tags the LATEST AI answer referenced (verified only) — drawn as gold
 # rings on the timeline and cause map so the agent's claims are visibly
@@ -542,14 +547,25 @@ with tab_sit:
     with right:
         st.subheader("🤝 Assistant's Brief — candidates and evidence")
         st.caption("Candidates = alarms no other active alarm can explain "
-                   "(independent roots in the graph). The evidence below is structural; "
-                   "weighing it is your job.")
+                   "(independent roots in the graph), plus any alarm whose "
+                   "ARRIVAL TIME rules out being a consequence — marked ⏱️. "
+                   "The evidence below is structural and temporal; weighing it "
+                   "is your job.")
         for b in briefs:
             n_exp = len(b["explains"])
             plab = b.get("priority_label", "")
+            _late = "  ⏱️" if b.get("late_onset") else ""
             with st.expander(f"**{b['tag']}** · {plab} — would explain "
-                             f"{n_exp} of the other alarms",
+                             f"{n_exp} of the other alarms{_late}",
                              expanded=(len(briefs) <= 3)):
+                if b.get("late_onset"):
+                    st.warning(
+                        f"⏱️ **Timing says this is a separate event.** "
+                        f"{b['tag']} rang **{b.get('detached_by', 0):.0f} s "
+                        f"before** every alarm that could explain it — a "
+                        f"consequence cannot precede its cause. The graph "
+                        f"filed it as a symptom; the clock says otherwise. "
+                        f"Likely a second, independent fault.")
                 if b["tag"] in fmap:
                     st.code(alarm_response_sheet(b["tag"], fmap[b["tag"]],
                                                  by_tag),

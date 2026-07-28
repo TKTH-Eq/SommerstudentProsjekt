@@ -23,7 +23,7 @@ load_dotenv()   # GEMINI_API_KEY gate below depends on .env
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from ui import page_header
-from analysis.rule_screening import screen_all
+from analysis.rule_catalog import screen_all_extended, CLAUSES, propose_fixes
 
 try:
     from config import DATA
@@ -34,14 +34,34 @@ _RULE_TITLE = {
     "R1": "Missing relief path", "R2": "Trip without action",
     "R3": "No pressure monitoring", "R8": "Valve without position feedback",
     "R9": "Trip without voting",
+    "R10": "Shutdown valve without cause (C&E)",
+    "R11": "Trip without effect (C&E)",
+    "R12": "C&E references unknown tag",
+    "R13": "Relief without pressure monitoring",
+    "R14": "Control function without final element",
+    "R15": "Lone redundancy leg",
+    "R16": "Near-duplicate tags",
 }
 _SEV_EN = {"høy": "high", "middels": "medium", "lav": "low"}
 _SEV_ORDER = ["high", "medium", "low"]
+_PROV_BADGE = {"verified": "✓ verified clause",
+               "indicative": "~ clause NOT verified",
+               "practice": "· no clause — engineering practice"}
 
 
 @st.cache_resource(show_spinner="Screening every drawing…")
 def _findings():
-    return screen_all(str(DATA))
+    ce = None
+    ce_dir = Path("data/cause_effect")
+    if ce_dir.exists():
+        try:
+            from analysis.cause_effect import load_ce, validate_ce
+            from analysis.plant_model import build_plant_model
+            pm = build_plant_model(str(DATA))
+            ce = validate_ce(load_ce(ce_dir), {o.tag: o for o in pm["objects"]})
+        except Exception:                                          # noqa: BLE001
+            ce = None
+    return screen_all_extended(str(DATA), ce=ce)
 
 
 @st.cache_data(show_spinner="Writing the executive summary…")
@@ -166,3 +186,51 @@ st.download_button(
     "⬇️ Download the plant findings (CSV)",
     view.drop(columns=["sev"]).to_csv(index=False).encode("utf-8-sig"),
     file_name="plant_compliance_findings.csv", mime="text/csv")
+
+# ---- proposed actions per finding ------------------------------------------
+st.divider()
+st.subheader("What to do about it — proposed actions")
+st.caption(
+    "Proposals for review, never decisions, and never an invented tag: each "
+    "action is phrased against the tags the finding already carries. For "
+    "PDF-derived findings the extraction check comes FIRST — at a measured "
+    "55 % recall, 'we may simply have missed it' is the cheapest and most "
+    "often correct hypothesis, and sending an engineer after a design change "
+    "that isn't needed is the expensive mistake.")
+
+if len(view):
+    _opts = [f"{r['rule']} · {r['drawing']} · {', '.join(r['tags'][:3])}"
+             for r in view.to_dict("records")]
+    _pick = st.selectbox("Finding", _opts, index=0)
+    _row = view.to_dict("records")[_opts.index(_pick)]
+    _prov = CLAUSES.get(_row["rule"], {}).get("provenance", "practice")
+
+    c1, c2 = st.columns([3, 2])
+    with c1:
+        st.markdown(f"**{_row['title']}**")
+        st.write(_row.get("description", ""))
+        st.caption(f"Anchor tags: {', '.join(_row['tags'])}")
+    with c2:
+        st.metric("Clause provenance", _PROV_BADGE.get(_prov, _prov))
+        st.caption(_row.get("standard", ""))
+
+    _src = "dexpi" if _row["drawing"] != "(anleggsdekkende)" else "dexpi"
+    for _f in propose_fixes(_row, source=_src):
+        st.markdown(f"- **{_f['label']}** — {_f['action']}")
+    st.caption("Record the outcome under HAZOP → Rule findings, where a "
+               "reviewer's disposition is stored per finding.")
+
+with st.expander("Rule catalogue and clause provenance"):
+    st.caption(
+        "A fabricated clause reference is worse than none — it looks "
+        "authoritative and someone acts on it. Every rule therefore declares "
+        "where its reference comes from, and `cite()` refuses a rule marked "
+        "verified that has no clause and paraphrase. To upgrade a rule, fill "
+        "in the clause and paraphrase from the standard text; no code that "
+        "performs a check needs to change.")
+    st.dataframe(
+        [{"rule": r, "topic": c["topic"], "family": c["family"],
+          "clause": c["clause"] or "—",
+          "provenance": _PROV_BADGE.get(c["provenance"], c["provenance"])}
+         for r, c in sorted(CLAUSES.items(), key=lambda kv: int(kv[0][1:]))],
+        use_container_width=True, hide_index=True)

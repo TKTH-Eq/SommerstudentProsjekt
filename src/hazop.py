@@ -184,25 +184,64 @@ if _stored_all:
                        f"({w['n_saves']} save(s))")
 
 
+CE_DIR = Path("data/cause_effect")
+
+
+def _ce_stamp() -> str:
+    """Cheap cache key for the C&E data: file names + mtimes. Passed as a
+    normal (hashable) argument so the cached worksheet rebuilds when someone
+    signs off a row or drops in a fresh vision extract — a dict argument
+    would have to be underscore-prefixed and would then never invalidate."""
+    if not CE_DIR.exists():
+        return ""
+    return ";".join(f"{p.name}:{int(p.stat().st_mtime)}"
+                    for p in sorted(CE_DIR.glob("*.csv")))
+
+
 @st.cache_resource(show_spinner="Building worksheet…")
 def load(system: str, pid: str, scd: str, basis: str = "loops",
-         dexpi_xml: str = "", cap: int = 40):
+         dexpi_xml: str = "", cap: int = 40, ce_stamp: str = ""):
     objs = sorted(set(create_objects(extract_tags(pid), "P&ID"))
                   | set(create_objects(extract_tags(scd), "SCD")), key=lambda o: o.tag)
     g = build_graph(objs)
+
+    # designed safeguards: the trip stated on the SCD beats a nearby
+    # safety-typed tag. Absent C&E data this stays None and the worksheet is
+    # built exactly as before.
+    ce_index, ce_stats = None, None
+    if ce_stamp:
+        from analysis.cause_effect import load_ce, validate_ce
+        _ce = validate_ce(load_ce(CE_DIR), {o.tag: o for o in objs})
+        ce_index, ce_stats = _ce["index"], _ce["stats"]
+
     if basis == "dexpi" and dexpi_xml:
         from analysis.hazop_dexpi import load_dexpi_model
         m = load_dexpi_model(Path(dexpi_xml), cap=cap)
         rows = build_worksheet(m["tag_graph"], m["objects"],
-                               nodes=m["sections"])
+                               nodes=m["sections"], ce_index=ce_index)
         if rows:                       # sections can be empty on sparse exports
-            return objs, g, rows, m["stats"]
-    return objs, g, build_worksheet(g, objs), None
+            return objs, g, rows, m["stats"], ce_stats
+    return objs, g, build_worksheet(g, objs, ce_index=ce_index), None, ce_stats
 
 
-objs, g, all_rows, _dex_stats = load(system, str(pid_path), str(scd_path),
-                                     "dexpi" if use_dexpi else "loops",
-                                     str(_dex_xml or ""), int(node_cap))
+objs, g, all_rows, _dex_stats, _ce_stats = load(
+    system, str(pid_path), str(scd_path),
+    "dexpi" if use_dexpi else "loops",
+    str(_dex_xml or ""), int(node_cap), _ce_stamp())
+
+if _ce_stats and _ce_stats.get("resolved"):
+    _n_designed = sum(1 for r in all_rows if "→" in r["safeguards"])
+    st.caption(
+        f"🔗 Designed safeguards active: {_ce_stats['resolved']} cause & effect "
+        f"row(s) resolved from {len(_ce_stats.get('files', []))} file(s) — "
+        f"{_n_designed} worksheet row(s) now cite the trip stated on the SCD "
+        f"instead of a nearby safety tag. "
+        f"{_ce_stats.get('verified', 0)} of the C&E rows are engineer-verified; "
+        f"the rest are marked UNVERIFIED.")
+elif not _ce_stamp():
+    st.caption("🔗 No cause & effect data in `data/cause_effect/` — safeguards "
+               "are structural candidates only. Run `src/ai/ce_vision.py` on the "
+               "SCD to propose the designed trips.")
 if use_dexpi and _dex_stats:
     st.caption(f"🧩 Node basis: **DEXPI process sections** — "
                f"{_dex_stats.get('sections', '?')} sections, method: "
@@ -545,14 +584,32 @@ with tab_funn:
                "can read get a box).")
 
     @st.cache_resource(show_spinner="Screener DEXPI-modellen…")
-    def _screen_drawing(pid_stem: str):
+    def _screen_drawing(pid_stem: str, ce_stamp: str = ""):
         hits = list(Path(PID_DIR).parent.rglob(f"{pid_stem}.DGN.xml"))
         if not hits:
             return None
         from analysis.hazop_dexpi import load_dexpi_model
         from analysis.rule_screening import screen
+        from analysis.rule_catalog import (screen_structure, screen_cause_effect,
+                                           PLANT_WIDE_RULES)
         m = load_dexpi_model(hits[0])
-        return screen(m["tag_graph"], m["objects"], m["sections"])
+
+        # C&E-reglene (R10–R12) er bare meningsfulle når det finnes C&E-data;
+        # uten faller de bort av seg selv i stedet for å rapportere «alt bra».
+        ce = None
+        if ce_stamp:
+            from analysis.cause_effect import load_ce, validate_ce
+            ce = validate_ce(load_ce(CE_DIR),
+                             {o.tag: o for o in m["objects"]})
+
+        out = screen(m["tag_graph"], m["objects"], m["sections"])
+        # R15/R16 er kryss-tegnings-regler — per ark finner de ingenting og
+        # ville gitt falsk trygghet. De rulles opp på compliance-siden.
+        out += [f for f in screen_structure(m["tag_graph"], m["objects"],
+                                            m["sections"])
+                if f["rule"] not in PLANT_WIDE_RULES]
+        out += screen_cause_effect(m["objects"], ce)
+        return out
 
     @st.cache_resource(show_spinner="Sjekker I-005-dekning P&ID↔SCD…")
     def _screen_coverage(pid: str, scd: str):
@@ -564,7 +621,7 @@ with tab_funn:
 
     _dx = list(Path(PID_DIR).parent.rglob(
         f"{Path(pid_path).stem}.DGN.xml"))
-    findings = _screen_drawing(Path(pid_path).stem)
+    findings = _screen_drawing(Path(pid_path).stem, _ce_stamp())
     coverage = _screen_coverage(str(pid_path), str(scd_path))
     findings = (findings or []) + coverage if (findings or coverage) \
         else findings
@@ -597,7 +654,13 @@ with tab_funn:
                                          "R3 pressure monitoring · R8 valve "
                                          "position feedback · R9 trip voting "
                                          "· R4-R7 I-005 Annex B coverage "
-                                         "P&ID↔SCD (verified clauses)")
+                                         "P&ID↔SCD (verified clauses) · "
+                                         "R10-R12 cause & effect completeness "
+                                         "(needs C&E data) · R13 relief "
+                                         "without monitoring · R14 control "
+                                         "function without final element. "
+                                         "R15/R16 are cross-drawing and are "
+                                         "rolled up on the compliance page.")
         shown = [f for f in findings if f["rule"] in pick_rules]
 
         # ---- triage: fluid hazard -> screening priority, worst first -------
@@ -658,6 +721,20 @@ with tab_funn:
                 st.write(f["description"])
                 st.write("**Recommended follow-up:** " + f["recommendation"])
                 st.caption("📖 " + f["standard"])
+
+                # ---- proposed actions ---------------------------------------
+                # Coverage rules (R4–R7) compare a PDF-derived SCD extraction,
+                # so the extraction check genuinely comes first there. The
+                # DEXPI rules run on stated structure, where that hypothesis is
+                # weaker — propose_fixes orders them accordingly.
+                from analysis.rule_catalog import propose_fixes as _fixes
+                _src = "pdf" if f["rule"] in ("R4", "R5", "R6", "R7") else "dexpi"
+                _props = _fixes(f, source=_src)
+                if _props:
+                    st.markdown("**Proposed actions** — for review, never "
+                                "decisions, and never an invented tag:")
+                    for _p in _props:
+                        st.markdown(f"- **{_p['label']}** — {_p['action']}")
                 _fc = _fluids.get(id(f), [])
                 if _fc:
                     st.caption("🧪 Fluid on connected lines "

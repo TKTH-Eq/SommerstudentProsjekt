@@ -24,10 +24,37 @@ How it maps to a real HAZOP:
   CONSEQUENCE Downstream tags from the dependency graph (nx.descendants),
               i.e. what this loop actually drives in the extracted model.
 
-  SAFEGUARDS  Safety-typed tags (config.SAFETY_TYPES) in the loop or
-              directly downstream, filtered by relevance to the deviation
-              (a PSV safeguards High pressure, an LSH safeguards High
-              level). Only tags that exist in the extraction are proposed.
+  SAFEGUARDS  Two sources, strongest first.
+
+              DESIGNED (when a cause & effect index is supplied): the
+              actual trip stated on the SCD — "27-PSH4811 -> 27-XV4813:
+              PSD close inlet [sheet]". This is what the plant is built
+              to do, with a sheet reference the team can look up.
+
+              STRUCTURAL (always): safety-typed tags (config.SAFETY_TYPES)
+              in the loop or directly downstream, filtered by relevance to
+              the deviation. This is a candidate — it says a PSV sits
+              nearby, and leaves the team to infer the link.
+
+              The difference matters in a HAZOP: "there is a safety valve
+              in this loop" is a prompt, "this trip closes that valve on
+              high pressure, per sheet E-101" is a safeguard. Only tags
+              that exist in the extraction are ever proposed, and designed
+              rows carry [UNVERIFIED] until an engineer has signed the C&E
+              row off against the sheet.
+
+              MEASURED LIMIT — designed safeguards fire on DEXPI section
+              nodes and NOT on loop-based ones. A designed safeguard needs
+              the initiating trip and a matching parameter in the same
+              node; across all 7 systems, 0 of 55 loop-based nodes contain
+              a trip element at all, because a switch's loop id (system +
+              number) puts it in a loop of its own, away from the process
+              loop it protects. DEXPI equipment-anchored sections do group
+              them: 24-PA001-section holds 24-LSH2005 together with the
+              valves it closes, so the safeguard lands. This is the
+              project's format argument again, in HAZOP terms — loop-based
+              nodes cannot express designed protection, section-based ones
+              can.
 
 Everything is preparation material: a pre-filled worksheet a HAZOP chair can
 edit, not a completed study. Same AI pattern as ai/operator_brief.py: the
@@ -37,8 +64,17 @@ extend it, constrained to the tags it is given.
 from __future__ import annotations
 
 import csv
+import os
+import re
+import sys
 from collections import defaultdict
 from pathlib import Path
+
+if __name__ == "__main__" and __package__ is None:      # direct run support
+    # must precede the `analysis.*` imports below — the bootstrap used to sit
+    # in the __main__ block at the bottom, so `python src/analysis/hazop_prep.py`
+    # (README workflow step 4) died on the first package import.
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import networkx as nx
 
@@ -172,14 +208,108 @@ def _safeguards(members, downstream_tags, by_tag, deviation) -> list[str]:
     return sorted({o.tag for o in pool if o.type_code in wanted})
 
 
+# switch/trip-shaped type codes: parameter letter + S + direction (PSH, LSHH,
+# FSL, PSLL). Deliberately narrow — a PT measures pressure but is not a trip.
+_SWITCH_RE = re.compile(r"^([PLFT])S(HH|LL|H|L)$")
+
+
+def _deviations_guarded(type_code: str) -> set[str]:
+    """Deviations a trip element credibly guards, read off its own type code.
+
+    Direction is the point: PSH guards High pressure, PSLL guards LOW
+    pressure, and a high-pressure switch is not a safeguard against low
+    pressure. The _SAFEGUARD_FOR table above cannot express that — it maps a
+    deviation to a set of type codes without direction, and omits the HH/LL
+    variants entirely (it lists PSH but not PSHH). This is used only for the
+    designed-safeguard pass, where getting the direction wrong would put a
+    real trip against the wrong deviation.
+    """
+    m = _SWITCH_RE.match((type_code or "").upper())
+    if not m:
+        return set()
+    param = _PARAM_BY_PREFIX.get(m.group(1))
+    if not param:
+        return set()
+    high = m.group(2).startswith("H")
+    if param == "Flow":                       # no separate "No flow" switch
+        return {"High flow"} if high else {"Low flow", "No flow"}
+    return {f"{'High' if high else 'Low'} {param.lower()}"}
+
+
+def _designed_safeguards(members, deviation, ce_index, member_tags,
+                         member_loops) -> tuple[list[str], set[str]]:
+    """Safeguards the DESIGNED logic states, rather than the structure guesses.
+
+    For every member that is an initiating function for THIS deviation, the
+    C&E index gives the elements it actually trips, plus the sheet the logic
+    was read from. Two things the structural pass cannot do:
+
+      * cite the ACTION ("closes 27-XV4813 on PSD") instead of naming a
+        safety-typed tag that happens to sit nearby and leaving the team to
+        guess whether it is connected at all
+      * find safeguards OUTSIDE the node — a trip whose actuated element
+        lives in another loop is invisible to the loop-based graph, but the
+        C&E row states it plainly
+
+    Only the direction "node member is the CAUSE" is implemented. The mirror
+    case (an external trip acting ON a node member) was considered and left
+    out: it would need the node to carry an instrument for the deviation the
+    external trip guards, and no node in this dataset satisfies that — a
+    valve node holds XV/HS/XY/ZL/ZS and no measuring element, so it has only
+    the default Flow deviations to attach to. Worth adding if a dataset shows
+    otherwise; not worth the branch here.
+
+    Returns (lines, covered_tags); the caller skips structural entries for
+    tags already described here — both the actuated element and the initiator,
+    since a designed statement names both and strictly beats listing either as
+    a bare proximity guess.
+    """
+    lines, covered = [], set()
+    for o in members:
+        if deviation not in _deviations_guarded(getattr(o, "type_code", "")):
+            continue
+        for r in ce_index.get("effects_of", {}).get(o.tag, []):
+            effect = r.get("effect")
+            if not effect:
+                continue
+            covered.update({effect, o.tag})
+            # commas would break the ", ".join the safeguards column uses
+            action = (r.get("function") or "action").replace(",", ";")
+            marks = []
+            # IPL: the detection sharing the node is the same independence
+            # concern the structural pass flags — carried over so suppressing
+            # the duplicate structural entry loses no warning. With loop-based
+            # nodes the initiator is a member by construction and this always
+            # fires; with DEXPI section nodes it discriminates.
+            if getattr(o, "loop", None) in member_loops:
+                marks.append("⚠ detection in node — verify independence")
+            if effect in member_tags:
+                marks.append("⚠ acts inside node")
+            if not r.get("verified"):
+                marks.append("UNVERIFIED")
+            src = r.get("drawing") or r.get("file") or ""
+            tail = f" [{src}]" if src else ""
+            if marks:
+                tail += f" [{'; '.join(marks)}]"
+            lines.append(f"{o.tag} → {effect}: {action}{tail}")
+    return sorted(set(lines)), covered
+
+
 def build_worksheet(graph: nx.DiGraph, objects, loops: list[str] | None = None,
-                    nodes: dict[str, list] | None = None) -> list[dict]:
+                    nodes: dict[str, list] | None = None,
+                    ce_index: dict | None = None) -> list[dict]:
     """The HAZOP preparation worksheet: one row per (node, deviation).
 
     Nodes default to functional loops (PDF pipeline). Pass `nodes`
     ({name: [EngineeringObject, ...]}) to use richer groupings instead —
     e.g. equipment-anchored process sections from DEXPI connectivity
     (see analysis/hazop_dexpi.py). Same worksheet, better nodes.
+
+    `ce_index`: the index from analysis.cause_effect.validate_ce()["index"].
+    When supplied, the safeguards column leads with the DESIGNED trip stated
+    on the SCD instead of a nearby safety-typed tag. Omitting it reproduces
+    the previous behaviour exactly — the C&E layer is an upgrade, never a
+    dependency, so a worksheet still builds with no cause & effect data at all.
 
     Every tag mentioned in causes/consequences/safeguards exists in the
     extracted data — nothing is invented. Rows where the node has no
@@ -207,19 +337,29 @@ def build_worksheet(graph: nx.DiGraph, objects, loops: list[str] | None = None,
             else:
                 continue
         down, down_safety = _consequences(graph, members)
-        member_tags = ", ".join(sorted(o.tag for o in members))
+        member_tag_set = {o.tag for o in members}
+        member_tags = ", ".join(sorted(member_tag_set))
         for param in params:
             for dev in DEVIATIONS[param]:
+                member_loops = {getattr(o, "loop", None) for o in members}
+                # designed logic first: what the SCD says actually happens
+                designed, covered = ([], set())
+                if ce_index:
+                    designed, covered = _designed_safeguards(
+                        members, dev, ce_index, member_tag_set, member_loops)
                 sg = _safeguards(members, down, by_tag, dev)
+                # a designed statement already describes this tag, and does it
+                # better — drop the bare structural mention of the same tag
+                sg = [t for t in sg if t not in covered]
                 # IPL principle: a safeguard sharing the loop with the
                 # initiating instruments is not an independent layer —
                 # credit it, but say so, so the team verifies independence.
-                member_loops = {getattr(o, "loop", None) for o in members}
                 sg = [t + (" (⚠ same loop — verify independence)"
                            if by_tag.get(t) is not None
                            and getattr(by_tag[t], "loop", None) in member_loops
                            else "")
                       for t in sg]
+                sg = designed + sg
                 causes = _tagged_causes(members, dev) + _GENERIC_CAUSES.get(dev, [])
                 conseq = _GENERIC_CONSEQUENCES.get(dev, "(review)")
                 if down:
@@ -293,9 +433,7 @@ def ai_enrich_node(rows_for_node: list[dict]) -> str:
 
 
 if __name__ == "__main__":
-    # quick check:  python src/analysis/hazop_prep.py 27
-    import os, sys
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    # quick check:  python src/analysis/hazop_prep.py 27      (path set at top)
     from extraction.tag_extractor import extract_tags, create_objects
     from analysis.build_dependency_graph import build_graph
     from main import resolve_inputs

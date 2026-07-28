@@ -15,8 +15,24 @@ Pure functions over (graph, objects) so the module is unit-testable
 headless and works identically on the loop-based PDF graph and the stated
 DEXPI topology — though the advice is only as good as the connectivity,
 which is the recurring point.
+
+TIME AS EVIDENCE (candidate_brief(timeline=...)): the graph says what is
+connected; arrival times say how many things went wrong. Passing the alarm
+shower's timeline lets an alarm that cannot be a consequence — because it
+rang before everything that supposedly explains it — be surfaced as its own
+candidate. Measured on the real Huldra model this removes the double-fault
+ceiling entirely (95 % -> 100 % hit1) and also lifts hit3 under dropped
+alarms (96.9 % -> 99.4 % at 40 % drop). Without a timeline the module
+behaves exactly as before.
 """
 from __future__ import annotations
+
+import os
+import sys
+
+if __name__ == "__main__" and __package__ is None:      # direct run support
+    # må ligge FØR pakkeimportene under — samme fallgruve som hazop_prep.py
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import networkx as nx
 
@@ -166,7 +182,38 @@ def alarm_shower(graph: nx.DiGraph, fault: str, noise: int = 2,
             "window": window, "step": step}
 
 
-def candidate_brief(graph: nx.DiGraph, by_tag, active: list[str]) -> list[dict]:
+def arrival_clusters(timeline: dict, gap: float) -> dict:
+    """Split alarms into temporal clusters: {tag: cluster index}, earliest 0.
+
+    One cascade rings at roughly `step` second spacing, so a gap materially
+    larger than that suggests a SEPARATE initiating event rather than more of
+    the same propagation. That is the one thing arrival times can say which
+    the graph cannot: how MANY things went wrong, as opposed to what is
+    connected to what.
+
+    Honest limits, both visible in the measurement: unrelated chatter
+    scattered through the window bridges real gaps and merges clusters, and
+    two faults that start close together are indistinguishable from one
+    cascade no matter how the threshold is set. This is evidence, not a
+    verdict — which is why it enters the ranking as a tiebreaker and is
+    reported alongside the structural signal, never instead of it.
+    """
+    if not timeline:
+        return {}
+    ordered = sorted(timeline, key=lambda t: (timeline[t], t))
+    out, cid = {}, 0
+    prev = None
+    for tag in ordered:
+        if prev is not None and (timeline[tag] - prev) > gap:
+            cid += 1
+        out[tag] = cid
+        prev = timeline[tag]
+    return out
+
+
+def candidate_brief(graph: nx.DiGraph, by_tag, active: list[str],
+                    timeline: dict | None = None,
+                    cluster_gap: float | None = None) -> list[dict]:
     """Evidence per candidate root — deliberately WITHOUT declaring a winner.
 
     Cycle-aware: the plant model adds cross-drawing edges in BOTH directions
@@ -182,6 +229,12 @@ def candidate_brief(graph: nx.DiGraph, by_tag, active: list[str]) -> list[dict]:
     act = [a for a in active if a in graph]
     sub = graph.subgraph(act)
     cond = nx.condensation(sub)
+    clusters = (arrival_clusters({t: v for t, v in timeline.items() if t in act},
+                                 cluster_gap if cluster_gap is not None else 5.0)
+                if timeline else {})
+    first_of_cluster = {}
+    for tag, c in sorted(clusters.items(), key=lambda kv: (timeline[kv[0]], kv[0])):
+        first_of_cluster.setdefault(c, tag)
     out = []
     for c in cond.nodes:
         if cond.in_degree(c) != 0:
@@ -206,6 +259,16 @@ def candidate_brief(graph: nx.DiGraph, by_tag, active: list[str]) -> list[dict]:
         }
         if len(members) > 1:
             entry["group"] = sorted(m for m in members if m != rep)
+        if timeline:
+            entry["late_onset"] = False
+            # earliest arrival within the group — the group is one candidate,
+            # so its clock starts when any of its members first rang
+            times = [timeline[m] for m in members if m in timeline]
+            entry["t"] = min(times) if times else None
+            entry["cluster"] = clusters.get(rep)
+            entry["first_in_cluster"] = any(
+                first_of_cluster.get(clusters.get(m)) == m
+                for m in members if m in clusters)
         out.append(entry)
     # Ranking: the STRUCTURAL root signal leads — the candidate that explains
     # the most other active alarms — because that is what actually points at
@@ -213,8 +276,80 @@ def candidate_brief(graph: nx.DiGraph, by_tag, active: list[str]) -> list[dict]:
     # explanatory roots the more critical one surfaces first. This ordering
     # deliberately does NOT let a high-priority but independent noise alarm
     # (explains 0) leapfrog the true cascade root. The board (urgency) is
+    # TEMPORAL DETACHMENT — the one thing arrival time can do that the graph
+    # cannot, and the only thing that moves the measured ceiling.
+    #
+    # The structural test asks "is anything active upstream of this alarm?".
+    # With two overlapping faults it silently loses a root: if fault B's root
+    # sits downstream of fault A's cascade it has active ancestors, is filed
+    # as a consequence, and never becomes a candidate. Measurement showed
+    # this IS the ceiling — on double faults every root that reaches the
+    # candidate list already ranks #1, so the whole 5 % loss is roots that
+    # were never listed. Ranking was never the problem.
+    #
+    # Two rules, and the order matters because they are not equally strong:
+    #
+    #   PRECEDES  an alarm that rang BEFORE every alarm that supposedly
+    #             explains it cannot be their consequence — causality does
+    #             not run backwards. This is a proof, not a heuristic, and
+    #             it is what rescues the EARLIER fault's root when the later
+    #             fault's cascade sits structurally upstream of it.
+    #
+    # A second rule was tried and REMOVED by measurement: "late onset" — an
+    # alarm ringing more than one propagation step after the latest alarm
+    # that could explain it. It sounded reasonable and cost nothing to add.
+    # Over 360 single-fault scenarios it promoted 804 extra candidates, and
+    # every single one was a genuine CASCADE alarm, not noise: in a long
+    # cascade a branch can trail its nearest active ancestor by well over a
+    # step without being a new event. It also contributed nothing to the
+    # dual-fault result — the 95 % -> 100 % jump came entirely from
+    # `precedes`, which fires zero times spuriously. A heuristic that adds
+    # ~2 false candidates per incident and buys no accuracy is worse than no
+    # heuristic, so it is gone rather than tuned.
+    if timeline:
+        tol = 0.01                       # rounding slack on the timeline
+        covered = {m for c in cond.nodes for m in cond.nodes[c]["members"]
+                   if cond.in_degree(c) == 0}
+        for a in act:
+            if a in covered or a not in timeline:
+                continue
+            anc = [x for x in nx.ancestors(sub, a) if x in timeline]
+            if not anc:
+                continue
+            earliest = min(timeline[x] for x in anc)
+            if timeline[a] + tol >= earliest:
+                continue
+            why, by = "precedes", round(earliest - timeline[a], 2)
+            exp = sorted(set(nx.descendants(graph, a)) & set(act) - {a})
+            from analysis.alarm_priority import alarm_semantics
+            o = by_tag.get(a)
+            sem = alarm_semantics(o.type_code if o else "")
+            out.append({
+                "tag": a, "explains": exp,
+                "priority": sem["priority"],
+                "priority_label": sem["priority_label"],
+                "direction": sem["direction"],
+                "checks": cross_checks(graph, by_tag, a),
+                "barriers": relevant_barriers(graph, by_tag, a),
+                "t": timeline[a], "cluster": clusters.get(a),
+                "first_in_cluster": first_of_cluster.get(clusters.get(a)) == a,
+                "late_onset": True, "detached": why, "detached_by": by,
+            })
+
     # priority-sorted; the candidate list (likelihood of being the origin) is
     # explains-first — two different questions, two different orders.
+    #
+    # With arrival times available, TIME enters strictly as a tiebreaker ahead
+    # of priority: among candidates that explain equally many alarms, the one
+    # that rang first is the likelier origin. It is deliberately not allowed
+    # to outrank the structural signal — the structural ordering is the one
+    # that measures 100 %/94 % on single faults, and a late-arriving alarm
+    # that explains more is still the better candidate.
+    if timeline:
+        return sorted(out, key=lambda b: (
+            -len(b["explains"]),
+            b["t"] if b.get("t") is not None else float("inf"),
+            b["priority"], b["tag"]))
     return sorted(out, key=lambda b: (-len(b["explains"]), b["priority"], b["tag"]))
 
 
@@ -1477,3 +1612,75 @@ def layered_cause_svg(graph: nx.DiGraph, center: str, active: list[str],
                  f'the view (max {per_col} per column)</text>')
     P.append("</svg>")
     return "".join(P)
+
+# ---------------------------------------------------------------------------
+# Selvtest for tidsbeviset — deterministisk, ingen data, ingen nettverk
+# ---------------------------------------------------------------------------
+
+def _selftest() -> int:
+    """Regresjonsvakt for de to reglene i candidate_brief(timeline=...).
+
+    Bygger en liten kjede A->B->C->D der D OGSÅ er strukturelt nedstrøms for
+    en annen kjede, og sjekker at tid gjenoppretter det strukturen mister —
+    uten å fragmentere en vanlig kaskade.
+    """
+    from models.engineering_object import EngineeringObject as E
+
+    g = nx.DiGraph()
+    chain = ["27-PT4801", "27-PIC4801", "27-PV4801", "27-XV4801"]
+    for a, b in zip(chain, chain[1:]):
+        g.add_edge(a, b)
+    # feil B sin rot ligger strukturelt NEDSTRØMS feil A sin kjede
+    g.add_edge("27-XV4801", "13-PT2201")
+    g.add_edge("13-PT2201", "13-PIC2201")
+    by_tag = {t: E.from_tag(t, "SCD") for t in list(g.nodes)}
+    active = list(g.nodes)
+
+    # 1) én kaskade, jevn spacing -> nøyaktig én kandidat, ingen fragmentering
+    single = {t: round(i * 2.5, 2) for i, t in enumerate(
+        ["27-PT4801", "27-PIC4801", "27-PV4801", "27-XV4801",
+         "13-PT2201", "13-PIC2201"])}
+    b1 = candidate_brief(g, by_tag, active, timeline=single, cluster_gap=5.0)
+    # 2) feil B starter LANGT etter -> skal IKKE bli kandidat: sen ankomst
+    #    alene er ikke bevis, og 'late'-regelen ble fjernet etter måling
+    late = dict(single)
+    late["13-PT2201"], late["13-PIC2201"] = 200.0, 202.5
+    b2 = candidate_brief(g, by_tag, active, timeline=late, cluster_gap=5.0)
+    # 3) feil B ringte FØR sine påståtte årsaker -> kan ikke være konsekvens
+    early = {"27-PT4801": 100.0, "27-PIC4801": 102.5, "27-PV4801": 105.0,
+             "27-XV4801": 107.5, "13-PT2201": 0.0, "13-PIC2201": 2.5}
+    b3 = candidate_brief(g, by_tag, active, timeline=early, cluster_gap=5.0)
+    # 4) uten timeline -> uendret oppførsel
+    b0 = candidate_brief(g, by_tag, active)
+
+    def tags(bs):
+        return [b["tag"] for b in bs]
+
+    checks = [
+        ("uten tid: én strukturell kandidat", tags(b0) == ["27-PT4801"]),
+        ("jevn kaskade fragmenteres ikke", tags(b1) == ["27-PT4801"]),
+        # sen ankomst alene promoterer IKKE — 'late' ble fjernet fordi den
+        # over 360 enkeltfeil-scenarioer flagget 804 ekte kaskadealarmer og
+        # ikke bidro til dobbeltfeil-gevinsten
+        ("sen ankomst alene gir ingen ny kandidat",
+         "13-PT2201" not in tags(b2)),
+        ("ingen kandidat merkes 'late'",
+         not any(b.get("detached") == "late" for b in b1 + b2 + b3)),
+        ("alarm før sin årsak blir kandidat", "13-PT2201" in tags(b3)),
+        ("den merkes 'precedes' (bevis, ikke terskel)",
+         any(b.get("detached") == "precedes"
+             for b in b3 if b["tag"] == "13-PT2201")),
+        ("strukturell rot beholdes i alle tilfeller",
+         all("27-PT4801" in tags(b) for b in (b1, b2, b3))),
+        ("strukturell rangering leder fortsatt",
+         tags(b2)[0] == "27-PT4801"),
+    ]
+    ok = True
+    for name, passed in checks:
+        print(f"  {'PASS' if passed else 'FAIL'}  {name}")
+        ok &= passed
+    return 0 if ok else 1
+
+
+if __name__ == "__main__":                       # sti satt øverst
+    sys.exit(_selftest())
