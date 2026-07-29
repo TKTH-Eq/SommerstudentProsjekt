@@ -34,7 +34,8 @@ hva DEXPI/AML-krav løser.
 
 ## Demonstrasjonene (Streamlit-appen)
 
-`streamlit run src/app.py` gir åtte sider. Kolonnen til høyre viser hvilket
+`streamlit run src/app.py` gir 21 sider (registrert i `src/nav_pages.py`).
+Tabellen under dekker hovedsidene; kolonnen til høyre viser hvilket
 nøkkelspørsmål i oppgaven hver side svarer på.
 
 | Side | Hva den viser | Oppgavespørsmål |
@@ -80,6 +81,19 @@ streamlit run src/app.py
 
 Alt deterministisk (uttrekk, avstemming, graf, HAZOP-ark, kontrollrom-brief)
 virker **uten** nøkkel; AI-lagene (omskriving, vision, Q&A) er tillegg oppå.
+
+### Valgfritt: Model Broker-konfigurasjon
+
+Sidene **⚙️ Model Broker config** og **🧩 Symbol variants** leser en
+referansekonfigurasjon eksportert fra Model Broker. Fila er ikke i repoet
+(den er ikke offentlig publisert) og forventes her:
+
+```
+data/broker/Huldra DEXPI P&ID 2.0_configuration.json
+```
+
+Mangler den, viser begge sidene en feilmelding og stopper — resten av appen
+er upåvirket. Stien kan overstyres i tekstfeltet øverst på hver side.
 
 ### Valgfritt: vision-reserve for bilde-tegninger
 

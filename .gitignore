@@ -37,4 +37,10 @@ __pycache__/
 
 data/broker/*__varianter.json
 data/broker/*__plus_*.json
-gatevalve-ai/results/
+
+# HAZOP-arbeidsark regenereres ved hver sidelasting (hazop_prep.py / hazop.py)
+# og har ustabil radrekkefølge — artefakter, ikke versjonert resultat.
+reports/hazop_worksheet.csv
+reports/hazop_system_*.xlsx
+reports/hazop_pdf_*.csv
+reports/hazop_dexpi_*.csv

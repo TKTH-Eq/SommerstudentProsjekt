@@ -115,7 +115,15 @@ def operator_brief(tag, entry, by_tag, use_ai: bool | None = None) -> str:
     f = _facts(tag, entry, by_tag)
     if use_ai is None:
         use_ai = bool(os.getenv("ANTHROPIC_API_KEY"))
-    return _ai_brief(f) if use_ai else _template_brief(f)
+    if not use_ai:
+        return _template_brief(f)
+    try:
+        return _ai_brief(f)
+    except ImportError:
+        # anthropic is an optional extra (pip install -e ".[anthropic]").
+        # The deterministic template is the documented baseline — degrade to it
+        # rather than taking down the page that called us.
+        return _template_brief(f)
 
 
 def briefs_for(fmap, objects, use_ai: bool | None = None) -> dict:

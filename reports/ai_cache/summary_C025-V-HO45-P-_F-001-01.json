@@ -1,0 +1,44 @@
+{
+  "ok": true,
+  "summary": "This P&ID illustrates the Fuel Gas System, detailing the generation, metering, and quality control of fuel gas. Its primary purpose is to supply conditioned and measured fuel gas to a generator, with provisions for safe venting and future connections.",
+  "key_equipment": [
+    "Fuel Gas Generator (45-XW50)",
+    "Gas Metering Package (45-XJ50)",
+    "Fuel Gas Calorimeter (45-XX50)",
+    "PSV 4833",
+    "PCV 4113"
+  ],
+  "main_hazards": [
+    "Overpressure",
+    "Gas Release",
+    "Loss of Containment",
+    "Flammability/Explosion"
+  ],
+  "tags": [
+    {
+      "tag": "45-XW50",
+      "status": "verified"
+    },
+    {
+      "tag": "45-XJ50",
+      "status": "verified"
+    },
+    {
+      "tag": "45-XX50",
+      "status": "verified"
+    },
+    {
+      "tag": "PSV 4833",
+      "status": "verified_loose"
+    },
+    {
+      "tag": "PCV 4113",
+      "status": "new_candidate"
+    },
+    {
+      "tag": "SI 4210",
+      "status": "new_candidate"
+    }
+  ],
+  "saved_at": "now (live)"
+}

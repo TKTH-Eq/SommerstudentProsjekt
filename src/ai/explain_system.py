@@ -7,8 +7,14 @@ load_dotenv()
 
 
 def explain_system(system: str, kpis: dict, consistency: dict, out_dir: Path) -> Path:
-    text = _llm_summary(system, kpis, consistency) if os.getenv("ANTHROPIC_API_KEY") \
-        else _template_summary(system, kpis, consistency)
+    if os.getenv("ANTHROPIC_API_KEY"):
+        try:
+            text = _llm_summary(system, kpis, consistency)
+        except ImportError:
+            # anthropic is an optional extra — fall back rather than fail.
+            text = _template_summary(system, kpis, consistency)
+    else:
+        text = _template_summary(system, kpis, consistency)
     out_dir.mkdir(parents=True, exist_ok=True)
     path = out_dir / f"system_{system}.md"
     path.write_text(text)

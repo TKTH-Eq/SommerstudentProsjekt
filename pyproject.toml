@@ -13,6 +13,8 @@ dependencies = [
     "matplotlib>=3.8",
     "seaborn>=0.13",
     "altair>=5",
+    "plotly>=5.20",
+    "pillow>=10.0",
     "scikit-learn>=1.4",
     "pymupdf>=1.24",
     "pdfplumber>=0.11",
@@ -25,3 +27,7 @@ dependencies = [
 
 [project.optional-dependencies]
 ocr = []
+# Valgfritt: operatør-brief og system-sammendrag kan kjøres mot en Anthropic-
+# modell i stedet for malen. Aktiveres av ANTHROPIC_API_KEY; uten pakken
+# faller begge tilbake på den deterministiske malen.
+anthropic = ["anthropic>=0.40"]
