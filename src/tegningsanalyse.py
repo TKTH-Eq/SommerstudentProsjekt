@@ -28,6 +28,7 @@ from PIL import Image
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from tegningsvisning import save_run_meta, view_panel   # noqa: E402
+from tegningslikhet import similarity_panel             # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 GATEVALVE_DIR = ROOT / "gatevalve-ai"
@@ -236,6 +237,14 @@ if st.session_state.get("analyzed") == str(choice) and verdict_p.exists():
                   "x": d["bbox_orig"][0], "y": d["bbox_orig"][1]}
                  for d in dets],
                 use_container_width=True)
+
+    # Which other analysed drawings resemble this one, by component profile.
+    # Sits at the end of the results block so it appears for every analysed
+    # drawing — including ones with no detections file, where the panel says
+    # so rather than silently vanishing.
+    st.divider()
+    similarity_panel(choice, RESULTS_DIR, CLASS_INFO)
+
 elif have_cached:
     st.caption("A previous result exists for this drawing — "
                "press «Analyze drawing» to show it.")

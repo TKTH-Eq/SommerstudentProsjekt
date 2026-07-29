@@ -259,6 +259,46 @@ def tag_reconstruction_check(items: list[Item]) -> list[dict]:
     return out
 
 
+def tagged_items(items: list[Item]) -> list[Item]:
+    """Objects that carry both a tag and a positional split, newest first.
+
+    These are the ones the decoder can work with: without parts there is
+    nothing to click, and without a tag there is nothing to decode.
+    """
+    return sorted((it for it in items if it.tag and it.parts),
+                  key=lambda it: it.tag or "")
+
+
+def part_positions(items: list[Item]) -> list[str]:
+    """Every position name present, in order: part1, part2, ..."""
+    names = {k for it in items for k in it.parts}
+    return sorted(names, key=lambda p: int(p[len(_PART_PREFIX):]))
+
+
+def ordered_parts(item: Item) -> list[tuple[str, str]]:
+    """[(position, value), ...] for one item, left to right."""
+    return [(k, item.parts[k]) for k in
+            sorted(item.parts, key=lambda p: int(p[len(_PART_PREFIX):]))]
+
+
+def position_values(items: list[Item], position: str) -> Counter:
+    """How often each value occurs at one position across the whole set.
+
+    This is the value domain — the thing you actually need when configuring a
+    tool to read these tags, and the thing that is tedious to collect by hand.
+    """
+    c: Counter[str] = Counter()
+    for it in items:
+        if position in it.parts:
+            c[it.parts[position]] += 1
+    return c
+
+
+def items_with_part(items: list[Item], position: str, value: str) -> list[Item]:
+    """Every object sharing one value at one position."""
+    return [it for it in items if it.parts.get(position) == value]
+
+
 def summary(items: list[Item]) -> dict:
     """Headline numbers for the page header."""
     drawings = {it.drawing for it in items}

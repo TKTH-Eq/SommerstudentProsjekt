@@ -34,3 +34,7 @@ gatevalve-ai/synth/
 *_proof.png
 *_verdict.json
 __pycache__/
+
+data/broker/*__varianter.json
+data/broker/*__plus_*.json
+gatevalve-ai/results/
