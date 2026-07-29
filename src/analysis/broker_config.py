@@ -60,6 +60,7 @@ import math
 import random
 import string
 from collections import Counter, defaultdict
+from functools import lru_cache
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -210,63 +211,174 @@ class Curve:
                      "includeInRoute": False, "constraints": []}
 
 
-def extract_region_geometry(pdf_path: Path | str, bbox_px: tuple[float, float, float, float],
-                            dpi: int, page: int = 0,
-                            pad_px: float = 2.0) -> list[Curve]:
-    """Vector primitives inside a pixel bounding box, in local coordinates.
+@lru_cache(maxsize=8)
+def _page_geometry(path_str: str, page: int, mtime: float) -> tuple:
+    """Every primitive on one page, parsed once and kept.
 
-    bbox_px is in the pixel space the detector worked in (i.e. the PDF
-    rendered at `dpi`), matching the "bbox_orig" field gatevalve-ai writes.
-    PDF user space is 72 units per inch, so the conversion is dpi/72.
+    The reason this exists: extracting one region used to open the PDF, parse
+    the whole page, and throw it away. On a sheet with three thousand
+    primitives and forty detections, that is forty full parses to read forty
+    small boxes — and the survey page does it for every class at once.
 
-    Returns polylines translated so the region centre is the origin — the
-    frame Model Broker patterns use.
+    Both y-orientations are computed up front, because the flip is a parameter
+    and recomputing it per box would give back the saving. Points are cheap;
+    parsing is not.
 
-    UNTESTED against a real vector P&ID. If the first generated pattern does
-    not match anything, check the y-axis direction first: PDF user space has
-    y increasing upwards, raster pixels have y increasing downwards, and this
-    function flips accordingly. If your renderer disagrees, that is the knob.
+    Keyed on mtime so an edited file is re-read rather than served stale.
     """
     import pdfplumber
 
-    scale = dpi / 72.0
-    x0, y0, x1, y1 = (v / scale for v in bbox_px)
-
-    with pdfplumber.open(str(pdf_path)) as pdf:
+    with pdfplumber.open(path_str) as pdf:
         pg = pdf.pages[page]
         height = pg.height
-        # raster y grows down; pdfplumber's top/bottom also grow down, so the
-        # box needs no flip here — only the emitted coordinates do
+        out = []
+        for prim in list(pg.lines) + list(pg.curves) + list(pg.rects):
+            plain = tuple(_primitive_points(prim, height, False))
+            if len(plain) < 2:
+                continue
+            flipped = tuple(_primitive_points(prim, height, True))
+            out.append((plain, flipped))
+        return tuple(out)
+
+
+def page_primitive_count(pdf_path: Path | str, page: int = 0) -> int:
+    """How many vector primitives the page has at all.
+
+    Zero means the sheet is a scan, or the drawing lives inside a Form XObject
+    this reader does not unpack. Either way no region on it can yield anything,
+    and it should be reported once as out of scope rather than as one failure
+    per detection.
+    """
+    try:
+        return len(_page_geometry(str(pdf_path), page,
+                                  Path(pdf_path).stat().st_mtime))
+    except Exception:                                           # noqa: BLE001
+        return 0
+
+
+def clear_geometry_cache() -> None:
+    """Forget parsed pages. Only needed if a PDF is replaced in place."""
+    _page_geometry.cache_clear()
+
+
+def extract_regions(pdf_path: Path | str,
+                    bboxes_px: list[tuple[float, float, float, float]],
+                    dpi: int, page: int = 0,
+                    pad_px: float = 8.0,
+                    mode: str = "majority",
+                    inside_fraction: float = 0.6,
+                    max_oversize: float = 2.0,
+                    flip_y: bool = False) -> list[list[Curve]]:
+    """Geometry for many regions on one page, parsing the page once.
+
+    Returns one list of Curves per input box, in the same order. Boxes that
+    contain nothing come back as empty lists rather than being dropped, so the
+    caller can still tell which detection they belonged to.
+
+    See extract_region_geometry for what the settings mean.
+    """
+    prims = _page_geometry(str(pdf_path), page,
+                           Path(pdf_path).stat().st_mtime)
+    scale = dpi / 72.0
+    results: list[list[Curve]] = []
+
+    for bbox in bboxes_px:
+        x0, y0, x1, y1 = (v / scale for v in bbox)
         pad = pad_px / scale
-        region = (x0 - pad, y0 - pad, x1 + pad, y1 + pad)
-        cx = (region[0] + region[2]) / 2
-        cy = (region[1] + region[3]) / 2
+        rx0, ry0, rx1, ry1 = x0 - pad, y0 - pad, x1 + pad, y1 + pad
+        rw = max(rx1 - rx0, 1e-6)
+        rh = max(ry1 - ry0, 1e-6)
+        cx = (rx0 + rx1) / 2
+        cy = (ry0 + ry1) / 2
 
         curves: list[Curve] = []
-        for prim in list(pg.lines) + list(pg.curves) + list(pg.rects):
-            pts = prim.get("pts")
-            if pts:
-                seq = [(float(px), float(py)) for px, py in pts]
-                # pdfplumber's pts are in bottom-up space for curves
-                seq = [(px, height - py) for px, py in seq]
-            elif "x0" in prim and "top" in prim:
-                if prim.get("width", 0) or prim.get("height", 0):
-                    seq = [(float(prim["x0"]), float(prim["top"])),
-                           (float(prim["x1"]), float(prim["bottom"]))]
-                else:
-                    continue
+        for plain, flipped in prims:
+            seq = flipped if flip_y else plain
+
+            inside = [rx0 <= px <= rx1 and ry0 <= py <= ry1 for px, py in seq]
+            if mode == "contain":
+                keep = all(inside)
+            elif mode == "intersect":
+                keep = any(inside)
             else:
+                keep = (sum(inside) / len(inside)) >= inside_fraction
+            if not keep:
                 continue
 
-            if not all(region[0] <= px <= region[2] and region[1] <= py <= region[3]
-                       for px, py in seq):
-                continue
+            xs = [p[0] for p in seq]
+            ys = [p[1] for p in seq]
+            if (max(xs) - min(xs)) > max_oversize * rw or \
+               (max(ys) - min(ys)) > max_oversize * rh:
+                continue                       # a pipe run passing through
+
             flat: list[float] = []
             for px, py in seq:
-                flat.extend([px - cx, cy - py])       # local frame, y up
+                flat.extend([px - cx, cy - py])        # local frame, y up
             if len(flat) >= 4:
                 curves.append(Curve(flat))
-    return curves
+        results.append(curves)
+    return results
+
+
+def extract_region_geometry(pdf_path: Path | str,
+                            bbox_px: tuple[float, float, float, float],
+                            dpi: int, page: int = 0,
+                            pad_px: float = 8.0,
+                            mode: str = "majority",
+                            inside_fraction: float = 0.6,
+                            max_oversize: float = 2.0,
+                            flip_y: bool = False) -> list[Curve]:
+    """Vector primitives inside one pixel bounding box, in local coordinates.
+
+    bbox_px is in the pixel space the detector worked in (the PDF rendered at
+    `dpi`), matching the "bbox_orig" field gatevalve-ai writes. PDF user space
+    is 72 units per inch, so the conversion is dpi/72. Returned polylines are
+    translated so the region centre is the origin — the frame Model Broker
+    patterns use.
+
+    `mode` is the knob that matters, and the default changed after the first
+    real run produced a pipe elbow labelled BallValve:
+
+      "contain"  every point must be inside. Strict, and biased in a way that
+                 is easy to miss: a circle drawn as four bezier segments has
+                 CONTROL POINTS outside the circle, so a tight box throws the
+                 circle away and keeps whatever small fragment happened to fit.
+                 That is exactly how a valve becomes an elbow.
+      "majority" at least `inside_fraction` of the points inside. Recovers the
+                 bezier circle without swallowing the whole sheet. Default.
+      "intersect" any point inside. Loosest, useful for diagnosis.
+
+    `max_oversize` then removes what majority lets back in: a primitive wider
+    or taller than this multiple of the region is a pipe run passing through,
+    not part of the symbol.
+
+    `flip_y` defaults to False, settled empirically rather than reasoned: on a
+    Huldra sheet every extraction with the flip on returned zero primitives and
+    every one with it off returned the symbol. pdfplumber already reports these
+    coordinates top-down, so the raster and the PDF agree and no flip is wanted.
+    The parameter stays because other producers may differ — but if a whole
+    drawing comes back empty, this is the first thing to toggle.
+
+    For more than one box on the same page, call extract_regions instead: it
+    parses the page once rather than once per box.
+    """
+    return extract_regions(pdf_path, [tuple(bbox_px)], dpi, page=page,
+                           pad_px=pad_px, mode=mode,
+                           inside_fraction=inside_fraction,
+                           max_oversize=max_oversize, flip_y=flip_y)[0]
+
+
+def _primitive_points(prim: dict, page_height: float,
+                      flip_y: bool) -> list[tuple[float, float]]:
+    """Every point of a pdfplumber primitive, in top-down page coordinates."""
+    pts = prim.get("pts")
+    if pts:
+        out = [(float(px), float(py)) for px, py in pts]
+        return [(px, page_height - py) for px, py in out] if flip_y else out
+    if "x0" in prim and "top" in prim:
+        return [(float(prim["x0"]), float(prim["top"])),
+                (float(prim["x1"]), float(prim["bottom"]))]
+    return []
 
 
 def geometry_signature(curves: list[Curve], quantum: float = 0.5) -> str:
