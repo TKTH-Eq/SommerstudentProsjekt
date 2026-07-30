@@ -1,31 +1,29 @@
 """
 src/broker_konfig.py
 =====================================================================
-Streamlit page: inspect a Model Broker configuration, compare it against the
-DEXPI output, and generate an ADDITION to it from what the symbol model found.
+Streamlit page: audit a Model Broker configuration.
 
-Three things happen here, in increasing order of ambition:
+What this page is NOT any more: it used to contain a pattern generator. That
+was superseded by the Symbol variants page, which does the same thing with a
+confirmation step in front of it, and keeping a second route with no human
+gate would have been a way to bypass the gate. It was removed rather than
+left disabled.
 
-  1. Catalogue     — what is in the configuration today: 205 patterns across
-                     Symbol, Letter, ConnectionSegment and SheetComponent.
-  2. Coverage gap  — which DEXPI classes appear in the output with no pattern
-                     targeting them, and which patterns target classes that
-                     never appear. Needs no model and no geometry; run it
-                     first, it is the cheapest useful thing on this page.
-  3. Generation    — detections from gatevalve-ai are used as region selectors,
-                     the geometry is read out of the PDF's own vector layer,
-                     occurrences are clustered to check they agree, and a
-                     pattern is written per class.
+What remains is the part that turned out to be useful without a model, without
+geometry extraction and without anything that can go quietly wrong:
 
-Generated patterns land in their own folder, in grey, and disabled below a
-confidence threshold. The engineer switches them on in Model Broker as they
-check them — the tool's own affordances are the review surface.
+  Variant families  the evidence that a configuration is a library rather than
+                    one pattern per symbol, which is the observation the whole
+                    Symbol variants page rests on
+  Coverage          which DEXPI classes have no pattern, and which patterns
+                    target a class that never appears. Two lists and a set
+                    difference
+  Health            dangling references, near-duplicate patterns, and patterns
+                    that would match almost anything
+  Compare           what changed between two exported configurations, which is
+                    how you check that an import did what you expected
 
-Caveat worth repeating in the UI: the geometry step needs a PDF with a vector
-layer. Scanned sheets produce nothing, and the page says so rather than
-producing an empty pattern.
-
-Located in src/ next to app.py. Add to app.py:
+Add to app.py:
 
     st.Page("broker_konfig.py", title="Model Broker config", icon="⚙️"),
 """
@@ -34,6 +32,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+from collections import Counter
 from pathlib import Path
 
 import pandas as pd
@@ -41,57 +40,43 @@ import streamlit as st
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from analysis.broker_config import (               # noqa: E402
-    coverage_gap, generate_from_detections, load_config, pattern_catalogue,
-    validate_config, write_config,
+from analysis.broker_config import (                            # noqa: E402
+    compare_configs, coverage_gap, load_config, pattern_catalogue,
+    validate_config,
 )
 from analysis.dexpi_properties import class_inventory, load_items  # noqa: E402
+from analysis.variant_survey import (                           # noqa: E402
+    describe_key, near_duplicates, pattern_profiles,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
-GATEVALVE_DIR = ROOT / "gatevalve-ai"
-RESULTS_DIR = GATEVALVE_DIR / "results"
 
+# Paths live in config.py so the project name appears in exactly one place.
 try:
-    from config import PID_DIR, RAW_DIR                            # noqa: E402
-except Exception:                                                  # noqa: BLE001
+    from config import BROKER_CONFIG, RAW_DIR                    # noqa: E402
+except Exception:                                                # noqa: BLE001
     RAW_DIR = ROOT / "data" / "raw"
-    PID_DIR = RAW_DIR / "P&ID"
+    BROKER_CONFIG = (ROOT / "data" / "broker" /
+                     "Huldra DEXPI P&ID 2.0_configuration.json")
 
 try:
-    from ui import page_header                                     # noqa: E402
-except Exception:                                                  # noqa: BLE001
+    from ui import page_header                                   # noqa: E402
+except Exception:                                                # noqa: BLE001
     def page_header(title, sub="", **_):
         st.title(title)
         if sub:
             st.caption(sub)
 
-# gatevalve-ai class -> DEXPI class. The one table you must maintain by hand;
-# everything else on this page is derived. Keys match CLASS_INFO in
-# tegningsanalyse.py, values must exist as Dexpi2 targets in the reference
-# configuration or the pattern will have nothing to inherit from.
-CLASS_TO_DEXPI = {
-    "gate_open": "GateValve",
-    "gate_closed": "GateValve",
-    "ball_valve": "BallValve",
-    "ball_open": "BallValve",
-    "ball_closed": "BallValve",
-    "globe_valve": "GlobeValve",
-    "check_valve": "CheckValve",
-    "butterfly_valve": "ButterflyValve",
-    "reducer": "PipeReducer",
-}
-
 page_header("Model Broker config",
-            "What the configuration covers — and a generated addition to it")
+            "What the configuration contains, what it misses, and what "
+            "changed since last time")
 
-cfg_path = st.text_input(
-    "Reference configuration (JSON exported from Model Broker)",
-    str(ROOT / "data" / "broker" / "Huldra DEXPI P&ID 2.0_configuration.json"))
+cfg_path = st.text_input("Configuration (JSON exported from Model Broker)",
+                         str(BROKER_CONFIG))
 if not Path(cfg_path).exists():
     st.error("Configuration not found. Export it from Model Broker and point "
              "this field at the file.")
     st.stop()
-
 try:
     config = load_config(cfg_path)
 except json.JSONDecodeError as e:
@@ -99,37 +84,69 @@ except json.JSONDecodeError as e:
     st.stop()
 
 catalogue = pattern_catalogue(config)
-by_type = pd.DataFrame(catalogue)["type"].value_counts()
+by_type = Counter(r["type"] for r in catalogue)
 
 c = st.columns(5)
 c[0].metric("Patterns", len(catalogue))
 for i, t in enumerate(["Symbol", "Letter", "ConnectionSegment",
-                       "SheetComponent"][:4]):
-    c[i + 1].metric(t, int(by_type.get(t, 0)))
-st.caption("Only the Symbol patterns are in reach of a symbol detector. "
-           "Letter, ConnectionSegment and SheetComponent are text, line and "
-           "frame handling — generation covers roughly half the configuration, "
-           "and it is the repetitive half.")
+                       "SheetComponent"]):
+    c[i + 1].metric(t, by_type.get(t, 0))
+st.caption("Only the symbol patterns are within reach of a symbol detector. "
+           "Letter, ConnectionSegment and SheetComponent handle text, lines "
+           "and sheet furniture — roughly half the configuration is out of "
+           "scope for any automated contribution from the outset.")
 
-tab_cat, tab_gap, tab_gen = st.tabs(
-    ["Catalogue", "Coverage gap", "Generate addition"])
+tab_fam, tab_cov, tab_health, tab_diff = st.tabs(
+    ["Variant families", "Coverage", "Health", "Compare"])
 
-# ------------------------------------------------------------------ catalogue
-with tab_cat:
-    only_symbols = st.checkbox("Symbol patterns only", value=True)
-    view = [r for r in catalogue if r["type"] == "Symbol"] if only_symbols \
-        else catalogue
-    st.dataframe(pd.DataFrame(view)[
-        ["name", "type", "folder", "enabled", "dexpi", "primitives",
-         "terminals"]],
+# ------------------------------------------------------------ variant families
+with tab_fam:
+    st.caption("A Model Broker configuration is not one pattern per symbol "
+               "type. It is a library that grew as new sheets were met — so "
+               "when a valve is not recognised on a new drawing, the tool's "
+               "own answer is an added variant, not a repaired one. This tab "
+               "is the evidence for that claim.")
+
+    families: dict[str, list] = {}
+    for r in catalogue:
+        if r["type"] != "Symbol":
+            continue
+        for cls in (x.strip() for x in (r["dexpi"] or "(no target)").split(",")):
+            families.setdefault(cls, []).append(r)
+
+    multi = {k: v for k, v in families.items() if len(v) > 1}
+    st.markdown(f"**{len(multi)} classes have more than one pattern.** "
+                f"The largest families are where the drawing set varies most.")
+    st.dataframe(pd.DataFrame(
+        [{"DEXPI class": k, "patterns": len(v),
+          "primitives": f"{min(r['primitives'] for r in v)}–"
+                        f"{max(r['primitives'] for r in v)}",
+          "names": ", ".join(sorted({r["name"] for r in v}))}
+         for k, v in sorted(multi.items(), key=lambda x: -len(x[1]))]),
         use_container_width=True, hide_index=True)
-    st.caption("«Primitives» is how many vector curves define the pattern. "
-               "A symbol with 65 of them is not something you can infer from "
-               "a bounding box — it has to be read out of the drawing.")
 
-# --------------------------------------------------------------- coverage gap
-with tab_gap:
-    dexpi_src = st.text_input("DEXPI folder", str(RAW_DIR), key="gap_src")
+    pick = st.selectbox("Inspect a family", sorted(families),
+                        index=sorted(families).index("GateValve")
+                        if "GateValve" in families else 0)
+    profs = pattern_profiles(config, {pick})
+    if profs:
+        st.dataframe(pd.DataFrame(
+            [{"name": p["name"], "enabled": p["enabled"],
+              "composition": describe_key(p["key"]),
+              "aspect": p["fingerprint"]["aspect"],
+              "curves": p["curves"], "text matchers": p["text_matchers"],
+              "terminals": p["terminals"]} for p in profs]),
+            use_container_width=True, hide_index=True)
+        st.caption("Composition is what a matcher keys on: the same valve "
+                   "drawn as 17 separate strokes and as 2 polylines are the "
+                   "same picture and different patterns.")
+
+# ------------------------------------------------------------------- coverage
+with tab_cov:
+    st.caption("Two lists and a set difference. No model, no geometry, "
+               "nothing that can fail quietly — run this first on any new "
+               "configuration.")
+    dexpi_src = st.text_input("DEXPI folder", str(RAW_DIR), key="cov_src")
     if not Path(dexpi_src).exists():
         st.info("Point this at the folder holding the DEXPI XML files.")
     else:
@@ -139,159 +156,121 @@ with tab_gap:
         else:
             counts = {r["class"]: r["count"] for r in class_inventory(items)}
             gap = coverage_gap(config, counts)
-
             g = st.columns(3)
             g[0].metric("Covered and present", len(gap["both"]))
             g[1].metric("Present, no pattern", len(gap["missing"]))
             g[2].metric("Pattern, never present", len(gap["unused"]))
 
-            st.markdown("**Classes in the DEXPI output with no pattern "
-                        "targeting them**")
-            st.caption("Not automatically an error — several of these come "
-                       "from connection and sheet handling rather than from a "
-                       "symbol pattern. The ones worth a look are the "
-                       "equipment and component classes with a high count.")
-            st.dataframe(
-                pd.DataFrame([{"class": c, "occurrences": counts.get(c, 0)}
-                              for c in gap["missing"]]),
+            st.markdown("**Classes in the output with no pattern targeting them**")
+            st.caption("Not automatically an error — several come from "
+                       "connection and sheet handling rather than from a "
+                       "symbol pattern. The ones worth a look are equipment "
+                       "and component classes with a high count.")
+            st.dataframe(pd.DataFrame(
+                [{"class": c, "occurrences": counts.get(c, 0)}
+                 for c in gap["missing"]]),
                 use_container_width=True, hide_index=True)
 
-            with st.expander("Patterns whose class never appears in the output"):
-                st.caption("Either dead weight in the configuration, or "
-                           "symbols that only occur on drawings you have not "
-                           "run yet. Check before deleting anything.")
+            with st.expander("Patterns whose class never appears"):
+                st.caption("Either dead weight, or symbols that only occur on "
+                           "drawings you have not converted yet. Check before "
+                           "deleting anything.")
                 st.write(", ".join(gap["unused"]) or "(none)")
 
-# ----------------------------------------------------------------- generation
-with tab_gen:
-    st.markdown("**Detections → geometry → patterns**")
-    st.caption("The detector says WHERE a symbol is and WHICH class it is. "
-               "The geometry is then read from the PDF's vector layer — the "
-               "same source every pattern in the reference configuration was "
-               "authored from.")
+# --------------------------------------------------------------------- health
+with tab_health:
+    problems = validate_config(config)
+    errors = [p for p in problems if p["severity"] == "feil"]
+    warnings = [p for p in problems if p["severity"] == "advarsel"]
 
-    pdfs = sorted(p for p in Path(PID_DIR).rglob("*")
-                  if p.suffix.lower() == ".pdf") if Path(PID_DIR).exists() else []
-    if not pdfs:
-        st.error(f"Found no PDFs under {PID_DIR}.")
-        st.stop()
+    h = st.columns(2)
+    h[0].metric("Structural errors", len(errors))
+    h[1].metric("Warnings", len(warnings))
 
-    drawing = st.selectbox("Drawing", pdfs, format_func=lambda p: p.name)
-    det_path = RESULTS_DIR / f"{drawing.stem}_detections.json"
-    run_path = RESULTS_DIR / f"{drawing.stem}_run.json"
+    if errors:
+        st.error("Broken internal references. A configuration with these will "
+                 "be rejected on import, usually with an unhelpful message.")
+        st.dataframe(pd.DataFrame(errors), use_container_width=True,
+                     hide_index=True)
+    else:
+        st.success("No dangling references. Every `order` entry points at the "
+                   "pattern's own matchers, every pattern has its metadata, "
+                   "and every folder reference resolves.")
+        st.caption("This check exists because a generated configuration was "
+                   "once rejected with a server error, and the cause — an "
+                   "`order` list inherited from another pattern, pointing at "
+                   "seven matchers that did not exist — was five lines of "
+                   "checking away.")
 
-    if not det_path.exists():
-        st.warning("No detections for this drawing yet — run it on the "
-                   "Drawing analysis page first.")
-        st.stop()
+    profs = pattern_profiles(config, {r["dexpi"].split(",")[0].strip()
+                                      for r in catalogue if r["dexpi"]})
+    dupes = near_duplicates(profs)
+    with st.expander(f"Near-duplicate patterns ({len(dupes)})"):
+        st.caption("A library maintained by hand across projects accumulates "
+                   "redundancy. Two patterns competing for the same geometry "
+                   "is worth knowing about before a third is added.")
+        st.dataframe(pd.DataFrame(dupes,
+                                  columns=["pattern A", "pattern B", "distance"]),
+                     use_container_width=True, hide_index=True)
 
-    detections = json.loads(det_path.read_text(encoding="utf-8"))
-    dpi = 200
-    if run_path.exists():
+    with st.expander(f"Warnings ({len(warnings)})"):
+        st.caption("Legal but worth a look. Most are single-primitive symbol "
+                   "patterns — a Flange defined as one vertical stroke will "
+                   "match a great many things, which is deliberate in a "
+                   "hand-made pattern and suspicious in a generated one.")
+        st.dataframe(pd.DataFrame(warnings), use_container_width=True,
+                     hide_index=True)
+
+# -------------------------------------------------------------------- compare
+with tab_diff:
+    st.caption("After importing generated variants and exporting again, this "
+               "answers whether what came back is what went in — and whether "
+               "anything else moved.")
+    other_path = st.text_input("Compare against", str(BROKER_CONFIG),
+                               key="diff_path")
+    if not Path(other_path).exists():
+        st.info("Point this at a second exported configuration.")
+    elif Path(other_path).resolve() == Path(cfg_path).resolve():
+        st.info("Same file. Choose a different one to compare.")
+    else:
         try:
-            dpi = int(json.loads(run_path.read_text(encoding="utf-8"))["dpi"])
-        except Exception:                                          # noqa: BLE001
-            pass
-    st.caption(f"{len(detections)} detections, analysed at {dpi} DPI. The "
-               "geometry lookup uses the same DPI — if it is wrong, the "
-               "regions land in the wrong place and nothing is found.")
+            other = load_config(other_path)
+        except json.JSONDecodeError as e:
+            st.error(f"Could not read it: {e}")
+            st.stop()
+        d = compare_configs(config, other)
 
-    o1, o2, o3, o4 = st.columns(4)
-    with o1:
-        min_conf = st.slider("Minimum confidence", 0.5, 1.0, 0.80, 0.05)
-    with o2:
-        enable_above = st.slider("Ship enabled above", 0.5, 1.0, 0.95, 0.05)
-    with o3:
-        max_per_class = st.number_input("Occurrences per class", 3, 40, 12)
-    with o4:
-        min_prims = st.number_input("Minimum primitives", 1, 20, 3,
-                                    help="A symbol built from one or two "
-                                         "curves is a line, not a symbol. "
-                                         "Below this the geometry reader is "
-                                         "assumed to have failed.")
+        m = st.columns(4)
+        m[0].metric("Added", len(d["added"]))
+        m[1].metric("Removed", len(d["removed"]))
+        m[2].metric("Changed", len(d["changed"]))
+        m[3].metric("Untouched", d["untouched"])
 
-    st.caption("Patterns below the second threshold are written with "
-               "`enabled: false`. They appear in Model Broker in their own "
-               "grey folder and do nothing until switched on.")
+        if d["version_before"] != d["version_after"]:
+            st.warning(f"Configuration version differs: "
+                       f"{d['version_before']} → {d['version_after']}.")
+        if d["new_folders"]:
+            st.info("New folders: " + ", ".join(d["new_folders"]))
+        if d["lost_folders"]:
+            st.warning("Folders no longer present: "
+                       + ", ".join(d["lost_folders"]))
 
-    if st.button("Generate addition", type="primary"):
-        with st.spinner("Reading geometry and building patterns …"):
-            try:
-                result = generate_from_detections(
-                    config, detections, drawing, dpi, CLASS_TO_DEXPI,
-                    min_conf=min_conf, enable_above=enable_above,
-                    max_per_class=int(max_per_class),
-                    min_primitives=int(min_prims))
-            except ImportError:
-                st.error("pdfplumber is needed for the geometry step. "
-                         "`pip install pdfplumber`")
-                st.stop()
-
-        report = result["report"]
-        made = [r for r in report if r["status"] == "mønster laget"]
-
-        r1, r2, r3 = st.columns(3)
-        r1.metric("Patterns generated", len(made))
-        r2.metric("Shipped enabled", sum(1 for r in made if r.get("enabled")))
-        r3.metric("Classes skipped", len(report) - len(made))
-
-        errors = [p for p in result.get("problems", [])
-                  if p["severity"] == "feil"]
-        if errors:
-            st.error(f"{len(errors)} structural errors — do NOT import this "
-                     f"file. The reference configuration has zero, so this is "
-                     f"an exact bar.")
-            st.dataframe(pd.DataFrame(errors), use_container_width=True,
+        if d["added"]:
+            st.markdown("**Added**")
+            st.dataframe(pd.DataFrame(d["added"]), use_container_width=True,
                          hide_index=True)
-        else:
-            st.success("Structural check passed: no dangling references. "
-                       "The reference configuration is the baseline — it also "
-                       "has zero.")
+        if d["removed"]:
+            st.error("Patterns are missing from the second file. An addition "
+                     "should never remove anything.")
+            st.dataframe(pd.DataFrame(d["removed"]), use_container_width=True,
+                         hide_index=True)
+        if d["changed"]:
+            st.markdown("**Changed**")
+            st.dataframe(pd.DataFrame(d["changed"]), use_container_width=True,
+                         hide_index=True)
+        if not (d["added"] or d["removed"] or d["changed"]):
+            st.success("The two configurations are identical in their patterns.")
 
-        if made:
-            st.dataframe(
-                pd.DataFrame(made)[["class", "dexpi", "donor", "occurrences",
-                                    "clusters", "agreement", "primitives",
-                                    "terminals", "best_conf", "enabled",
-                                    "detail"]],
-                use_container_width=True, hide_index=True)
-            st.caption("«Agreement» is the share of occurrences whose geometry "
-                       "matched the largest cluster. Below 0.8 the detector "
-                       "grouped things that are not the same symbol — the "
-                       "pattern is still written, but shipped disabled.")
-
-        skipped = [r for r in report if r["status"] != "mønster laget"]
-        if skipped:
-            with st.expander(f"{len(skipped)} classes produced nothing"):
-                st.dataframe(pd.DataFrame(skipped)[["class", "status", "detail"]],
-                             use_container_width=True, hide_index=True)
-
-        if made and not errors:
-            out = ROOT / "data" / "broker" / \
-                f"{Path(cfg_path).stem}__plus_{drawing.stem}.json"
-            write_config(result["config"], out)
-            st.success(f"Written to `{out}`")
-            st.download_button(
-                "Download configuration",
-                data=json.dumps(result["config"], indent=1,
-                                ensure_ascii=False).encode("utf-8"),
-                file_name=out.name, mime="application/json")
-            st.caption("Nothing existing was modified: version, "
-                       "patternTemplate, targetDefinitions and every hand-made "
-                       "pattern come through unchanged. Import it into Model "
-                       "Broker and the new folder appears alongside the old "
-                       "ones.")
-        elif errors:
-            st.info("Nothing written — fix the structural errors first.")
-        else:
-            st.info("No patterns were produced. If the report says «for lite "
-                    "geometri», the detector worked and the geometry reader "
-                    "did not: check the DPI, the y-axis direction in "
-                    "extract_region_geometry, and whether the symbols are "
-                    "Form XObjects rather than page-level curves.")
-
-st.divider()
-st.caption("A draft for engineering review. A generated pattern that matches "
-           "the wrong thing is worse than a missing one, which is why nothing "
-           "ships enabled unless both the confidence and the geometry "
-           "agreement clear their thresholds.")
+st.caption("Read-only. This page never writes a configuration — generating "
+           "patterns lives on the Symbol variants page, behind a confirmation "
+           "step.")
