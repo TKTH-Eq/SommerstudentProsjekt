@@ -137,7 +137,7 @@ Fire lag, der hvert lag kan brukes uten laget over:
 ```
                     ┌───────────────────────────────────────────────┐
    LAG 4            │  Streamlit-app (src/app.py, 21 sider)         │
-   presentasjon     │  + selvstendig HTML-dashboard, demos/*.html   │
+   presentasjon     │  + selvstendige HTML-eksporter (offline-trygt) │
                     └───────────────────┬───────────────────────────┘
                                         │
                     ┌───────────────────┴───────────────────────────┐
@@ -271,7 +271,6 @@ SommerstudentProsjekt/
 ├── reports_channels/            tekst vs vision vs union (150 dpi)
 ├── reports_channels_300/        samme eksperiment ved 300 dpi
 │
-├── demos/DEXPI_VS_PDF.html      frittstående demo (virker uten Streamlit)
 ├── tools/
 │   ├── eval_agent.py            testrigg for kontrollrom-agenten (harde scenarier)
 │   └── make_demo_incident.py    generer syntetisk hendelsesdatasett
@@ -398,7 +397,7 @@ hver side svarer på.
 | Side | Hva den viser | Oppgavespørsmål |
 |---|---|---|
 | 🏠 **Home** (`hjem.py`) | Landingsside: hva dette er, de ærlige nøkkeltallene som KPI-er lest live fra `eval_root_cause.json`, og tre guidede stier inn i appen. Egen «demo readiness»-sjekk før presentasjon | kontekst |
-| 🆚 **DEXPI vs PDF** (`dexpi_vs_pdf.py`) | Interaktiv side-om-side: samme tegning rekonstruert fra begge kilder («tags er tekst; topologi er det ikke»). Tynt skall over `demos/DEXPI_VS_PDF.html`, som også virker frittstående i nettleser | PDF vs DEXPI |
+| 🆚 **DEXPI vs PDF** (`dexpi_vs_pdf.py`) | Interaktiv side-om-side: samme tegning rekonstruert fra begge kilder («tags er tekst; topologi er det ikke»). Venstre panel er DEXPI-modellen med alle oppgitte koblinger, høyre er hva PDF-tekstlaget gir alene — komponenter uten lesbar tekst markeres 🔴 **?**, og høyre panel har null koblinger. Hover for å spore hva noe henger sammen med. **Alt beregnes ved lasting** av `extraction.dexpi_parser` + `extraction.tag_extractor`, for **alle 16** tegninger som har begge kilder, så siden ikke kan drive fra den målte pipelinen. Nedlastingsknapp skriver ut gjeldende visning som selvstendig HTML | PDF vs DEXPI |
 | 🏭 **Plant overview** (`anleggsoversikt.py`) | Anleggsmodellen på tegningsnivå: 17 noder, én per ark, koblet der linjenumre beviser at arkene deler fysisk rør. Etableringsbildet før enhver anleggsdekkende demo | Data/LCI: én modell, ikke 17 dokumenter |
 
 ### 6.2 Systemanalyse
@@ -1277,9 +1276,9 @@ analysemoduler følger dette mønsteret — se listen i §7.2.
 | Repo med README, oppsett, eksempel-arbeidsflyt | denne filen (§5, §7) |
 | ≥ 2 fungerende AI-demonstrasjoner | 21 app-sider, hvorav 8 med AI-lag (§6) |
 | Rapport med funn, begrensninger, verktøy, pilotkandidater | egen rapport (leveres separat) + `Results.md`, `PID_TO_STRUCTURE.md` |
-| PDF vs strukturert format-sammenligning | `Results.md`, 🆚- og ⚖️-sidene, `demos/DEXPI_VS_PDF.html`, §2.3, §12 |
+| PDF vs strukturert format-sammenligning | `Results.md`, 🆚- og ⚖️-sidene, §2.3, §12 |
 | Verktøy-/lisensanbefaling | §17 + rapportens kap. 3.4 |
-| Presentasjon/demo for stakeholders | appen + `demos/` + landingssidens tre stier |
+| Presentasjon/demo for stakeholders | appen + landingssidens tre stier + selvstendig HTML-eksport fra 🆚-siden og `src/dashboard.py` |
 | Gjenbrukbare prompts/agenter/skills | §16 |
 | Dashboard/grafvisualisering med topologi, kompleksitet, flagg | 🏠/📄/🧭/🏭-sidene (KPI-er, mest koblede komponenter, kvalitetsflagg) + 📊 compliance-dashboardet |
 | Minimumskrav for maskinlesbare leveranser | rapporten, empirisk begrunnet: recall-tak (§2.3), utagget mellomelement-topologi (§12), tag-konvensjonsvariasjon (§9.2), utagget utstyr i HAZOP-seksjoner (§19) |

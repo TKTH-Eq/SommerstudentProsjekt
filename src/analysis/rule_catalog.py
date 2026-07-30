@@ -54,8 +54,9 @@ import networkx as nx
 
 PROVENANCE = ("verified", "indicative", "practice")
 
-_UNVERIFIED = "Klausulnummer IKKE verifisert — fagingeniør må bekrefte."
-_NO_CLAUSE = "Ingen standardreferanse — regelen er utledet, ikke sitert."
+_UNVERIFIED = ("Clause number NOT verified — a discipline engineer must "
+               "confirm it.")
+_NO_CLAUSE = ("No standard reference — the rule is derived, not cited.")
 
 
 # ---------------------------------------------------------------------------
@@ -68,63 +69,64 @@ CLAUSES: dict[str, dict] = {
     # --- eksisterende regler i rule_screening.py, registrert med proveniens --
     "R1": {"family": "NORSOK P-001 / API 521", "clause": "",
            "provenance": "indicative", "paraphrase": "",
-           "topic": "trykkbeskyttelse / avlastningsvei"},
+           "topic": "pressure protection / relief path"},
     "R2": {"family": "NORSOK S-001 / IEC 61511", "clause": "",
            "provenance": "indicative", "paraphrase": "",
-           "topic": "nedstengingsfunksjon skal ha pådrag"},
+           "topic": "a shutdown function must act on something"},
     "R3": {"family": "NORSOK P-001", "clause": "",
            "provenance": "indicative", "paraphrase": "",
-           "topic": "trykkovervåking av seksjon"},
+           "topic": "pressure monitoring of a section"},
     "R4": {"family": "NORSOK I-005:2013+AC:2016", "clause": "B.2.2",
            "provenance": "verified",
-           "paraphrase": "alle måleinstrumenter med input til "
-                         "kontrollsystemet skal vises på SCD-en",
-           "topic": "SCD-dekning: måleinstrumenter"},
+           "paraphrase": "all measuring instruments with an input to the "
+                         "control system shall be shown on the SCD",
+           "topic": "SCD coverage: measuring instruments"},
     "R5": {"family": "NORSOK I-005:2013+AC:2016", "clause": "B.2.1.3",
            "provenance": "verified",
-           "paraphrase": "fjernopererte ventiler med aktuator, inkl. on/off- "
-                         "og reguleringsventiler, skal inkluderes på SCD-en",
-           "topic": "SCD-dekning: aktuerte ventiler"},
+           "paraphrase": "remotely operated valves with an actuator, "
+                         "including on/off and control valves, shall be "
+                         "included on the SCD",
+           "topic": "SCD coverage: actuated valves"},
     "R6": {"family": "NORSOK I-005:2013+AC:2016", "clause": "B.2.3.2",
            "provenance": "verified",
-           "paraphrase": "alle shutdown-funksjoner innen PCS og PSD skal "
-                         "implementeres på SCD-ene",
-           "topic": "SCD-dekning: nedstengingsfunksjoner"},
+           "paraphrase": "all shutdown functions within PCS and PSD shall be "
+                         "implemented on the SCDs",
+           "topic": "SCD coverage: shutdown functions"},
     "R7": {"family": "NORSOK I-005:2013+AC:2016", "clause": "B.2.3.1",
            "provenance": "verified",
-           "paraphrase": "SCD-en skal inkludere alle reguleringsfunksjoner "
-                         "og deres innbyrdes utveksling av status, "
-                         "målevariabler, forriglinger og undertrykking",
-           "topic": "SCD-dekning: reguleringsfunksjoner"},
+           "paraphrase": "the SCD shall include all control functions and "
+                         "their mutual exchange of status, measured "
+                         "variables, interlocks and suppression",
+           "topic": "SCD coverage: control functions"},
     "R8": {"family": "NORSOK I-001 / I-005", "clause": "",
            "provenance": "indicative", "paraphrase": "",
-           "topic": "posisjonstilbakemelding fra aktuert ventil"},
+           "topic": "position feedback from an actuated valve"},
     "R9": {"family": "IEC 61511 / NORSOK I-002", "clause": "",
            "provenance": "indicative", "paraphrase": "",
-           "topic": "redundans og stemmegivning på trip"},
+           "topic": "redundancy and voting on trips"},
 
-    # --- nye regler ---------------------------------------------------------
-    "R10": {"family": "NORSOK I-005 (nedstengingslogikk)", "clause": "",
+    # --- new rules ----------------------------------------------------------
+    "R10": {"family": "NORSOK I-005 (shutdown logic)", "clause": "",
             "provenance": "practice", "paraphrase": "",
-            "topic": "nedstengingsventil uten årsak i cause & effect"},
-    "R11": {"family": "NORSOK I-005 (nedstengingslogikk)", "clause": "",
+            "topic": "shutdown valve with no cause in cause & effect"},
+    "R11": {"family": "NORSOK I-005 (shutdown logic)", "clause": "",
             "provenance": "practice", "paraphrase": "",
-            "topic": "trip uten effekt i cause & effect"},
+            "topic": "trip with no effect in cause & effect"},
     "R12": {"family": "—", "clause": "",
             "provenance": "practice", "paraphrase": "",
-            "topic": "cause & effect refererer ukjent tag"},
+            "topic": "cause & effect references an unknown tag"},
     "R13": {"family": "NORSOK P-001 / API 521", "clause": "",
             "provenance": "indicative", "paraphrase": "",
-            "topic": "avlastningsenhet uten trykkovervåking"},
+            "topic": "relief device without pressure monitoring"},
     "R14": {"family": "NORSOK I-005 / P-002", "clause": "",
             "provenance": "practice", "paraphrase": "",
-            "topic": "reguleringssløyfe uten pådragsorgan"},
-    "R15": {"family": "IEC 61511 (redundans)", "clause": "",
+            "topic": "control loop without a final element"},
+    "R15": {"family": "IEC 61511 (redundancy)", "clause": "",
             "provenance": "practice", "paraphrase": "",
-            "topic": "redundanspar der bare ett bein er kjent"},
-    "R16": {"family": "NORSOK Z-001 (dokumentasjon/merking)", "clause": "",
+            "topic": "redundancy pair where only one leg is known"},
+    "R16": {"family": "NORSOK Z-001 (documentation/tagging)", "clause": "",
             "provenance": "practice", "paraphrase": "",
-            "topic": "nær-duplikate tags (nummerkonvensjon)"},
+            "topic": "near-duplicate tags (numbering convention)"},
 }
 
 
@@ -137,15 +139,15 @@ def cite(rule: str) -> str:
     """
     c = CLAUSES.get(rule)
     if not c:
-        return f"{rule}: ukjent regel i katalogen."
+        return f"{rule}: unknown rule in the catalogue."
     prov = c.get("provenance")
     if prov not in PROVENANCE:
-        raise ValueError(f"{rule}: ugyldig proveniens {prov!r}")
+        raise ValueError(f"{rule}: invalid provenance {prov!r}")
     if prov == "verified" and not (c.get("clause") and c.get("paraphrase")):
-        raise ValueError(f"{rule}: merket 'verified' uten klausul og parafrase")
+        raise ValueError(f"{rule}: marked 'verified' without clause and paraphrase")
     if prov == "verified":
         return (f"{c['family']}, {c['clause']} — {c['paraphrase']} "
-                f"(parafrasert). Klausul verifisert mot standardteksten.")
+                f"(paraphrased). Clause verified against the standard text.")
     if prov == "indicative":
         return f"{c['family']} ({c['topic']}). {_UNVERIFIED}"
     return f"{c['topic']}. {_NO_CLAUSE}"
@@ -189,16 +191,16 @@ def screen_cause_effect(objects, ce: dict | None) -> list[dict]:
         if o.type_code in _SHUTDOWN_VALVES and not causes_of.get(t))
     if orphan_valves:
         findings.append({
-            "rule": "R10", "severity": "høy", "section": "C&E",
-            "title": "Nedstengingsventil uten årsak i cause & effect",
+            "rule": "R10", "severity": "high", "section": "C&E",
+            "title": "Shutdown valve with no cause in cause & effect",
             "tags": orphan_valves[:8],
-            "description": f"{len(orphan_valves)} aktuert nedstengingsventil "
-                           f"har ingen registrert årsak som stenger den: "
+            "description": f"{len(orphan_valves)} actuated shutdown valve(s) "
+                           f"have no recorded cause that closes them: "
                            f"{', '.join(orphan_valves[:5])}"
                            + (" …" if len(orphan_valves) > 5 else "") + ".",
-            "recommendation": "Enten mangler logikken i C&E-registreringen, "
-                              "eller ventilen inngår ikke i noen "
-                              "nedstengingsfunksjon — begge deler bør avklares.",
+            "recommendation": "Either the logic is missing from the C&E "
+                              "record, or the valve is not part of any "
+                              "shutdown function — both need clarifying.",
             "standard": cite("R10"),
         })
 
@@ -208,15 +210,15 @@ def screen_cause_effect(objects, ce: dict | None) -> list[dict]:
         if o.type_code in _TRIP_TYPES and not effects_of.get(t))
     if dead_trips:
         findings.append({
-            "rule": "R11", "severity": "høy", "section": "C&E",
-            "title": "Trip uten registrert effekt",
+            "rule": "R11", "severity": "high", "section": "C&E",
+            "title": "Trip with no recorded effect",
             "tags": dead_trips[:8],
-            "description": f"{len(dead_trips)} trip-/bryterfunksjon har ingen "
-                           f"registrert effekt: {', '.join(dead_trips[:5])}"
+            "description": f"{len(dead_trips)} trip/switch function(s) have "
+                           f"no recorded effect: {', '.join(dead_trips[:5])}"
                            + (" …" if len(dead_trips) > 5 else "") + ".",
-            "recommendation": "En trip uten effekt gjør ingenting. Verifiser "
-                              "mot SCD-en om aksjonen mangler i registreringen "
-                              "eller i designet.",
+            "recommendation": "A trip with no effect does nothing. Verify "
+                              "against the SCD whether the action is missing "
+                              "from the record or from the design.",
             "standard": cite("R11"),
         })
 
@@ -224,15 +226,15 @@ def screen_cause_effect(objects, ce: dict | None) -> list[dict]:
     unknown = sorted((ce.get("stats") or {}).get("unknown_tags", []))
     if unknown:
         findings.append({
-            "rule": "R12", "severity": "middels", "section": "C&E",
-            "title": "Cause & effect refererer ukjent tag",
+            "rule": "R12", "severity": "medium", "section": "C&E",
+            "title": "Cause & effect references an unknown tag",
             "tags": unknown[:8],
-            "description": f"{len(unknown)} tag i C&E-registreringen finnes "
-                           f"ikke i tag-registeret: {', '.join(unknown[:5])}"
+            "description": f"{len(unknown)} tag(s) in the C&E record are not "
+                           f"in the tag register: {', '.join(unknown[:5])}"
                            + (" …" if len(unknown) > 5 else "") + ".",
-            "recommendation": "Enten en skrivefeil i C&E-arket, et tag "
-                              "uttrekket ikke fanget, eller en reell "
-                              "kryssdokument-inkonsistens.",
+            "recommendation": "Either a typo on the C&E sheet, a tag the "
+                              "extraction missed, or a genuine "
+                              "cross-document inconsistency.",
             "standard": cite("R12"),
         })
     return findings
@@ -259,15 +261,16 @@ def screen_structure(graph: nx.DiGraph, objects, sections: dict) -> list[dict]:
         meas = [o.tag for o in members if o.type_code in _PRESSURE_MEAS]
         if relief and not meas:
             findings.append({
-                "rule": "R13", "severity": "middels", "section": name,
-                "title": "Avlastningsenhet uten trykkovervåking i seksjonen",
+                "rule": "R13", "severity": "medium", "section": name,
+                "title": "Relief device without pressure monitoring in the section",
                 "tags": relief[:6],
-                "description": f"Seksjonen har avlastning "
-                               f"({', '.join(relief[:4])}) men ingen "
-                               f"trykkmåling blant medlemmene.",
-                "recommendation": "Uten trykkindikering ser operatøren ikke at "
-                                  "settpunktet nærmer seg, og at avlastningen "
-                                  "har løftet må utledes indirekte.",
+                "description": f"The section has relief "
+                               f"({', '.join(relief[:4])}) but no pressure "
+                               f"measurement among its members.",
+                "recommendation": "Without pressure indication the operator "
+                                  "cannot see the set point approaching, and "
+                                  "that the relief has lifted must be "
+                                  "inferred indirectly.",
                 "standard": cite("R13"),
             })
 
@@ -295,15 +298,20 @@ def screen_structure(graph: nx.DiGraph, objects, sections: dict) -> list[dict]:
         orphan_ctrl += ctrl
     if orphan_ctrl:
         findings.append({
-            "rule": "R14", "severity": "middels", "section": "sløyfe",
-            "title": "Reguleringsfunksjon uten pådragsorgan",
+            # NB: "section" is part of finding_id() — keep the stored value
+            # stable so saved review dispositions keep matching. It is an id,
+            # not display text (the UI never shows it).
+            "rule": "R14", "severity": "medium", "section": "sløyfe",
+            "title": "Control function without a final element",
             "tags": sorted(orphan_ctrl)[:8],
-            "description": f"{len(orphan_ctrl)} reguleringsfunksjon har verken "
-                           f"ventil i egen sløyfe eller nedstrøms i grafen: "
+            "description": f"{len(orphan_ctrl)} control function(s) have "
+                           f"neither a valve in their own loop nor one "
+                           f"downstream in the graph: "
                            f"{', '.join(sorted(orphan_ctrl)[:5])}.",
-            "recommendation": "En regulator uten pådrag kan ikke gjøre noe. "
-                              "Ofte et koblingstap i uttrekket — verifiser på "
-                              "tegningen før det behandles som designavvik.",
+            "recommendation": "A controller with nothing to act on cannot do "
+                              "anything. Often a lost connection in the "
+                              "extraction — verify on the drawing before "
+                              "treating it as a design deviation.",
             "standard": cite("R14"),
         })
 
@@ -318,16 +326,17 @@ def screen_structure(graph: nx.DiGraph, objects, sections: dict) -> list[dict]:
         if len(sfx) == 1 and next(iter(sfx)) in {"A", "B", "C", "D"})
     if lonely:
         findings.append({
-            "rule": "R15", "severity": "lav", "section": "redundans",
-            "title": "Redundansbein uten søsken i uttrekket",
+            "rule": "R15", "severity": "low", "section": "redundans",  # id, see R14
+            "title": "Redundancy leg with no sibling in the extraction",
             "tags": lonely[:8],
-            "description": f"{len(lonely)} tag har et redundanssuffiks (A/B) "
-                           f"men søskenbeinet finnes ikke: "
+            "description": f"{len(lonely)} tag(s) carry a redundancy suffix "
+                           f"(A/B) but the sibling leg is absent: "
                            f"{', '.join(lonely[:5])}"
                            + (" …" if len(lonely) > 5 else "") + ".",
-            "recommendation": "Enten er søskenbeinet tapt i uttrekket, eller "
-                              "suffikset er brukt uten at redundans finnes. "
-                              "Påvirker også alarm-punktkobling.",
+            "recommendation": "Either the sibling leg was lost in the "
+                              "extraction, or the suffix is used without "
+                              "redundancy being present. Also affects alarm "
+                              "point matching.",
             "standard": cite("R15"),
         })
     return findings
@@ -350,10 +359,10 @@ def _difference_kind(tags: set[str]) -> str:
         return "nummer-først vs type-først"
     bare = {re.sub(r"[\s\-]", "", t) for t in ts}
     if len({b.lstrip("0") for b in bare}) < len(bare):
-        return "ledende nuller"
+        return "leading zeros"
     if len({re.sub(r"[\s\-]", "", t) for t in ts}) < len(ts):
-        return "separator/mellomrom"
-    return "ulik skrivemåte"
+        return "separator/whitespace"
+    return "different spelling"
 
 
 def screen_tag_conventions(objects) -> list[dict]:
@@ -374,15 +383,17 @@ def screen_tag_conventions(objects) -> list[dict]:
         return []
     pairs = [f"{'/'.join(sorted(g))} ({_difference_kind(g)})" for g in dupes]
     return [{
-        "rule": "R16", "severity": "middels", "section": "merking",
-        "title": "Nær-duplikate tags (samme instrument, ulik skrivemåte)",
+        "rule": "R16", "severity": "medium", "section": "merking",  # id, see R14
+        "title": "Near-duplicate tags (same instrument, different spelling)",
         "tags": sorted({t for g in dupes for t in g})[:8],
-        "description": f"{len(dupes)} tag-par peker på samme instrument med "
-                       f"ulik skrivemåte: {'; '.join(pairs[:4])}"
+        "description": f"{len(dupes)} tag pair(s) point at the same "
+                       f"instrument with different spellings: "
+                       f"{'; '.join(pairs[:4])}"
                        + (" …" if len(pairs) > 4 else "") + ".",
-        "recommendation": "Samme instrument talt som to. Avklar hvilken "
-                          "skrivemåte som er riktig og rett kilden — dette "
-                          "slår ut i tellinger, avstemming og alarmkobling.",
+        "recommendation": "The same instrument counted twice. Decide which "
+                          "spelling is correct and fix the source — this "
+                          "distorts counts, reconciliation and alarm "
+                          "matching.",
         "standard": cite("R16"),
     }]
 
@@ -458,9 +469,9 @@ def screen_all_extended(raw_dir, ce: dict | None = None) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 FIX_KINDS = {
-    "extraction": "🔍 Verifiser uttrekket",
-    "design": "🔧 Design-/tegningstiltak",
-    "deliverable": "📦 Leveransekrav",
+    "extraction": "🔍 Verify the extraction",
+    "design": "🔧 Design / drawing action",
+    "deliverable": "📦 Deliverable requirement",
 }
 
 # Rekkefølgen er ikke kosmetikk. For funn utledet av PDF-uttrekk må
@@ -471,64 +482,79 @@ FIX_KINDS = {
 _ORDER = {"extraction": 0, "design": 1, "deliverable": 2}
 
 _FIXES: dict[str, list[tuple[str, str]]] = {
-    "R1": [("extraction", "Sjekk om PSV/PSE finnes på tegningen men mangler i "
-                          "uttrekket (symbol uten lesbart tag er vanlig)."),
-           ("design", "Finnes ingen avlastningsvei: avklar om seksjonen kan "
-                      "overtrykkes fra kilden, og dokumenter beslutningen.")],
-    "R2": [("extraction", "Sjekk om aksjonsveien finnes på SCD-en — "
-                          "kryss-tegningskoblinger er de svakeste i uttrekket."),
-           ("design", "Trip uten pådrag: avklar hvilket element den skal "
-                      "aktuere, og registrer det i cause & effect.")],
-    "R3": [("extraction", "Trykkmåling kan være tegnet som symbol uten tag."),
-           ("design", "Seksjon uten trykkovervåking: vurder indikering, "
-                      "særlig hvis seksjonen kan isoleres.")],
-    "R4": [("extraction", "SCD-arket kan mangle lesbart tekstlag — omtrent to "
-                          "tredjedeler gjør det. Kjør vision-reserven først."),
-           ("design", "Reelt dekningsavvik mot I-005 B.2.2: instrumentet skal "
-                      "vises på SCD-en."),
-           ("deliverable", "Krev SCD levert med maskinlesbart tekstlag eller "
-                           "som strukturert format.")],
-    "R5": [("extraction", "Samme SCD-tekstlagsproblem som R4."),
-           ("design", "Reelt dekningsavvik mot I-005 B.2.1.3."),
-           ("deliverable", "Krev SCD levert maskinlesbart.")],
-    "R6": [("extraction", "Samme SCD-tekstlagsproblem som R4."),
-           ("design", "Reelt dekningsavvik mot I-005 B.2.3.2 — "
-                      "nedstengingsfunksjonen skal implementeres på SCD.")],
-    "R7": [("extraction", "Samme SCD-tekstlagsproblem som R4."),
-           ("design", "Reelt dekningsavvik mot I-005 B.2.3.1.")],
-    "R8": [("extraction", "ZS/ZL kan være tegnet uten lesbart tag."),
-           ("design", "Ventil uten posisjonstilbakemelding: sikkerhetslogikken "
-                      "kan ikke bekrefte at ventilen nådde stilling.")],
-    "R9": [("extraction", "Søskensensoren kan mangle i uttrekket — se R15."),
-           ("design", "Enkelt sensorbein på en trip: avklar om SIL-kravet "
-                      "forutsetter stemmegivning.")],
-    "R10": [("design", "Registrer hvilken årsak som stenger ventilen, eller "
-                       "bekreft at den ikke inngår i nedstenging."),
-            ("deliverable", "Krev cause & effect levert i maskinlesbar form, "
-                            "ikke bare som felt på arket.")],
-    "R11": [("design", "Trip uten effekt: finn aksjonen på SCD-en og registrer "
-                       "den, eller avklar om trippen er ute av bruk."),
-            ("deliverable", "Samme C&E-leveransekrav som R10.")],
-    "R12": [("extraction", "Taggen kan finnes på tegningen men mangle i "
-                           "uttrekket — sjekk før det kalles en skrivefeil."),
-            ("design", "Rett skrivefeilen i C&E-arket, eller avklar "
-                       "kryssdokument-inkonsistensen.")],
-    "R13": [("extraction", "Trykkmåling kan mangle i uttrekket."),
-            ("design", "Vurder trykkindikering i seksjoner med avlastning.")],
-    "R14": [("extraction", "Koblingen regulator→ventil er den som oftest "
-                           "brytes i uttrekket — verifiser på tegningen."),
-            ("design", "Regulator uten pådrag: avklar hvilket element den "
-                       "styrer.")],
-    "R15": [("extraction", "Søskenbeinet er sannsynligvis tapt i uttrekket "
-                           "(målt recall 55 %) — sjekk tegningen først."),
-            ("design", "Finnes bare ett bein: avklar om suffikset er brukt "
-                       "uten at redundans finnes."),
-            ("deliverable", "Konsekvent suffiksbruk er et minimumskrav for "
-                            "kobling mot drifts-/alarmsystem.")],
-    "R16": [("design", "Avklar hvilken skrivemåte som er riktig og rett "
-                       "kilden."),
-            ("deliverable", "Krev entydig tag-konvensjon i leveransen — "
-                            "ledende nuller må være konsistente.")],
+    "R1": [("extraction", "Check whether a PSV/PSE is on the drawing but "
+                          "absent from the extraction (a symbol with no "
+                          "readable tag is common)."),
+           ("design", "If there genuinely is no relief path: establish "
+                      "whether the section can be over-pressured from the "
+                      "source, and document the decision.")],
+    "R2": [("extraction", "Check whether the action path exists on the SCD — "
+                          "cross-drawing links are the weakest part of the "
+                          "extraction."),
+           ("design", "Trip with nothing to act on: establish which element "
+                      "it should actuate, and record it in cause & effect.")],
+    "R3": [("extraction", "Pressure measurement may be drawn as a symbol "
+                          "with no tag."),
+           ("design", "Section without pressure monitoring: consider "
+                      "indication, especially if the section can be "
+                      "isolated.")],
+    "R4": [("extraction", "The SCD sheet may have no readable text layer — "
+                          "roughly two thirds do not. Run the vision reserve "
+                          "first."),
+           ("design", "A real coverage gap against I-005 B.2.2: the "
+                      "instrument shall be shown on the SCD."),
+           ("deliverable", "Require the SCD delivered with a machine-readable "
+                           "text layer, or in a structured format.")],
+    "R5": [("extraction", "Same SCD text-layer problem as R4."),
+           ("design", "A real coverage gap against I-005 B.2.1.3."),
+           ("deliverable", "Require the SCD delivered machine-readable.")],
+    "R6": [("extraction", "Same SCD text-layer problem as R4."),
+           ("design", "A real coverage gap against I-005 B.2.3.2 — the "
+                      "shutdown function shall be implemented on the SCD.")],
+    "R7": [("extraction", "Same SCD text-layer problem as R4."),
+           ("design", "A real coverage gap against I-005 B.2.3.1.")],
+    "R8": [("extraction", "ZS/ZL may be drawn without a readable tag."),
+           ("design", "Valve without position feedback: the safety logic "
+                      "cannot confirm the valve reached position.")],
+    "R9": [("extraction", "The sibling sensor may be missing from the "
+                          "extraction — see R15."),
+           ("design", "A single sensor leg on a trip: establish whether the "
+                      "SIL requirement presumes voting.")],
+    "R10": [("design", "Record which cause closes the valve, or confirm that "
+                       "it is not part of a shutdown."),
+            ("deliverable", "Require cause & effect delivered in "
+                            "machine-readable form, not only as a field on "
+                            "the sheet.")],
+    "R11": [("design", "Trip with no effect: find the action on the SCD and "
+                       "record it, or establish whether the trip is out of "
+                       "service."),
+            ("deliverable", "Same C&E deliverable requirement as R10.")],
+    "R12": [("extraction", "The tag may be on the drawing but missing from "
+                           "the extraction — check before calling it a "
+                           "typo."),
+            ("design", "Correct the typo on the C&E sheet, or resolve the "
+                       "cross-document inconsistency.")],
+    "R13": [("extraction", "Pressure measurement may be missing from the "
+                           "extraction."),
+            ("design", "Consider pressure indication in sections that have "
+                       "relief.")],
+    "R14": [("extraction", "The controller→valve link is the one most often "
+                           "broken in the extraction — verify on the "
+                           "drawing."),
+            ("design", "Controller with nothing to act on: establish which "
+                       "element it controls.")],
+    "R15": [("extraction", "The sibling leg was probably lost in the "
+                           "extraction (measured recall 55 %) — check the "
+                           "drawing first."),
+            ("design", "Only one leg present: establish whether the suffix "
+                       "is used without redundancy being there."),
+            ("deliverable", "Consistent suffix use is a minimum requirement "
+                            "for linking to an operations/alarm system.")],
+    "R16": [("design", "Decide which spelling is correct and fix the "
+                       "source."),
+            ("deliverable", "Require an unambiguous tag convention in the "
+                            "deliverable — leading zeros must be "
+                            "consistent.")],
 }
 
 

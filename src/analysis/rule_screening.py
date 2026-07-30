@@ -45,7 +45,8 @@ if __name__ == "__main__" and __package__ is None:      # direct run support
     import os
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-_VERIFY = "Veiledende referanse — fagingeniør må bekrefte funn og klausul."
+_VERIFY = ("Indicative reference — a discipline engineer must confirm both "
+           "the finding and the clause.")
 
 _PRESSURE_TYPES = {"PT", "PI", "PIC", "PIT", "PDI", "PDT", "PV", "PSH", "PSL"}
 _RELIEF_TYPES = {"PSV", "PSE"}
@@ -73,26 +74,27 @@ def screen(graph: nx.DiGraph, objects, sections: dict) -> list[dict]:
         relief = sorted(o.tag for o in members if o.type_code in _RELIEF_TYPES)
         if p_tags and not relief:
             findings.append({
-                "rule": "R1", "title": "Mulig manglende avlastningsvei",
-                "severity": "høy", "section": name, "tags": p_tags[:6],
-                "description": f"Seksjonen har trykkmåling/-regulering "
-                               f"({', '.join(p_tags[:4])}) men ingen "
-                               f"PSV/PSE blant medlemmene.",
-                "recommendation": "Verifiser på tegning/tilstøtende ark om "
-                                  "avlastning finnes utenfor seksjonen, eller "
-                                  "om den mangler.",
-                "standard": f"NORSOK P-001 / API 521 (trykkbeskyttelse). {_VERIFY}",
+                "rule": "R1", "title": "Possible missing relief path",
+                "severity": "high", "section": name, "tags": p_tags[:6],
+                "description": f"The section has pressure measurement/control "
+                               f"({', '.join(p_tags[:4])}) but no PSV/PSE "
+                               f"among its members.",
+                "recommendation": "Verify on the drawing or an adjacent sheet "
+                                  "whether relief exists outside the section, "
+                                  "or is genuinely missing.",
+                "standard": f"NORSOK P-001 / API 521 (pressure protection). "
+                            f"{_VERIFY}",
             })
         if len(members) >= 4 and not (types & (_PRESSURE_TYPES | _RELIEF_TYPES)):
             findings.append({
-                "rule": "R3", "title": "Seksjon uten trykkovervåking",
-                "severity": "lav", "section": name,
+                "rule": "R3", "title": "Section without pressure monitoring",
+                "severity": "low", "section": name,
                 "tags": sorted(o.tag for o in members)[:6],
-                "description": f"{len(members)} komponenter uten noen "
-                               f"trykkmåling i seksjonen.",
-                "recommendation": "Kan være riktig (f.eks. drenering) — "
-                                  "bekreft at overvåking ikke er påkrevd.",
-                "standard": f"NORSOK I-001 (instrumentering). {_VERIFY}",
+                "description": f"{len(members)} components with no pressure "
+                               f"measurement anywhere in the section.",
+                "recommendation": "May be correct (a drain, for example) — "
+                                  "confirm that monitoring is not required.",
+                "standard": f"NORSOK I-001 (instrumentation). {_VERIFY}",
             })
 
     # ---- R2: trip functions without an actuation path -----------------------
@@ -104,19 +106,19 @@ def screen(graph: nx.DiGraph, objects, sections: dict) -> list[dict]:
                       if by_tag.get(t) and by_tag[t].type_code in _ACTION_TYPES)
         if not acts:
             findings.append({
-                "rule": "R2", "title": "Sikkerhetsfunksjon uten aksjonsvei",
-                "severity": "høy", "section": "",
+                "rule": "R2", "title": "Safety function without action path",
+                "severity": "high", "section": "",
                 "tags": [o.tag],
-                "description": f"{o.tag} ({o.type_code}) har ingen "
-                               f"XV/ESV nedstrøms i modellen.",
-                "recommendation": "Aksjonen kan ligge i SCD-logikk eller på "
-                                  "annet ark — verifiser at funksjonen "
-                                  "faktisk utløser en aksjon.",
-                "standard": "NORSOK I-005:2013+AC:2016, B.2.3.2 — "
-                            "shutdown-funksjoner skal implementeres på SCD "
-                            "som logiske forbindelser mellom relevante "
-                            "utganger og innganger (parafrasert). "
-                            "Klausul verifisert mot standardteksten.",
+                "description": f"{o.tag} ({o.type_code}) has no XV/ESV "
+                               f"downstream in the model.",
+                "recommendation": "The action may live in SCD logic or on "
+                                  "another sheet — verify that the function "
+                                  "actually triggers an action.",
+                "standard": "NORSOK I-005:2013+AC:2016, B.2.3.2 — shutdown "
+                            "functions shall be implemented on the SCD as "
+                            "logical connections between the relevant outputs "
+                            "and inputs (paraphrased). Clause verified "
+                            "against the standard text.",
             })
 
     # ---- R8 + R9: per loop (redundancy legs A/B/C share a loop) -------------
@@ -132,19 +134,21 @@ def screen(graph: nx.DiGraph, objects, sections: dict) -> list[dict]:
             if not (sibling_types & _POS_FEEDBACK):
                 findings.append({
                     "rule": "R8",
-                    "title": "Aktuert ventil uten posisjonstilbakemelding",
-                    "severity": "middels", "section": o.loop,
+                    "title": "Actuated valve without position feedback",
+                    "severity": "medium", "section": o.loop,
                     "tags": [o.tag],
-                    "description": f"{o.tag} ({o.type_code}) er en aktuert "
-                                   f"avstengningsventil, men sløyfen har ingen "
-                                   f"posisjonsbryter (ZS/ZL) — logikken kan da "
-                                   f"ikke bekrefte at ventilen nådde stilling.",
-                    "recommendation": "Posisjonsbryteren kan være symbol-only "
-                                      "(mangler i tekstlaget) eller på annet "
-                                      "ark — verifiser på tegningen at ZS/ZL "
-                                      "finnes, ev. at feedback ikke er påkrevd.",
-                    "standard": f"NORSOK I-001 / I-005 (posisjonsindikering "
-                                f"for SIS-ventiler). {_VERIFY}",
+                    "description": f"{o.tag} ({o.type_code}) is an actuated "
+                                   f"shutdown valve, but its loop has no "
+                                   f"position switch (ZS/ZL) — the logic "
+                                   f"cannot confirm the valve reached "
+                                   f"position.",
+                    "recommendation": "The position switch may be symbol-only "
+                                      "(absent from the text layer) or on "
+                                      "another sheet — verify on the drawing "
+                                      "that ZS/ZL exists, or that feedback is "
+                                      "not required.",
+                    "standard": f"NORSOK I-001 / I-005 (position indication "
+                                f"for SIS valves). {_VERIFY}",
                 })
         # R9: trip sensor that is the only leg in its loop (no voting).
         if o.type_code in _TRIP_TYPES:
@@ -152,21 +156,22 @@ def screen(graph: nx.DiGraph, objects, sections: dict) -> list[dict]:
             if len(legs) < 2:
                 findings.append({
                     "rule": "R9",
-                    "title": "Nødavstengningsfunksjon uten redundans",
-                    "severity": "lav", "section": o.loop,
+                    "title": "Shutdown function without redundancy",
+                    "severity": "low", "section": o.loop,
                     "tags": [o.tag],
-                    "description": f"{o.tag} ({o.type_code}) er eneste "
-                                   f"{o.type_code}-giver i sløyfen — ingen "
-                                   f"redundant giver for voting (1oo1).",
-                    "recommendation": "Om voting er påkrevd avhenger av "
-                                      "SIL-klassifiseringen (IEC 61511) — "
-                                      "bekreft mot SRS/SIL-analyse at 1oo1 er "
-                                      "akseptabelt for denne funksjonen.",
-                    "standard": f"IEC 61511 / NORSOK I-002 (redundans og "
-                                f"voting etter SIL). {_VERIFY}",
+                    "description": f"{o.tag} ({o.type_code}) is the only "
+                                   f"{o.type_code} sensor in its loop — no "
+                                   f"redundant sensor for voting (1oo1).",
+                    "recommendation": "Whether voting is required depends on "
+                                      "the SIL classification (IEC 61511) — "
+                                      "confirm against the SRS/SIL analysis "
+                                      "that 1oo1 is acceptable for this "
+                                      "function.",
+                    "standard": f"IEC 61511 / NORSOK I-002 (redundancy and "
+                                f"voting per SIL). {_VERIFY}",
                 })
 
-    order = {"høy": 0, "middels": 1, "lav": 2}
+    order = {"high": 0, "medium": 1, "low": 2}
     return sorted(findings, key=lambda f: (order[f["severity"]], f["rule"]))
 
 
@@ -179,7 +184,7 @@ if __name__ == "__main__":
         m = load_dexpi_model(xml)
         fs = screen(m["tag_graph"], m["objects"], m["sections"])
         if fs:
-            print(f"\n{xml.stem.replace('.DGN', '')}: {len(fs)} funn")
+            print(f"\n{xml.stem.replace('.DGN', '')}: {len(fs)} findings")
             for f in fs[:4]:
                 print(f"  [{f['rule']}/{f['severity']}] {f['title']} — "
                       f"{', '.join(f['tags'][:3])}")
@@ -211,45 +216,45 @@ def screen_scd_coverage(pid_objects, scd_objects) -> list[dict]:
         missing = sorted(o.tag for o in objs if o.tag not in scd_tags)
         if missing:
             findings.append({
-                "rule": rule, "title": title, "severity": "middels",
+                "rule": rule, "title": title, "severity": "medium",
                 "section": "P&ID↔SCD", "tags": missing[:8],
-                "description": f"{len(missing)} komponenter på P&ID-en "
-                               f"gjenfinnes ikke i SCD-uttrekket: "
+                "description": f"{len(missing)} components on the P&ID are "
+                               f"not found in the SCD extraction: "
                                f"{', '.join(missing[:5])}"
                                + (" …" if len(missing) > 5 else "") + ".",
-                "recommendation": "Enten reelt dekningsavvik fra klausulen "
-                                  "eller uttrekkstap på SCD-arket — "
-                                  "verifiser mot SCD-tegningen.",
+                "recommendation": "Either a real coverage gap against the "
+                                  "clause, or an extraction miss on the SCD "
+                                  "sheet — verify against the SCD drawing.",
                 "standard": f"NORSOK I-005:2013+AC:2016, {clause} — "
-                            f"{paraphrase} (parafrasert). Klausul verifisert "
-                            f"mot standardteksten.",
+                            f"{paraphrase} (paraphrased). Clause verified "
+                            f"against the standard text.",
             })
 
-    # B.2.2 gjelder instrumenter MED input til kontrollsystemet — lokale
-    # indikatorer (PI/FI/TI/LI/PDI uten transmitter) holdes utenfor for å
-    # unngå falske funn; konservativt valg, dokumentert her.
+    # B.2.2 applies to instruments WITH an input to the control system — local
+    # indicators (PI/FI/TI/LI/PDI without a transmitter) are excluded to avoid
+    # false findings; a conservative choice, documented here.
     _LOCAL_ONLY = {"PI", "FI", "TI", "LI", "PDI"}
     _gap([o for o in pid_objects if o.category == "input"
           and o.type_code not in _LOCAL_ONLY],
-         "Måleinstrument ikke gjenfunnet på SCD", "R4", "B.2.2",
-         "alle måleinstrumenter med input til kontrollsystemet skal vises "
-         "på SCD-en")
+         "Measuring instrument not found on the SCD", "R4", "B.2.2",
+         "all measuring instruments with an input to the control system "
+         "shall be shown on the SCD")
     _gap([o for o in pid_objects if o.type_code in _ACTUATED_VALVES],
-         "Aktuert ventil ikke gjenfunnet på SCD", "R5", "B.2.1.3",
-         "fjernopererte ventiler med aktuator, inkl. on/off- og "
-         "reguleringsventiler, skal inkluderes på SCD-en")
+         "Actuated valve not found on the SCD", "R5", "B.2.1.3",
+         "remotely operated valves with an actuator, including on/off and "
+         "control valves, shall be included on the SCD")
     _gap([o for o in pid_objects if o.type_code in _SHUTDOWN_FUNCS],
-         "Shutdown-funksjon ikke gjenfunnet på SCD", "R6", "B.2.3.2",
-         "alle shutdown-funksjoner innen PCS og PSD skal implementeres på "
-         "SCD-ene")
-    # reguleringsfunksjoner: typekoder som ender på IC (PIC, LIC, FIC, TIC …)
+         "Shutdown function not found on the SCD", "R6", "B.2.3.2",
+         "all shutdown functions within PCS and PSD shall be implemented on "
+         "the SCDs")
+    # control functions: type codes ending in IC (PIC, LIC, FIC, TIC …)
     import re as _re
     _gap([o for o in pid_objects
           if o.type_code and _re.match(r"^[A-Z]{1,3}IC$", o.type_code)],
-         "Reguleringsfunksjon ikke gjenfunnet på SCD", "R7", "B.2.3.1",
-         "SCD-en skal inkludere alle reguleringsfunksjoner og deres "
-         "innbyrdes utveksling av status, målevariabler, forriglinger og "
-         "undertrykking")
+         "Control function not found on the SCD", "R7", "B.2.3.1",
+         "the SCD shall include all control functions and their mutual "
+         "exchange of status, measured variables, interlocks and "
+         "suppression")
     return findings
 
 
@@ -257,11 +262,11 @@ def screen_scd_coverage(pid_objects, scd_objects) -> list[dict]:
 # filter — the codes are assumptions (see the fluid-code table in the
 # report), so they inform the team without hiding rows.
 FLUID_MEANINGS = {  # subset of Table 1; basis/confidence per report
-    "PV": "Process Vapour (antatt, moderat)", "PL": "Process Liquid (antatt, moderat)",
-    "VF": "Vent/Flare gas (antatt, moderat)", "DC": "Drain Closed (antatt, moderat)",
-    "WS": "Water Service (antatt, lav-moderat)", "WF": "Water Fresh (antatt, lav-moderat)",
-    "GF": "Gas Fuel (antatt, lav-moderat)", "AI": "Air Instrument (antatt, moderat)",
-    "GI": "Gas Injection (antatt, lav-moderat)", "OL": "Oil Line (antatt, lav-moderat)",
+    "PV": "Process Vapour (assumed, moderate)", "PL": "Process Liquid (assumed, moderate)",
+    "VF": "Vent/Flare gas (assumed, moderate)", "DC": "Drain Closed (assumed, moderate)",
+    "WS": "Water Service (assumed, low-moderate)", "WF": "Water Fresh (assumed, low-moderate)",
+    "GF": "Gas Fuel (assumed, low-moderate)", "AI": "Air Instrument (assumed, moderate)",
+    "GI": "Gas Injection (assumed, low-moderate)", "OL": "Oil Line (assumed, low-moderate)",
 }
 
 
@@ -279,14 +284,14 @@ FLUID_HAZARD = {
     "WS": 0.3, "WF": 0.3, "WI": 0.3, "WC": 0.3, "WD": 0.3,   # water services
     "DC": 0.6,                                   # closed drain (may carry HC)
 }
-_SEV_BASE = {"høy": 3.0, "middels": 2.0, "lav": 1.0}
+_SEV_BASE = {"high": 3.0, "medium": 2.0, "low": 1.0}
 
 
 def hazard_score(finding: dict, fluid_codes: list[str] | None = None) -> float:
     """Screening priority 1.0–5.0: severity, lifted by the hazard of the
     fluid on the finding's connected lines. Ranking aid only — never a
     substitute for the discipline engineer's consequence assessment."""
-    base = _SEV_BASE.get(finding.get("severity", "lav"), 1.0)
+    base = _SEV_BASE.get(finding.get("severity", "low"), 1.0)
     worst = max((FLUID_HAZARD.get(c, 0.6) for c in (fluid_codes or [])),
                 default=0.5)
     return round(min(base * (1.0 + worst), 5.0), 2)

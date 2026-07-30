@@ -42,6 +42,8 @@ _RULE_TITLE = {
     "R15": "Lone redundancy leg",
     "R16": "Near-duplicate tags",
 }
+# The rule engines emit English severities. Kept as a safety net so a stale
+# cached/CSV finding written before that change still renders correctly.
 _SEV_EN = {"høy": "high", "middels": "medium", "lav": "low"}
 _SEV_ORDER = ["high", "medium", "low"]
 _PROV_BADGE = {"verified": "✓ verified clause",

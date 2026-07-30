@@ -639,7 +639,10 @@ with tab_funn:
         #          selve modellen — R1/R2, severity "høy").
         #   GUL  = mulig avvik som MÅ verifiseres mot et dokument (typisk
         #          SCD-en eller tilstøtende ark — R3–R7, "middels"/"lav").
-        _SEV = {"høy": "#c0392b", "middels": "#e0a800", "lav": "#e0a800"}
+        _SEV = {"high": "#c0392b", "medium": "#e0a800", "low": "#e0a800",
+                # legacy Norwegian values, in case a cached finding predates
+                # the switch to English rule output
+                "høy": "#c0392b", "middels": "#e0a800", "lav": "#e0a800"}
         st.markdown(
             "<span style='color:#c0392b;font-weight:700'>🔴 Red</span> = most "
             "likely a real deviation (structural absence in the model). &nbsp; "
@@ -714,10 +717,10 @@ with tab_funn:
             _cur = _disp.get(_fid, {})
             _badge = {"accepted": "🔴", "rejected": "⚪",
                       "verified": "🟢"}.get(_cur.get("status"), "")
-            with st.expander(f"{'🔴' if f['severity']=='høy' else '🟡'} "
+            with st.expander(f"{'🔴' if f['severity'] in ('high', 'høy') else '🟡'} "
                              f"[{f['rule']}] {f['title']} — "
                              f"{', '.join(f['tags'][:3])}  "
-                             f"· prioritet {f['_score']:.1f}{'  '+_badge if _badge else ''}"):
+                             f"· priority {f['_score']:.1f}{'  '+_badge if _badge else ''}"):
                 st.write(f["description"])
                 st.write("**Recommended follow-up:** " + f["recommendation"])
                 st.caption("📖 " + f["standard"])

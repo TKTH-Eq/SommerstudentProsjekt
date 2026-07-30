@@ -46,15 +46,31 @@ _FONTS = ("<link rel='preconnect' href='https://fonts.googleapis.com'>"
           ":wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600"
           "&display=swap' rel='stylesheet'>")
 
+# Google Fonts is a PROGRESSIVE ENHANCEMENT, never a dependency. Offline, on a
+# locked-down corporate machine, or behind a proxy that blocks
+# fonts.googleapis.com, the link above simply fails — so the stacks below have
+# to carry the design on their own. The mono stack matters most: every tag and
+# every page_header context line is mono, and a bare `monospace` fallback
+# lands on Courier, which is what actually made the offline app look broken.
+_SANS = ("'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI Variable Text',"
+         " 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif")
+_MONO = ("'IBM Plex Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono',"
+         " 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace")
+# Same stack for inline style='…' attributes, which are single-quote
+# delimited — so the family names must stay unquoted. Legal CSS: every name
+# here is a sequence of valid identifiers.
+_MONO_ATTR = ("IBM Plex Mono,ui-monospace,Cascadia Mono,Segoe UI Mono,"
+              "SF Mono,Menlo,Consolas,Liberation Mono,monospace")
+
 _BASE_CSS = f"""
 <style>
-html, body, [class*="css"], .stApp {{ font-family: 'Inter', sans-serif; }}
+html, body, [class*="css"], .stApp {{ font-family: {_SANS}; }}
 /* calm light canvas — enforced so it never falls back to a dark base */
 .stApp {{ background: {PAGE_BG} !important; color: {SLATE}; }}
 [data-testid="stAppViewContainer"] {{ background: {PAGE_BG}; }}
 [data-testid="stMain"] p, [data-testid="stMain"] li,
 [data-testid="stMain"] label {{ color: {SLATE}; }}
-code, pre {{ font-family: 'IBM Plex Mono', monospace; }}
+code, pre {{ font-family: {_MONO}; }}
 h1 {{ font-weight: 700 !important; letter-spacing: -0.3px; color: {SLATE} !important; }}
 h2, h3 {{ font-weight: 600 !important; color: {SLATE} !important; }}
 /* top header: white with a thin Energy Red brand line */
@@ -155,7 +171,7 @@ def page_header(title: str, context: str,
         f"<div><div style='font-size:22px;font-weight:700;letter-spacing:-0.3px;"
         f"color:{SLATE}'>{title}</div>"
         f"<div style='font-size:12.5px;color:{MUTED};margin-top:2px;"
-        f"font-family:IBM Plex Mono,monospace'>{context}</div></div>"
+        f"font-family:{_MONO_ATTR}'>{context}</div></div>"
         f"<div style='display:flex;align-items:center'>{kpi_html}</div></div>",
         unsafe_allow_html=True)
 
@@ -164,7 +180,7 @@ def chip(tag: str, category: str = "other") -> str:
     bg, bd, fg = CAT_CHIP.get(category, CAT_CHIP["other"])
     return (f"<span style='background:{bg};border:1px solid {bd};color:{fg};"
             f"border-radius:4px;padding:2px 8px;margin:2px;display:inline-block;"
-            f"font-family:IBM Plex Mono,monospace;font-size:12px'>{tag}</span>")
+            f"font-family:{_MONO_ATTR};font-size:12px'>{tag}</span>")
 
 
 def chips(tags, by_tag) -> str:
@@ -189,7 +205,7 @@ def prio_badge(priority: int, direction: str | None = None) -> str:
     c = PRIO_COLOR.get(priority, "#5f5e5a")
     return (f"<span style='background:{c};color:#fff;border-radius:4px;"
             f"padding:1px 7px;font-size:11px;font-weight:600;"
-            f"font-family:IBM Plex Mono,monospace'>P{priority}{arrow}</span>")
+            f"font-family:{_MONO_ATTR}'>P{priority}{arrow}</span>")
 
 # --------------------------------------------------------------------------- #
 #  Zoomable image viewer (shared)                                             #

@@ -221,9 +221,11 @@ else:
         joined = "".join(v for _, v in parts)
         flat = (item.tag or "").replace("-", "").replace(" ", "")
         if joined != flat:
-            st.error(f"The parts do not rebuild the tag: `{joined}` vs "
-                     f"`{flat}`. Either the split slid, or the tag was "
-                     f"rewritten after splitting.")
+            # A finding about the DEXPI data, not an application failure —
+            # amber, so it does not read as "the page is broken".
+            st.warning(f"⚑ Finding: the parts do not rebuild the tag — "
+                       f"`{joined}` vs `{flat}`. Either the split slid, or "
+                       f"the tag was rewritten after splitting.")
         else:
             st.success("The parts rebuild the tag exactly.")
     with o2:
@@ -256,7 +258,10 @@ if grammar:
 
 bad = tag_reconstruction_check(items)
 if bad:
-    st.error(f"{len(bad)} tags are not reproduced by joining their own parts")
+    # This is a measured result about the Model Broker output, and one of the
+    # more interesting things on the page — so amber, framed as a finding.
+    st.warning(f"⚑ Finding: {len(bad)} tags are not reproduced by joining "
+               f"their own parts")
     st.caption("Concatenating the parts must give the tag back. Where it does "
                "not, the configuration read that tag wrongly — these are "
                "found by exact string comparison, with no model involved.")
