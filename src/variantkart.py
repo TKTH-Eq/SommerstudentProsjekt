@@ -39,6 +39,10 @@ from analysis.broker_config import (                            # noqa: E402
 from analysis.symbol_reference import (                          # noqa: E402
     load_references, render_svg, shape_profile,
 )
+from analysis.review_store import (                            # noqa: E402
+    CONFIRMED, REJECTED, clear_decision, load_decisions, save_decisions,
+    set_decision, stats, verdict_of,
+)
 from analysis.variant_survey import (                           # noqa: E402
     combined_distance, describe_key, geometry_fingerprint, survey,
 )
@@ -46,7 +50,16 @@ from analysis.variant_survey import (                           # noqa: E402
 ROOT = Path(__file__).resolve().parents[1]
 GATEVALVE_DIR = ROOT / "gatevalve-ai"
 RESULTS_DIR = GATEVALVE_DIR / "results"
-REF_DIR = ROOT / "data" / "broker" / "references"
+# Paths live in config.py so the project name appears in exactly one place.
+# It has been mistyped three times while editing these pages; the fallback
+# below is a last resort, not the source of truth.
+try:
+    from config import BROKER_CONFIG, REF_DIR                    # noqa: E402
+except Exception:                                                # noqa: BLE001
+    BROKER_DIR = ROOT / "data" / "broker"
+    BROKER_CONFIG = BROKER_DIR / "Huldra DEXPI P&ID 2.0_configuration.json"
+    REF_DIR = BROKER_DIR / "references"
+DECISIONS_PATH = Path(BROKER_CONFIG).parent / "reviewed_compositions.json"
 
 try:
     from config import PID_DIR                                  # noqa: E402
@@ -88,7 +101,7 @@ page_header("Symbol variants",
 # ------------------------------------------------------------------ sources
 cfg_path = st.text_input(
     "Reference configuration",
-    str(ROOT / "data" / "broker" / "Huldra DEXPI P&ID 2.0_configuration.json"))
+    str(BROKER_CONFIG))
 if not Path(cfg_path).exists():
     st.error("Configuration not found.")
     st.stop()
@@ -135,15 +148,16 @@ chosen = st.multiselect(
 
 o1, o2, o3, o4 = st.columns(4)
 with o1:
-    min_conf = st.slider("Minimum confidence", 0.5, 1.0, 0.90, 0.05)
+    min_conf = st.slider("Minimum confidence", 0.5, 1.0, 0.80, 0.05)
 with o2:
     max_per = st.number_input("Max per class per drawing", 3, 60, 25)
 with o3:
-    min_inst = st.number_input("Minimum instances", 1, 20, 3,
-                               help="A real drawing convention recurs. A "
-                                    "composition seen once or twice is more "
-                                    "often a false detection or a partial "
-                                    "extraction than a variant worth adding.")
+    min_inst = st.number_input("Minimum instances", 1, 20, 1,
+                               help="Left at 1 on purpose. A threshold cannot "
+                                    "tell a false detection from a different "
+                                    "way of drawing the symbol — it removes "
+                                    "both. Confirm or reject each composition "
+                                    "below instead.")
 with o4:
     max_dist = st.slider("Coverage distance", 0.05, 0.60, 0.25, 0.05,
                          help="How close a harvested composition must be to an "
@@ -228,16 +242,21 @@ st.caption("A covered composition means the configuration knows this primitive "
            "fires — coordinates and tolerances decide that, and only Model "
            "Broker can answer it. Treat coverage as a reason not to generate "
            "a variant yet.")
-st.warning("**This page does not judge what a symbol is.** Every composition "
-           "below comes from a region the detector labelled with that class. "
-           "False detections and partial extractions arrive here as "
-           "compositions and look exactly like real variants. A long list for "
-           "one class measures noise in the pipeline, not richness in the "
-           "drawings — the pictures are the review, and a saved reference is "
-           "the only thing on this page that a human has confirmed.")
+st.warning("**This page does not judge what a symbol is — you do.** Every "
+           "composition below comes from a region the detector labelled with "
+           "that class, and false detections look exactly like real variants. "
+           "Filters cannot separate them: raising a threshold removes genuine "
+           "drawing variants along with the noise, which is why nothing is "
+           "filtered out by default any more. Press ✓ or ✗ on each one. The "
+           "decisions are saved, so this is done once, and only confirmed "
+           "compositions can be generated.")
 
 # ----------------------------------------------------------- per class view
 st.divider()
+
+decisions = load_decisions(DECISIONS_PATH)
+hide_rejected = st.checkbox("Hide rejected", value=True)
+
 by_class: dict[str, list] = {}
 for c in comps:
     by_class.setdefault(c.dexpi, []).append(c)
@@ -245,10 +264,25 @@ for c in comps:
 for dexpi in sorted(by_class):
     existing = [p for p in result["patterns"]
                 if dexpi in {x.strip() for x in p["dexpi"].split(",")}]
-    gaps = [c for c in by_class[dexpi] if c.covered_by is None]
-    st.subheader(f"{dexpi} — {len(by_class[dexpi])} compositions found, "
-                 f"{len(existing)} patterns exist"
-                 + (f", {len(gaps)} missing" if gaps else ""))
+    group = by_class[dexpi]
+    st_stats = stats(decisions, dexpi)
+    unreviewed = [c for c in group
+                  if verdict_of(decisions, dexpi, c.key) is None]
+
+    st.subheader(f"{dexpi} — {len(group)} compositions, "
+                 f"{len(existing)} patterns exist")
+    h = st.columns(4)
+    h[0].metric("Confirmed", st_stats["confirmed"])
+    h[1].metric("Rejected", st_stats["rejected"])
+    h[2].metric("Not yet reviewed", len(unreviewed))
+    h[3].metric("Detector precision",
+                f"{st_stats['precision']:.0%}"
+                if st_stats["precision"] is not None else "—")
+    if st_stats["precision"] is not None:
+        st.caption("Precision here is over COMPOSITIONS, not detections: the "
+                   "share of distinct geometries you judged genuine. It is a "
+                   "measurement of the detector obtained as a by-product of "
+                   "reviewing, with no dataset annotated.")
 
     with st.expander(f"Existing patterns ({len(existing)})"):
         st.dataframe(pd.DataFrame([
@@ -259,30 +293,63 @@ for dexpi in sorted(by_class):
              "terminals": p["terminals"]}
             for p in existing]), use_container_width=True, hide_index=True)
 
-    for comp in by_class[dexpi]:
+    # Unreviewed first, then most common — what needs a decision is on top.
+    ordered = sorted(group, key=lambda c: (
+        verdict_of(decisions, dexpi, c.key) is not None, -c.n))
+
+    for comp in ordered:
+        verdict = verdict_of(decisions, dexpi, comp.key)
+        if verdict == REJECTED and hide_rejected:
+            continue
         rep = comp.representative
-        c1, c2 = st.columns([1, 3])
+        c1, c2, c3 = st.columns([1, 3, 1])
         with c1:
             st.markdown(render_svg(rep.curves, size=150),
                         unsafe_allow_html=True)
         with c2:
-            if comp.covered_by:
-                st.markdown(f"**Covered** by `{comp.covered_by}` "
+            if verdict == CONFIRMED:
+                st.markdown("**✓ Confirmed as this symbol**")
+            elif verdict == REJECTED:
+                st.markdown("**✗ Rejected**")
+            elif comp.covered_by:
+                st.markdown(f"Covered by `{comp.covered_by}` "
                             f"(distance {comp.distance:.2f})")
             else:
-                st.markdown(f"**Not covered** — nearest pattern is "
+                st.markdown(f"Not covered — nearest pattern is "
                             f"{comp.distance:.2f} away")
             st.caption(describe_key(comp.key))
             st.caption(f"{comp.n} instances across {len(comp.drawings)} "
                        f"drawings: {', '.join(comp.drawings[:4])}"
                        + (" …" if len(comp.drawings) > 4 else ""))
             fill_note = ("fills the detection box" if comp.fill >= 0.6 else
-                         "partial — geometry covers only part of the box"
+                         "partial — covers only part of the box"
                          if comp.fill < 0.45 else "fills most of the box")
             st.caption(f"Fill {comp.fill:.2f} — {fill_note}")
             rname, rdist = _ref_match(comp)
             if rname and rdist <= 0.35:
                 st.caption(f"Same composition as saved reference `{rname}`")
+        with c3:
+            ck = f"{dexpi}_{comp.key}"
+            if verdict is None:
+                if st.button("✓ Is this symbol", key=f"y_{ck}",
+                             use_container_width=True):
+                    save_decisions(set_decision(
+                        decisions, dexpi, comp.key, CONFIRMED,
+                        instances=comp.n, drawings=comp.drawings),
+                        DECISIONS_PATH)
+                    st.rerun()
+                if st.button("✗ Not this symbol", key=f"n_{ck}",
+                             use_container_width=True):
+                    save_decisions(set_decision(
+                        decisions, dexpi, comp.key, REJECTED,
+                        instances=comp.n, drawings=comp.drawings),
+                        DECISIONS_PATH)
+                    st.rerun()
+            else:
+                if st.button("Undo", key=f"u_{ck}", use_container_width=True):
+                    save_decisions(clear_decision(decisions, dexpi, comp.key),
+                                   DECISIONS_PATH)
+                    st.rerun()
 
 # --------------------------------------------------------------- generation
 st.divider()
@@ -300,54 +367,33 @@ st.caption("Each variant inherits its tolerances and its typed terminals from "
            "works elsewhere. Only the geometry is new. Everything ships "
            "disabled, in its own folder.")
 
-f1, f2 = st.columns(2)
-with f1:
-    min_fill = st.slider("Minimum fill of the detection box", 0.0, 1.0, 0.45,
-                         0.05,
-                         help="How much of the box the geometry spans. A whole "
-                              "symbol nearly fills the box the detector drew "
-                              "round it; an arrowhead read without the rest of "
-                              "the valve does not. This is the filter that "
-                              "separates a partial extraction from a genuinely "
-                              "different drawing convention.")
-with f2:
-    min_drawings = st.number_input("Minimum drawings", 1, 10, 1,
-                                   help="A composition seen on several sheets "
-                                        "is a convention. One seen on a single "
-                                        "sheet may still be real — but it is "
-                                        "the weaker case.")
+confirmed = [c for c in missing
+             if verdict_of(decisions, c.dexpi, c.key) == CONFIRMED]
 
-pool = [i for i in range(len(missing))
-        if missing[i].fill >= min_fill
-        and len(missing[i].drawings) >= int(min_drawings)]
-st.caption(f"{len(pool)} of {len(missing)} compositions pass. Distance to a "
-           f"saved reference is deliberately NOT used here: a reference from "
-           f"one drawing cannot vouch for a composition from a sheet that "
-           f"draws the symbol differently, which is precisely what this page "
-           f"is looking for.")
+if not confirmed:
+    st.info("Nothing confirmed yet. Go through the compositions above and "
+            "press ✓ on the ones that really are the symbol. Only confirmed "
+            "compositions can be generated — a threshold cannot make that "
+            "judgement, and neither can this page.")
+    st.stop()
 
-labels = []
-for c in missing:
-    rname, rdist = _ref_match(c)
-    tag = f" · ≈ {rname}" if rname and rdist <= 0.35 else ""
-    labels.append(f"{c.dexpi} · {describe_key(c.key)} · {c.n} instances "
-                  f"· fill {c.fill:.2f}{tag}")
+st.caption(f"{len(confirmed)} confirmed compositions are not covered by any "
+           f"existing pattern.")
 
+labels = [f"{c.dexpi} · {describe_key(c.key)} · {c.n} instances "
+          f"· fill {c.fill:.2f}" for c in confirmed]
 picked = st.multiselect(
-    "Compositions to generate", pool, default=[],
-    format_func=lambda i: labels[i],
-    help="Nothing is preselected on purpose. Look at each picture above and "
-         "pick the ones that are actually the symbol.")
+    "Compositions to generate", range(len(confirmed)),
+    default=list(range(len(confirmed))),
+    format_func=lambda i: labels[i])
 if not picked:
-    st.info("Pick at least one composition. Choosing them deliberately is the "
-            "point — a generated pattern that matches the wrong thing is worse "
-            "than a missing one.")
+    st.info("Pick at least one.")
 
 if st.button("Generate variants", type="primary", disabled=not picked):
     folder_id = new_id()
     patterns, report = [], []
     for i in picked:
-        comp = missing[i]
+        comp = confirmed[i]
         rep = comp.representative
         donor = donor_pattern(config, comp.dexpi)
         if donor is None:
