@@ -145,6 +145,60 @@ def coverage_gap(config: dict, dexpi_class_counts: dict[str, int]) -> dict:
     }
 
 
+def compare_configs(before: dict, after: dict) -> dict:
+    """What changed between two exported configurations.
+
+    Written for the workflow this project settled into: generate variants,
+    import them, export again, and check that what came back is what went in.
+    A configuration is a flat dict of "collection/id" keys, so a diff is
+    straightforward — but the useful comparison is by NAME and target rather
+    than by id, because ids are regenerated and a reader wants to know which
+    symbols changed, not which random strings did.
+    """
+    a_defs = _collection(before, "patternDefinitions")
+    b_defs = _collection(after, "patternDefinitions")
+    a_meta = _collection(before, "patternMeta")
+    b_meta = _collection(after, "patternMeta")
+
+    def _describe(pid, defs, meta):
+        d, m = defs.get(pid, {}), meta.get(pid, {})
+        targets = (m.get("targets") or d.get("targets") or {}).get("Dexpi2", [])
+        return {"name": m.get("name") or d.get("name") or pid,
+                "type": m.get("type") or d.get("type") or "",
+                "dexpi": ", ".join(targets),
+                "primitives": len(d.get("matchers") or {}),
+                "terminals": len(d.get("terminals") or []),
+                "enabled": bool(m.get("enabled", d.get("enabled", False)))}
+
+    added = [_describe(p, b_defs, b_meta) for p in set(b_defs) - set(a_defs)]
+    removed = [_describe(p, a_defs, a_meta) for p in set(a_defs) - set(b_defs)]
+
+    changed = []
+    for pid in set(a_defs) & set(b_defs):
+        x, y = _describe(pid, a_defs, a_meta), _describe(pid, b_defs, b_meta)
+        diffs = [k for k in x if x[k] != y[k]]
+        if diffs:
+            changed.append({"name": x["name"], "changed": ", ".join(diffs),
+                            "before": " · ".join(f"{k}={x[k]}" for k in diffs),
+                            "after": " · ".join(f"{k}={y[k]}" for k in diffs)})
+
+    folders_a = {f.get("name") for f in
+                 _collection(before, "patternFolders").values()}
+    folders_b = {f.get("name") for f in
+                 _collection(after, "patternFolders").values()}
+
+    return {
+        "added": sorted(added, key=lambda r: (r["dexpi"], r["name"])),
+        "removed": sorted(removed, key=lambda r: (r["dexpi"], r["name"])),
+        "changed": sorted(changed, key=lambda r: r["name"]),
+        "new_folders": sorted(folders_b - folders_a),
+        "lost_folders": sorted(folders_a - folders_b),
+        "version_before": before.get("version"),
+        "version_after": after.get("version"),
+        "untouched": len(set(a_defs) & set(b_defs)) - len(changed),
+    }
+
+
 def donor_pattern(config: dict, dexpi_class: str | None = None,
                   pattern_type: str = "Symbol") -> dict | None:
     """An existing pattern to copy tolerance settings from.
