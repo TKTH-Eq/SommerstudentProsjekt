@@ -24,6 +24,21 @@ load_dotenv()
 
 _client = None
 
+# The model every caller falls back to when GEMINI_MODEL is unset.
+#
+# Defined ONCE and imported, because the previous three private copies drifted:
+# they all still said "gemini-2.5-flash" long after the project had moved on.
+# That generation was retired for new users mid-project (see Results.md), so a
+# newcomer who set only GEMINI_API_KEY got a model that may no longer exist —
+# and the measured numbers in Results.md were produced with the model below,
+# not with the old fallback.
+DEFAULT_MODEL = "gemini-3.1-flash-lite"
+
+
+def resolve_model(model: str | None = None) -> str:
+    """Caller's explicit choice, else GEMINI_MODEL, else DEFAULT_MODEL."""
+    return model or os.getenv("GEMINI_MODEL") or DEFAULT_MODEL
+
 
 def _new_client():
     from google import genai
@@ -41,8 +56,7 @@ def generate(contents, model: str | None = None, config=None):
     """generate_content through the shared client, with one automatic
     recreate-and-retry if the client turns out to be closed."""
     global _client
-    kwargs = {"model": model or os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
-              "contents": contents}
+    kwargs = {"model": resolve_model(model), "contents": contents}
     if config is not None:
         kwargs["config"] = config
     try:

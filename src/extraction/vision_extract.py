@@ -134,7 +134,8 @@ def extract_tags_vision(pdf_path, dpi: int = 200, model: str | None = None) -> l
 
     from google import genai
     from google.genai import types
-    model_name = model or os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    from ai.gemini_client import resolve_model
+    model_name = resolve_model(model)
     png = render_png(pdf_path, dpi)
     img = Path(png).read_bytes()
     client = genai.Client()  # reads GEMINI_API_KEY from the environment

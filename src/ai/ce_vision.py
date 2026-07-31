@@ -434,7 +434,8 @@ def extract_ce_vision(pdf_path: str | Path, known_tags, dpi: int = 300,
     global _QUOTA_EXHAUSTED
     pdf_path = Path(pdf_path)
     drawing = pdf_path.stem
-    model_name = model or os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    from ai.gemini_client import resolve_model
+    model_name = resolve_model(model)
 
     raw = _cache_load(drawing)
     if raw is None:

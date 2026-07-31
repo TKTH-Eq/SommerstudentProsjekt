@@ -332,20 +332,62 @@ og systemsammendrag):
 uv sync --extra anthropic
 ```
 
-### 5.3 Miljøvariabler
+### 5.3 Miljøvariabler og API-nøkkel
 
-Lag en `.env` i prosjektroten (gitignorert):
+Kopier malen og fyll inn:
 
-```dotenv
-GEMINI_API_KEY=<din nøkkel>          # gratis tier fra Google AI Studio holder
-GEMINI_MODEL=gemini-3.1-flash-lite   # valgfritt — standard i prosjektet
-ANTHROPIC_API_KEY=<valgfritt>        # kun for alternativ brief-generator
+```bash
+cp .env.example .env                 # Windows: copy .env.example .env
 ```
+
+`.env.example` er dokumentert linje for linje og er den autoritative listen.
+`.env` er gitignorert; `.env.example` er det ikke — så skriv aldri en ekte
+nøkkel i malen.
+
+**Du trenger ikke nøkkel for å teste prosjektet.** Uten `.env` virker hele
+det deterministiske laget, som er der de målte tallene og hele
+formatargumentet ligger. Nøkkelen slår kun på AI-tilleggene.
+
+#### Skaffe en gratis Gemini-nøkkel
+
+1. Gå til **<https://aistudio.google.com/apikey>** og logg inn med en
+   Google-konto.
+2. Opprett en API-nøkkel i det prosjektet AI Studio foreslår. Nøkkelen vises
+   **kun én gang** — kopier den med det samme.
+3. Lim den inn i `.env`:
+
+   ```dotenv
+   GEMINI_API_KEY=AIza…
+   ```
+
+4. Start appen på nytt (`.env` leses ved oppstart) og verifiser i
+   🏠 **Home → 🩺 Demo readiness** at `GEMINI_API_KEY set` er grønn.
+
+Gratis-tieren dekket **all** utvikling og demo i dette prosjektet, inkludert
+vision-lesing av hele tegningsbunken — takket være disk-cachingen, som gjør
+at et svar bare betales for én gang. Kortopplysninger var ikke nødvendig.
+
+> **Hvorfor ingen klikk-for-klikk-guide her:** Google endrer konsollen
+> jevnlig, og kvotegrensene endres oftere enn dette repoet. En detaljert
+> stegliste ville vært utdatert før noen leste den — akkurat den typen drift
+> prosjektet ellers argumenterer mot. Gjeldende betingelser og kvoter står i
+> [Googles egen dokumentasjon](https://ai.google.dev/gemini-api/docs/api-key).
+
+**Nøkkelhygiene, kort:**
+
+- `.env` er gitignorert — sjekk med `git check-ignore .env` før første commit.
+- Treffer du en kvotegrense, er det ikke feil: cachen gjør kjøringer
+  gjenopptakbare, så du fortsetter neste dag uten å miste arbeid. Feil caches
+  aldri, kun vellykkede svar.
+- Lekker nøkkelen, trekk den tilbake i AI Studio og lag en ny. Ingenting i
+  repoet er knyttet til en bestemt nøkkel.
+
+#### Alle variabler
 
 | Variabel | Standard | Effekt |
 |---|---|---|
 | `GEMINI_API_KEY` | — | slår på hele AI-laget. Uten den: alt deterministisk virker, AI-knapper viser forklarende melding |
-| `GEMINI_MODEL` | `gemini-3.1-flash-lite` | modellvalg — byttbart uten kodeendring (se driftsrisiko i §17) |
+| `GEMINI_MODEL` | `gemini-3.1-flash-lite` | modellvalg — byttbart uten kodeendring. Standarden er definert ett sted, `DEFAULT_MODEL` i `src/ai/gemini_client.py` (se driftsrisiko i §17) |
 | `ANTHROPIC_API_KEY` | — | lar `ai/operator_brief.py` og `ai/explain_system.py` bruke Anthropic i stedet for malen |
 | `HULDRA_VISION` | `0` | `1` slår på vision-reserven i tag-uttrekket (pass c) |
 | `HULDRA_VISION_FRESH` | `0` | `1` omgår diskcachen og tvinger nye API-kall |
