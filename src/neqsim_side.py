@@ -365,19 +365,33 @@ if not drawings:
     st.warning("No DEXPI drawings found in the tag register.")
     st.stop()
 
-st.sidebar.title("NeqSim simulation")
+# Selection sits at the top of the page rather than in the sidebar. With a
+# dozen pages registered the sidebar is a navigation list, so controls placed
+# there are easy to miss — and the two operating-condition inputs below are
+# assumptions the reader needs to see, not settings to tuck away.
 from incident_context import incident_banner, match_index
 _inc = incident_banner("drawing preselected — run the fault simulation "
                        "for the incident component", key="neqsim")
-drawing = st.sidebar.selectbox(
-    "Drawing (DEXPI-covered only)", drawings,
-    index=match_index(drawings,
-                      *((_inc.get("drawings") or []) if _inc else []),
-                      _inc and _inc.get("system")))
-pressure = st.sidebar.number_input("Representative pressure [bara]", value=60.0, step=5.0,
-                                   help="The DEXPI export does not contain actual operating pressure — "
-                                        "this is an assumed value you can adjust.")
-temperature = st.sidebar.number_input("Representative temperature [°C]", value=20.0, step=5.0)
+
+sel1, sel2, sel3 = st.columns([3, 1, 1])
+with sel1:
+    drawing = st.selectbox(
+        "Drawing (DEXPI-covered only)", drawings,
+        index=match_index(drawings,
+                          *((_inc.get("drawings") or []) if _inc else []),
+                          _inc and _inc.get("system")))
+with sel2:
+    pressure = st.number_input(
+        "Pressure [bara]", value=60.0, step=5.0,
+        help="The DEXPI export contains no operating conditions. This is an "
+             "assumed value, and every property below is conditional on it.")
+with sel3:
+    temperature = st.number_input(
+        "Temperature [°C]", value=20.0, step=5.0,
+        help="Assumed, as above. Different fluid codes on one drawing "
+             "genuinely operate at different conditions — a flare line is "
+             "near atmospheric — so one value across the sheet is a "
+             "simplification, not just an approximation.")
 
 tab1, tab2 = st.tabs(["🧯 Fluid overview", "🎯 Fault simulation + hydrate consequence"])
 

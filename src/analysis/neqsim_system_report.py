@@ -1,32 +1,30 @@
 # src/analysis/neqsim_system_report.py
 """
-Systemomfattende kobling mellom ekstrahert P&ID-topologi og NeqSim —
-svarer direkte paa noekkelspoersmaalet "Can extracted system information
-be connected to simulation/calculation tools such as NeqSim?"
+Plant-wide link between extracted P&ID topology and NeqSim — the direct
+answer to the key question "Can extracted system information be connected
+to simulation/calculation tools such as NeqSim?"
 
-I motsetning til simulate_component_failure.py (som kun beregner
-konsekvens for ETT feilpunkt om gangen), tar dette scriptet for seg en
-HEL tegning: finner alle unike fluidkoder som faktisk forekommer
-(FluidCodeAssignmentClass fra DEXPI), hvor mange roersegmenter/objekter
-hver av dem dekker, og beregner grunnleggende fysiske egenskaper
-(tetthet, Z-faktor, viskositet) for hver fluidtype via NeqSim.
+Unlike simulate_component_failure.py, which computes the consequence of ONE
+failure point at a time, this script takes a WHOLE drawing: it finds every
+fluid code that actually occurs (FluidCodeAssignmentClass from DEXPI), how
+many piping segments and objects each covers, and computes basic physical
+properties (density, Z-factor, viscosity) per fluid type via NeqSim.
 
-Dette viser at koblingen DEXPI -> NeqSim skalerer til et helt system,
-ikke bare et enkelt scenario — det sterkeste svaret vi har paa
-noekkelspoersmaalet saa langt.
+This is what shows the DEXPI to NeqSim link scaling to a whole system rather
+than a single scenario.
 
-FORBEHOLD (samme som fluid_lookup.py):
-  - Fluidkode -> sammensetning er ANTATT, ikke bekreftet mot "P&ID
-    Legend Huldra". Sjekk FLUID_PRESETS i neqsim_tools/fluid_lookup.py.
-  - Trykk/temperatur er IKKE i DEXPI-dataen. Brukes her som representative
-    eksempelverdier (kan overstyres med --pressure/--temperature).
-  - DEXPI-eksporten dekker kun 17 av 141 tegninger (~12%) — dette scriptet
-    kan derfor kun kjoeres paa den delmengden.
+CAVEATS (the same as fluid_lookup.py):
+  - Fluid code to composition is ASSUMED, not confirmed against the "P&ID
+    Legend Huldra" sheets. See FLUID_PRESETS in neqsim_tools/fluid_lookup.py.
+  - Pressure and temperature are NOT in the DEXPI data. Representative
+    example values are used here (override with --pressure/--temperature).
+  - The DEXPI export covers 17 of 141 drawings, so this script can only run
+    on that subset.
 
-Kjor fra prosjektroten:
-    python -m analysis.neqsim_system_report <tegningsnavn> [--pressure 60] [--temperature 20]
+Run from the project root:
+    python -m analysis.neqsim_system_report <drawing> [--pressure 60] [--temperature 20]
 
-Eksempel:
+Example:
     python -m analysis.neqsim_system_report C025-V-HO27-P-_E-001-01
 """
 
@@ -51,7 +49,7 @@ PROCESSED_DIR = ROOT / "data" / "processed"
 
 
 # ---------------------------------------------------------------------------
-# 1. Hent ut ALLE fluidkoder + tilhoerende segmentinfo fra DEXPI
+# 1. Every fluid code plus its segment information, from DEXPI
 # ---------------------------------------------------------------------------
 
 def find_xml_for_drawing(drawing: str) -> Path | None:
@@ -63,7 +61,7 @@ def find_xml_for_drawing(drawing: str) -> Path | None:
 
 
 def summarize_fluid_codes(xml_path: Path) -> pd.DataFrame:
-    """Ett rad per unike fluidkode: antall segmenter, roerdiametre, linjenumre."""
+    """One row per unique fluid code: segment count, diameters, line numbers."""
     root = ET.parse(xml_path).getroot()
 
     def attr(el, name):
@@ -98,7 +96,7 @@ def summarize_fluid_codes(xml_path: Path) -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------------------
-# 2. NeqSim: fysiske egenskaper per fluidtype
+# 2. NeqSim: physical properties per fluid type
 # ---------------------------------------------------------------------------
 
 def compute_neqsim_properties(fluid_codes: list[str], pressure_bara: float,
@@ -108,10 +106,10 @@ def compute_neqsim_properties(fluid_codes: list[str], pressure_bara: float,
         from neqsim_tools.fluid_lookup import get_preset, build_neqsim_fluid
         from neqsim.thermo import TPflash
     except ImportError as e:
-        print(f"(NeqSim/fluid_lookup ikke tilgjengelig her: {e})")
+        print(f"(NeqSim/fluid_lookup unavailable here: {e})")
         return pd.DataFrame()
     except Exception as e:
-        print(f"(NeqSim/JVM-feil: {e})")
+        print(f"(NeqSim/JVM error: {e})")
         return pd.DataFrame()
 
     rows = []
@@ -145,7 +143,7 @@ def compute_neqsim_properties(fluid_codes: list[str], pressure_bara: float,
 
 
 # ---------------------------------------------------------------------------
-# Visualisering
+# Plotting
 # ---------------------------------------------------------------------------
 
 def plot_summary(summary: pd.DataFrame, props: pd.DataFrame, drawing: str) -> None:
@@ -156,19 +154,19 @@ def plot_summary(summary: pd.DataFrame, props: pd.DataFrame, drawing: str) -> No
 
     axes[0].barh(summary["fluid_code"], summary["n_segments"], color="#16233A")
     axes[0].invert_yaxis()
-    axes[0].set_xlabel("Antall roersegmenter")
-    axes[0].set_title(f"Fluidkoder i {drawing}")
+    axes[0].set_xlabel("Piping segments")
+    axes[0].set_title(f"Fluid codes in {drawing}")
 
     if not props.empty and props["density_kg_m3"].notna().any():
         axes[1].bar(props["fluid_code"], props["density_kg_m3"], color="#E8640F")
-        axes[1].set_ylabel("Tetthet [kg/m³]")
-        axes[1].set_title("NeqSim-beregnet tetthet per fluidtype")
+        axes[1].set_ylabel("Density [kg/m3]")
+        axes[1].set_title("NeqSim density per fluid type")
 
     plt.tight_layout()
     out = FIG_DIR / f"neqsim_system_report_{drawing}.png"
     plt.savefig(out, dpi=150)
     plt.close()
-    print(f"\nFigur lagret: {out.relative_to(ROOT)}")
+    print(f"\nFigure saved: {out.relative_to(ROOT)}")
 
 
 # ---------------------------------------------------------------------------
@@ -179,26 +177,26 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("drawing")
     ap.add_argument("--pressure", type=float, default=60.0,
-                    help="Representativt trykk i bara (DEXPI har ikke ekte driftstrykk)")
+                    help="Representative pressure in bara (DEXPI has no real operating pressure)")
     ap.add_argument("--temperature", type=float, default=20.0,
-                    help="Representativ temperatur i C")
+                    help="Representative temperature in C")
     args = ap.parse_args()
 
     xml_path = find_xml_for_drawing(args.drawing)
     if xml_path is None:
-        print(f"Fant ingen DEXPI-XML for '{args.drawing}' under {RAW_DIR}")
+        print(f"Found no DEXPI XML for '{args.drawing}' under {RAW_DIR}")
         return
 
     summary = summarize_fluid_codes(xml_path)
     if summary.empty:
-        print("Ingen fluidkoder funnet i denne tegningen.")
+        print("No fluid codes found in this drawing.")
         return
 
-    print(f"=== Fluidoversikt: {args.drawing} ===\n")
+    print(f"=== Fluid overview: {args.drawing} ===\n")
     print(summary.to_string(index=False))
 
-    print(f"\n=== NeqSim-egenskaper ved {args.pressure} bara / {args.temperature}°C ===")
-    print("(representative verdier — DEXPI har ikke ekte driftsbetingelser, se docstring)\n")
+    print(f"\n=== NeqSim properties at {args.pressure} bara / {args.temperature} C ===")
+    print("(representative values — DEXPI has no real operating conditions, see docstring)\n")
     props = compute_neqsim_properties(summary["fluid_code"].tolist(), args.pressure, args.temperature)
     if not props.empty:
         print(props.to_string(index=False))

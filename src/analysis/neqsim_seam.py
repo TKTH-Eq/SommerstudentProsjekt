@@ -38,13 +38,13 @@ def consequence_for(drawing_stem: str, tag: str) -> dict:
             load_graph, simulate_failure, neqsim_consequence)
     except Exception as e:                                  # noqa: BLE001
         return {"ok": False, "affected": [], "log": "",
-                "summary": f"Konsekvensmodulen utilgjengelig: {e}"}
+                "summary": f"Consequence module unavailable: {e}"}
 
     need = ["dexpi_tags.csv", "dexpi_connections.csv", "dexpi_associations.csv"]
     if not all((PROCESSED / f).exists() for f in need):
         return {"ok": False, "affected": [], "log": "",
-                "summary": "data/processed/ mangler — kjør "
-                           "analysis/parse_dexpi_data.py først (se README)."}
+                "summary": "data/processed/ is missing — run "
+                           "analysis/parse_dexpi_data.py first (see README)."}
 
     try:
         tags = pd.read_csv(PROCESSED / "dexpi_tags.csv")
@@ -53,8 +53,8 @@ def consequence_for(drawing_stem: str, tag: str) -> dict:
         G, sub_t = load_graph(tags, conns, assocs, drawing_stem)
         if tag not in set(sub_t["tag_name"].dropna()):
             return {"ok": False, "affected": [], "log": "",
-                    "summary": f"{tag} finnes ikke i den prosesserte "
-                               f"DEXPI-dataen for {drawing_stem}."}
+                    "summary": f"{tag} is not present in the processed "
+                               f"DEXPI data for {drawing_stem}."}
 
         buf = io.StringIO()
         with redirect_stdout(buf):
@@ -65,12 +65,12 @@ def consequence_for(drawing_stem: str, tag: str) -> dict:
                                sub=sub_t, fail_id=res["fail_id"])
         affected = sorted(res["affected_tags"]["tag_name"].dropna().tolist())
         return {"ok": True, "affected": affected, "log": buf.getvalue(),
-                "summary": f"Fjernes {tag}, isoleres {len(res['affected_ids'])} "
-                           f"objekter ({len(affected)} med tag) fra resten av "
-                           f"systemet."}
+                "summary": f"Removing {tag} isolates {len(res['affected_ids'])} "
+                           f"objects ({len(affected)} tagged) from the rest of "
+                           f"the system."}
     except Exception as e:                                  # noqa: BLE001
         return {"ok": False, "affected": [], "log": "",
-                "summary": f"Konsekvensberegningen feilet: {e}"}
+                "summary": f"The consequence calculation failed: {e}"}
 
 
 if __name__ == "__main__":
@@ -80,6 +80,6 @@ if __name__ == "__main__":
                         "C025-V-HO27-P-_E-001-01",
                         sys.argv[2] if len(sys.argv) > 2 else "27-4510PV")
     print(r["summary"])
-    print("påvirket:", r["affected"][:10])
-    print("--- logg fra kjeden ---")
+    print("affected:", r["affected"][:10])
+    print("--- log from the chain ---")
     print(r["log"])
