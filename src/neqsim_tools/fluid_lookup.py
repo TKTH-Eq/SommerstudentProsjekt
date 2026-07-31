@@ -1,39 +1,41 @@
 # src/neqsim_tools/fluid_lookup.py
 """
-Kobler DEXPI sin FluidCodeAssignmentClass (en kort kode, f.eks. "PV", "VF",
-"PL", "DC", "WS", "DO", "OL") til en konkret NeqSim-fluidsammensetning.
+Maps DEXPI's FluidCodeAssignmentClass (a short code such as "PV", "VF",
+"PL", "DC", "WS", "DO", "OL") to a concrete NeqSim fluid composition.
 
-VIKTIG — DETTE MAA VERIFISERES MOT DERES EGEN P&ID LEGEND:
+IMPORTANT - THIS MUST BE VERIFIED AGAINST THE PROJECT'S OWN P&ID LEGEND:
 
-Sjekket mot DEXPI sin offisielle spesifikasjon (v1.3/v1.4,
-dexpi.org/static/pid_specification_1.4/reference/Piping/...): attributtet
-er dokumentert med teksten "So far, DEXPI does not define restrictions for
-valid values" — det finnes altsaa INGEN global standard aa slaa opp mot.
-Fluidkoder er en fri tekststreng, definert prosjekt for prosjekt. Vi har
-ogsaa bekreftet at dette IKKE stod i "P&ID Legend Huldra"-symbolserien
-(U999-1-000-PT-100 til PT-114 ble systematisk gjennomgaatt uten treff).
+Checked against the DEXPI specification (v1.3/v1.4,
+dexpi.org/static/pid_specification_1.4/reference/Piping/...): the attribute
+is documented with the text "So far, DEXPI does not define restrictions for
+valid values" - so there is NO global standard to look these up against.
+Fluid codes are a free text string, defined project by project. We also
+confirmed they are not defined in the "P&ID Legend Huldra" symbol series
+(U999-1-000-PT-100 to PT-114 were reviewed systematically without a hit).
 
-Presetene under er derfor BEGRUNNEDE GJETNINGER, med to ulike
-begrunnelsesnivaaer merket eksplisitt per kode:
+The presets below are therefore REASONED GUESSES, with the basis flagged
+explicitly per code at one of two levels:
 
-  [MOENSTER]  Basert paa vanlig bransjepraksis: fluidkoder paa en
-              roerlinjeliste foelger ofte moensteret "forkortelse av
-              fluidnavn + fasebokstav" (f.eks. SW=Sea Water, AL=Ammonia
-              Liquid, AG=Ammonia Gas — se diskusjon paa Eng-Tips-forumet
-              for rørleggingsingeniorer, "ASME Fluid codes" 2016).
-  [INTERN]    Basert paa at koden danner et naturlig PAR med en kode vi
-              allerede har sett paa samme tegningssett (f.eks. DO ved
-              siden av DC).
+  [CONVENTION]        From common industry practice: fluid codes on a line
+                      list often follow the pattern "abbreviation of the
+                      fluid name plus a phase letter" (SW = Sea Water,
+                      AL = Ammonia Liquid, AG = Ammonia Gas - see the
+                      Eng-Tips piping forum discussion, "ASME Fluid codes",
+                      2016).
+  [PATTERN-INTERNAL]  From the code forming a natural PAIR with one already
+                      seen in the same drawing set (DO alongside DC, for
+                      example).
 
-Ingen av disse er bekreftet — kun konsistente gjetninger. Sjekk deres egen
-roerlinjeliste ("line list") eller tilsvarende dokument, om tilgjengelig,
-og korriger FLUID_PRESETS under foer dette brukes til noe som helst reelt.
+None of these is confirmed - they are consistent guesses and nothing more.
+Check the project's own line list or equivalent document if one is
+available, and correct FLUID_PRESETS below before this is used for anything
+real.
 
-Sammensetningene selv (mol%) er ogsaa PLACEHOLDER-eksempler, ikke hentet
-fra et ekte prosess-datablad. Bytt ut med reelle tall fra prosessdatabladet/
-design basis naar/hvis dere har tilgang til det — DEXPI-dataen inneholder
-dessverre ikke sammensetning eller drifts-trykk/temperatur i det hele tatt
-(bekreftet: ingen slike GenericAttribute-felt finnes i eksporten).
+The compositions themselves (mol%) are also PLACEHOLDER examples, not taken
+from a process datasheet. Replace them with real figures from the datasheet
+or design basis if access is obtained - the DEXPI data contains neither
+composition nor operating pressure and temperature at all (confirmed: no
+such GenericAttribute fields exist in the export).
 """
 
 from __future__ import annotations
@@ -41,7 +43,7 @@ from __future__ import annotations
 # kode -> (beskrivelse, NeqSim-komponenter [(navn, mol%), ...], typisk fase)
 FLUID_PRESETS: dict[str, dict] = {
     "PV": {
-        "description": "Process Vapour/gass (ANTATT — verifiser mot legend)",
+        "description": "Process Vapour / gas (ASSUMED - verify against the legend)",
         "eos": "cpa",
         "components": [
             ("nitrogen", 1.0), ("CO2", 2.0), ("methane", 85.0),
@@ -50,7 +52,7 @@ FLUID_PRESETS: dict[str, dict] = {
         "phase": "gass",
     },
     "PL": {
-        "description": "Process Liquid/kondensat (ANTATT — verifiser mot legend)",
+        "description": "Process Liquid / condensate (ASSUMED - verify against the legend)",
         "eos": "srk",
         "components": [
             ("methane", 5.0), ("ethane", 5.0), ("propane", 10.0),
@@ -59,7 +61,7 @@ FLUID_PRESETS: dict[str, dict] = {
         "phase": "vaeske",
     },
     "VF": {
-        "description": "Vent/Flare-gass (ANTATT — verifiser mot legend)",
+        "description": "Vent / Flare gas (ASSUMED - verify against the legend)",
         "eos": "cpa",
         "components": [
             ("nitrogen", 3.0), ("CO2", 3.0), ("methane", 80.0),
@@ -68,8 +70,8 @@ FLUID_PRESETS: dict[str, dict] = {
         "phase": "gass",
     },
     "DC": {
-        "description": "Drain Closed / lukket drenering — ofte vaeske+vann "
-                       "(ANTATT — verifiser mot legend)",
+        "description": "Drain Closed - often liquid plus water "
+                       "(ASSUMED - verify against the legend)",
         "eos": "cpa",
         "components": [
             ("methane", 2.0), ("propane", 3.0), ("n-hexane", 25.0), ("water", 70.0),
@@ -77,8 +79,8 @@ FLUID_PRESETS: dict[str, dict] = {
         "phase": "blandet",
     },
     "DO": {
-        "description": "[INTERN] Drain Open / aapen drenering — antatt som par til DC "
-                       "(ANTATT — IKKE bekreftet, ingen ekstern kilde funnet)",
+        "description": "[PATTERN-INTERNAL] Drain Open - assumed as the counterpart to DC "
+                       "(ASSUMED - NOT confirmed, no external source found)",
         "eos": "cpa",
         "components": [
             ("methane", 1.0), ("propane", 2.0), ("n-hexane", 17.0), ("water", 80.0),
@@ -86,20 +88,20 @@ FLUID_PRESETS: dict[str, dict] = {
         "phase": "blandet",
     },
     "WS": {
-        "description": "[MOENSTER] Water Service/sjovann — basert paa vanlig "
-                       "'W...'-fluidkode-moenster for vannbaserte systemer "
-                       "(ANTATT — IKKE bekreftet, ingen ekstern kilde funnet)",
+        "description": "[CONVENTION] Water Service / sea water - from the common "
+                       "'W...' fluid-code pattern for water systems "
+                       "(ASSUMED - NOT confirmed, no external source found)",
         "eos": "cpa",
         "components": [("water", 100.0)],
         "phase": "vaeske",
     },
     "OL": {
-        "description": "[MOENSTER] Oil Line/smoereolje — basert paa vanlig "
-                       "'O...'-fluidkode-moenster for oljebaserte systemer. "
-                       "Bruker n-nonane i stedet for n-decane, siden NeqSim "
-                       "sin database ikke har 'n-decane' som navngitt "
-                       "komponent (bekreftet ved test) "
-                       "(ANTATT — IKKE bekreftet, ingen ekstern kilde funnet)",
+        "description": "[CONVENTION] Oil Line / lube oil - from the common "
+                       "'O...' fluid-code pattern for oil systems. "
+                       "Uses n-nonane rather than n-decane, because NeqSim's "
+                       "component database has no named 'n-decane' "
+                       "(confirmed by running it) "
+                       "(ASSUMED - NOT confirmed, no external source found)",
         "eos": "srk",
         "components": [
             ("n-nonane", 40.0), ("n-hexane", 20.0), ("n-heptane", 40.0),
@@ -107,9 +109,9 @@ FLUID_PRESETS: dict[str, dict] = {
         "phase": "vaeske",
     },
     "VA": {
-        "description": "[INTERN] Vent Atmosphere — antatt som par til VF (Vent/Flare): "
-                       "vent til atmosfaere i stedet for til flare "
-                       "(ANTATT — IKKE bekreftet, ingen ekstern kilde funnet)",
+        "description": "[PATTERN-INTERNAL] Vent Atmosphere - assumed counterpart to VF (Vent/Flare): "
+                       "venting to atmosphere rather than to flare "
+                       "(ASSUMED - NOT confirmed, no external source found)",
         "eos": "cpa",
         "components": [
             ("nitrogen", 5.0), ("CO2", 4.0), ("methane", 75.0),
@@ -118,44 +120,44 @@ FLUID_PRESETS: dict[str, dict] = {
         "phase": "gass",
     },
     "WD": {
-        "description": "[INTERN] Water Drain — antatt som par til WS (Water Service): "
-                       "drenering av vannbaserte systemer "
-                       "(ANTATT — IKKE bekreftet, ingen ekstern kilde funnet)",
+        "description": "[PATTERN-INTERNAL] Water Drain - assumed counterpart to WS (Water Service): "
+                       "draining of water systems "
+                       "(ASSUMED - NOT confirmed, no external source found)",
         "eos": "cpa",
         "components": [("water", 100.0)],
         "phase": "vaeske",
     },
     "WF": {
-        "description": "[INTERN] Water Fresh (ferskvann) — antatt som tredje kode i "
-                       "'W...'-moensteret ved siden av WS (Water Service) og "
-                       "WD (Water Drain); skiller trolig ferskvann fra sjovann/"
-                       "prosessvann "
-                       "(ANTATT — IKKE bekreftet, ingen ekstern kilde funnet)",
+        "description": "[PATTERN-INTERNAL] Water Fresh - assumed third code in the "
+                       "'W...' pattern alongside WS (Water Service) and "
+                       "WD (Water Drain); probably separates fresh water from sea or "
+                       "process water "
+                       "(ASSUMED - NOT confirmed, no external source found)",
         "eos": "cpa",
         "components": [("water", 100.0)],
         "phase": "vaeske",
     },
     "WI": {
-        "description": "[INTERN — sterk] Water Injection — direkte parallell til "
-                       "GI (Gas Injection): vanninjeksjon og gassinjeksjon er ofte "
-                       "tvillingsystemer for trykkstoette offshore "
-                       "(ANTATT — IKKE bekreftet, ingen ekstern kilde funnet)",
+        "description": "[PATTERN-INTERNAL - strong] Water Injection - direct parallel to "
+                       "GI (Gas Injection): water and gas injection are often "
+                       "twin systems for pressure support offshore "
+                       "(ASSUMED - NOT confirmed, no external source found)",
         "eos": "cpa",
         "components": [("water", 100.0)],
         "phase": "vaeske",
     },
     "WC": {
-        "description": "[INTERN/MOENSTER] Water, Cooling (kjolevann) — 'W'-prefiks "
-                       "etablert, kjolevann er et svaert vanlig industrisystem "
-                       "(ANTATT — IKKE bekreftet, ingen ekstern kilde funnet)",
+        "description": "[PATTERN-INTERNAL / CONVENTION] Water, Cooling - the 'W' prefix is "
+                       "established, and cooling water is a very common system "
+                       "(ASSUMED - NOT confirmed, no external source found)",
         "eos": "cpa",
         "components": [("water", 100.0)],
         "phase": "vaeske",
     },
     "AP": {
-        "description": "[INTERN] Air, Plant (prosessluft) — naturlig par til AI "
-                       "(Air, Instrument); plattformer har ofte begge "
-                       "(ANTATT — IKKE bekreftet, ingen ekstern kilde funnet)",
+        "description": "[PATTERN-INTERNAL] Air, Plant - natural counterpart to AI "
+                       "(Air, Instrument); platforms often have both "
+                       "(ASSUMED - NOT confirmed, no external source found)",
         "eos": "srk",
         "components": [
             ("nitrogen", 78.0), ("oxygen", 21.0), ("argon", 1.0),
@@ -163,10 +165,10 @@ FLUID_PRESETS: dict[str, dict] = {
         "phase": "gass",
     },
     "CA": {
-        "description": "[MOENSTER — kjent forkortelse] Compressed Air (trykkluft) — "
-                       "vanlig, gjenkjennelig forkortelse, overlapper i betydning "
-                       "med AP/AI "
-                       "(ANTATT — IKKE bekreftet, ingen ekstern kilde funnet)",
+        "description": "[CONVENTION - well-known abbreviation] Compressed Air - a "
+                       "common, recognisable abbreviation, overlapping in meaning "
+                       "with AP and AI "
+                       "(ASSUMED - NOT confirmed, no external source found)",
         "eos": "srk",
         "components": [
             ("nitrogen", 78.0), ("oxygen", 21.0), ("argon", 1.0),
@@ -174,9 +176,9 @@ FLUID_PRESETS: dict[str, dict] = {
         "phase": "gass",
     },
     "CG": {
-        "description": "[MOENSTER — svak] Condensate/Chemical Glycol — usikker "
-                       "tolkning, kunne ogsaa vaert 'Chemical Gas'. "
-                       "(ANTATT — IKKE bekreftet, lav tillit)",
+        "description": "[CONVENTION - weak] Condensate / Chemical Glycol - uncertain "
+                       "reading; could equally be 'Chemical Gas'. "
+                       "(ASSUMED - NOT confirmed, low confidence)",
         "eos": "srk",
         "components": [
             ("methane", 3.0), ("ethane", 3.0), ("n-hexane", 30.0),
@@ -185,26 +187,26 @@ FLUID_PRESETS: dict[str, dict] = {
         "phase": "vaeske",
     },
     "CC": {
-        "description": "[MOENSTER — svak] Chemical, Corrosion inhibitor — ren "
-                       "gjetning basert paa vanlige kjemikalietilsetninger offshore "
-                       "(ANTATT — IKKE bekreftet, lav tillit)",
+        "description": "[CONVENTION - weak] Chemical, Corrosion inhibitor - a guess "
+                       "based on common chemical injections offshore "
+                       "(ASSUMED - NOT confirmed, low confidence)",
         "eos": "cpa",
         "components": [("water", 90.0), ("MEG", 10.0)],
         "phase": "vaeske",
     },
     "MK": {
-        "description": "[MOENSTER] Make-up (paafyllingsvaeske/-vann) — vanlig "
-                       "prosessterm for vaeske som erstatter tap i et system "
-                       "(ANTATT — IKKE bekreftet, ingen ekstern kilde funnet)",
+        "description": "[CONVENTION] Make-up (replacement liquid or water) - a common "
+                       "process term for liquid replacing losses in a system "
+                       "(ASSUMED - NOT confirmed, no external source found)",
         "eos": "cpa",
         "components": [("water", 100.0)],
         "phase": "vaeske",
     },
     "OF": {
-        "description": "[MOENSTER — tvetydig] Open Flare ELLER Oil Flow — to "
-                       "rimelige tolkninger, ingen klart bedre. Antar her Open "
-                       "Flare (parallell til VA=Vent Atmosphere) "
-                       "(ANTATT — IKKE bekreftet, SAERLIG usikker)",
+        "description": "[CONVENTION - ambiguous] Open Flare OR Oil Flow - two "
+                       "reasonable readings, neither clearly better. Assumes Open "
+                       "Flare here (parallel to VA = Vent Atmosphere) "
+                       "(ASSUMED - NOT confirmed, especially uncertain)",
         "eos": "cpa",
         "components": [
             ("nitrogen", 3.0), ("CO2", 3.0), ("methane", 80.0),
@@ -213,14 +215,14 @@ FLUID_PRESETS: dict[str, dict] = {
         "phase": "gass",
     },
     "PT": {
-        "description": "[MOENSTER — alternativ konvensjon] Pressure Test — vanlig "
-                       "statuskode for roerlinjer under/etter trykktesting i "
-                       "roerleggingsdokumentasjon. VIKTIG: dette er IKKE relatert "
-                       "til instrument-typekoden 'PT' (Trykktransmitter) brukt "
-                       "andre steder i prosjektet — samme bokstaver, to ulike "
-                       "kontekster (bekreftet ved at 'PT' faktisk forekommer som "
-                       "FluidCodeAssignmentClass paa ekte segmenter) "
-                       "(ANTATT — IKKE bekreftet, ingen ekstern kilde funnet)",
+        "description": "[CONVENTION - alternative reading] Pressure Test - a common "
+                       "status code for piping under or after pressure testing in "
+                       "piping documentation. NOTE: this is NOT related "
+                       "to the instrument type code 'PT' (Pressure Transmitter) used "
+                       "elsewhere in this project - same letters, two different "
+                       "contexts (confirmed: 'PT' does occur as a "
+                       "FluidCodeAssignmentClass on real segments) "
+                       "(ASSUMED - NOT confirmed, no external source found)",
         "eos": "cpa",
         "components": [
             ("nitrogen", 1.0), ("CO2", 2.0), ("methane", 85.0),
@@ -229,13 +231,13 @@ FLUID_PRESETS: dict[str, dict] = {
         "phase": "gass",
     },
     "PI": {
-        "description": "[MOENSTER — SAERLIG usikker] Ingen god tolkning funnet. "
-                       "Bekreftet aa forekomme som ekte FluidCodeAssignmentClass-"
-                       "verdi (se PT), men uten en plausibel fluid-betydning aa "
-                       "gjette paa — bruker generisk gass som stand-in inntil "
-                       "videre. IKKE relatert til instrument-typekoden 'PI' "
-                       "(Trykkindikator) "
-                       "(ANTATT — svaert lav tillit)",
+        "description": "[CONVENTION - especially uncertain] No good reading found. "
+                       "Confirmed to occur as a real FluidCodeAssignmentClass "
+                       "value (see PT), but with no plausible fluid meaning to "
+                       "guess at - uses a generic gas as a stand-in for now. "
+                       "NOT related to the instrument type code 'PI' "
+                       "(Pressure Indicator) "
+                       "(ASSUMED - very low confidence)",
         "eos": "cpa",
         "components": [
             ("nitrogen", 1.0), ("CO2", 2.0), ("methane", 85.0),
@@ -244,9 +246,9 @@ FLUID_PRESETS: dict[str, dict] = {
         "phase": "gass",
     },
     "GI": {
-        "description": "[MOENSTER] Gas Injection — vanlig offshore-system "
-                       "(gassloeft/trykkstoette til reservoar), 'G'=Gas-prefiks "
-                       "(ANTATT — IKKE bekreftet, ingen ekstern kilde funnet)",
+        "description": "[CONVENTION] Gas Injection - a common offshore system "
+                       "(gas lift or reservoir pressure support), 'G' = gas prefix "
+                       "(ASSUMED - NOT confirmed, no external source found)",
         "eos": "cpa",
         "components": [
             ("nitrogen", 1.0), ("CO2", 2.0), ("methane", 88.0),
@@ -255,11 +257,11 @@ FLUID_PRESETS: dict[str, dict] = {
         "phase": "gass",
     },
     "AI": {
-        "description": "[MOENSTER — kjent bransjeforkortelse] Air, Instrument "
-                       "(instrumentluft) — 'AI'/'IA' er en svaert vanlig forkortelse "
-                       "i olje/gass-P&ID-er. FYSISK ANNERLEDES fluid enn resten "
-                       "(ren luft, ikke hydrokarboner). "
-                       "(ANTATT type — sammensetning IKKE bekreftet mot legend)",
+        "description": "[CONVENTION - well-known industry abbreviation] Air, Instrument "
+                       "- 'AI' or 'IA' is a very common abbreviation "
+                       "in oil and gas P&IDs. PHYSICALLY DIFFERENT from the rest "
+                       "(pure air, not hydrocarbons). "
+                       "(ASSUMED type - composition NOT confirmed against the legend)",
         "eos": "srk",
         "components": [
             ("nitrogen", 78.0), ("oxygen", 21.0), ("argon", 1.0),
@@ -267,9 +269,9 @@ FLUID_PRESETS: dict[str, dict] = {
         "phase": "gass",
     },
     "GF": {
-        "description": "[MOENSTER] Gas Fuel (brenngass) — svaert vanlig eget "
-                       "delsystem paa plattformer, 'G'=Gas-prefiks "
-                       "(ANTATT — IKKE bekreftet, ingen ekstern kilde funnet)",
+        "description": "[CONVENTION] Gas Fuel - very commonly its own "
+                       "subsystem on platforms, 'G' = gas prefix "
+                       "(ASSUMED - NOT confirmed, no external source found)",
         "eos": "cpa",
         "components": [
             ("nitrogen", 1.0), ("CO2", 1.0), ("methane", 90.0),
@@ -278,10 +280,10 @@ FLUID_PRESETS: dict[str, dict] = {
         "phase": "gass",
     },
     "OH": {
-        "description": "[INTERN] Oil Header — antatt som utvidelse av OL "
-                       "(Oil Line): samlerør/hovedledning for olje. Bruker "
-                       "n-nonane i stedet for n-decane, se OL-forklaring "
-                       "(ANTATT — IKKE bekreftet, ingen ekstern kilde funnet)",
+        "description": "[PATTERN-INTERNAL] Oil Header - assumed as an extension of OL "
+                       "(Oil Line): a collecting or main oil line. Uses "
+                       "n-nonane rather than n-decane, see the OL note "
+                       "(ASSUMED - NOT confirmed, no external source found)",
         "eos": "srk",
         "components": [
             ("n-nonane", 35.0), ("n-hexane", 25.0), ("n-heptane", 40.0),
@@ -289,10 +291,10 @@ FLUID_PRESETS: dict[str, dict] = {
         "phase": "vaeske",
     },
     "GE": {
-        "description": "[MOENSTER + kontekst] Gas Export — Huldra er et gassfelt, "
-                       "saa gasseksport er trolig et hovedsystem paa anlegget; "
-                       "noe sterkere kontekstuell stoette enn ren bokstav-gjetning, "
-                       "men FORTSATT IKKE bekreftet mot legend",
+        "description": "[CONVENTION + field context] Gas Export - Huldra is a gas field, "
+                       "so gas export is likely a main system on the plant; "
+                       "somewhat stronger contextual support than a pure letter "
+                       "guess, but STILL NOT confirmed against the legend",
         "eos": "cpa",
         "components": [
             ("nitrogen", 0.5), ("CO2", 1.5), ("methane", 92.0),
@@ -302,24 +304,26 @@ FLUID_PRESETS: dict[str, dict] = {
     },
 }
 
-DEFAULT_PRESET = "PV"  # brukes naar fluidkoden er ukjent/mangler
+DEFAULT_PRESET = "PV"  # used when the fluid code is unknown or absent
 
 
 def get_preset(fluid_code: str | None) -> dict:
-    """Hent NeqSim-preset for en DEXPI-fluidkode. Faller tilbake til
-    DEFAULT_PRESET (med tydelig markering OGSAA i beskrivelsesteksten,
-    ikke bare i 'matched'-flagget) hvis koden er ukjent."""
+    """NeqSim preset for a DEXPI fluid code.
+
+    Falls back to DEFAULT_PRESET when the code is unknown, and says so in the
+    description text as well as in the 'matched' flag — a caller that only
+    renders the description should still see that nothing was identified."""
     if fluid_code and fluid_code in FLUID_PRESETS:
         return {**FLUID_PRESETS[fluid_code], "matched": True, "code": fluid_code}
     fallback = FLUID_PRESETS[DEFAULT_PRESET]
     return {
         **fallback,
         "matched": False,
-        "code": fluid_code or "(ingen kode funnet)",
+        "code": fluid_code or "(no code found)",
         "description": (
-            f"Ukjent fluidkode '{fluid_code}' — bruker {DEFAULT_PRESET}-sammensetning "
-            f"som midlertidig stand-in (IKKE en identifikasjon av hva '{fluid_code}' "
-            f"faktisk er — se docstring i fluid_lookup.py)"
+            f"Unknown fluid code '{fluid_code}' - using the {DEFAULT_PRESET} "
+            f"composition as a stand-in. This is NOT an identification of what "
+            f"'{fluid_code}' actually is; see the docstring in fluid_lookup.py"
         ),
     }
 
