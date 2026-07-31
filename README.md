@@ -50,10 +50,20 @@ beskrives: alt under er kjørbar kode på ekte tegninger, og alle AI-uttrekk er
 ## 1. Hurtigstart
 
 ```bash
-# krever Python 3.12+ og uv (https://docs.astral.sh/uv/)
-uv sync                                   # installerer alle avhengigheter
-streamlit run src/app.py                  # åpner appen på http://localhost:8501
+git clone <repo-url> && cd SommerstudentProsjekt
+uv sync                                   # installerer alle avhengigheter (~15 s)
+uv run streamlit run src/app.py           # åpner appen på http://localhost:8501
 ```
+
+Det er hele oppsettet. **Tegningene ligger i repoet** (140 MB under
+`data/raw/`: 20 P&ID-er, 193 SCD-ark, 17 DEXPI-eksporter), og `reports/`
+kommer med ferdig varme cacher — så appen har ekte data å vise fra første
+sekund, uten nedlasting, API-nøkkel eller nettilgang.
+
+Mangler du `uv`: `curl -LsSf https://astral.sh/uv/install.sh | sh`
+(Windows: `powershell -c "irm https://astral.sh/uv/install.ps1 | iex"`).
+Du trenger ikke installere Python selv — `uv sync` henter versjonen prosjektet
+er låst til (3.14, se `.python-version`) hvis du ikke har den.
 
 Alt **deterministisk** — uttrekk, avstemming, grafer, HAZOP-ark,
 kontrollrom-brief, regelscreening — virker uten API-nøkkel. AI-lagene
@@ -283,12 +293,20 @@ SommerstudentProsjekt/
 
 ### 5.1 Forutsetninger
 
-| Krav | Versjon | Nødvendig for |
+| Krav | Versjon | Må du gjøre noe? |
 |---|---|---|
-| Python | **3.12+** | alt |
-| [`uv`](https://docs.astral.sh/uv/) | nyeste | avhengighetsstyring |
-| Java (JRE/JDK) | **8+** | NeqSim (termodynamikk) — kun 🧪-siden og `neqsim_tools/` |
-| Gemini API-nøkkel | gratis tier | AI-lagene (valgfritt) |
+| [`uv`](https://docs.astral.sh/uv/) | nyeste | **Ja** — eneste faktiske forutsetning |
+| Python | 3.12+ (låst til 3.14) | Nei — `uv sync` henter den ved behov |
+| Kildedata | — | Nei — tegningene ligger i repoet (§5.4) |
+| Java (JRE/JDK) | 8+ | Kun for NeqSim (🧪-siden) |
+| Gemini API-nøkkel | gratis tier | Kun for AI-lagene, som er valgfrie |
+
+Installer `uv`:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh                    # Linux/macOS
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"         # Windows
+```
 
 Java trengs kun for NeqSim-sporet. Mangler Java, feiler NeqSim-kallene med
 en tydelig melding og resten av appen er upåvirket — sett
@@ -300,7 +318,12 @@ en tydelig melding og resten av appen er upåvirket — sett
 git clone <repo-url>
 cd SommerstudentProsjekt
 uv sync                              # installerer alt fra pyproject.toml + uv.lock
+uv run streamlit run src/app.py      # start appen
 ```
+
+`uv run` er det som gjør at du slipper å aktivere et virtuelt miljø manuelt.
+Vil du heller aktivere det: `source .venv/bin/activate` (Windows:
+`.venv\Scripts\activate`), så holder `streamlit run src/app.py`.
 
 Valgfri ekstra (Anthropic-modell som alternativ til malen i operatør-brief
 og systemsammendrag):
@@ -330,10 +353,37 @@ ANTHROPIC_API_KEY=<valgfritt>        # kun for alternativ brief-generator
 
 På Windows: `set HULDRA_VISION=1`. På Linux/macOS: `export HULDRA_VISION=1`.
 
-### 5.4 Legg inn tegningene
+### 5.4 Data — du trenger ikke skaffe noe
 
-Legg kildedata under `data/raw/` med strukturen i [§8](#8-datagrunnlaget).
-Uten data starter appen, men sidene melder tydelig at ingenting ble funnet.
+**Tegningene er allerede i repoet.** Huldra-dataene er offentlig publisert
+(lisens: `data/Equinor open data sharing license - Huldra.pdf`) og
+versjonert med koden, så et klon gir deg alt: 20 P&ID-er, 193 SCD-ark,
+17 DEXPI-eksporter og symbolbibliotekene — se [§8](#8-datagrunnlaget) for
+strukturen.
+
+Det samme gjelder `reports/`: tag-registeret, valideringsrapportene og
+vision-/AI-cachene er committet, så appen viser ekte, målte tall før du har
+kjørt en eneste kommando. Vil du regenerere dem selv, står kommandoene i
+[§7](#7-kommandolinjeverktøy).
+
+Er oppsettet riktig? Åpne 🏠 **Home** → **🩺 Demo readiness**. Den sjekker
+data, cacher og nøkler og sier hva som eventuelt mangler. Rett etter et klon
+skal alt være grønt bortsett fra `GEMINI_API_KEY`, som er valgfri.
+
+<details>
+<summary>Vil du bruke dine egne tegninger i stedet?</summary>
+
+Legg dem under `data/raw/P&ID/` og `data/raw/SCD/`. To ting må stemme:
+
+- **Filnavnet bærer systemnummeret** (`C025-V-HO27-P-_E-002-01.PDF` → system
+  27). Systemet leses fra navnet, ikke fra tegningen — se §8.1.
+- **P&ID og SCD for samme system må ha samme systemkode**, ellers finner ikke
+  avstemmingen paret.
+
+DEXPI-XML er valgfritt, men uten det faller fasitmålingen, 🧭-siden,
+🔗-topologien og regelscreeningen bort — de krever strukturerte data, og det
+er hele poenget deres.
+</details>
 
 ### 5.5 Valgfritt: Model Broker-konfigurasjon
 
