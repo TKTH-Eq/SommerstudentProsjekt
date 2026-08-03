@@ -56,7 +56,7 @@ def _model():
     return build_plant_graph(RAW)
 
 
-page_header("Plant Q&A (GraphRAG)",
+page_header("Plant Q&A",
             "Ask the plant in plain language — AI interprets the question, the "
             "DEXPI graph answers, and every tag is verified against the register")
 st.caption("Retrieval over structure, not free-form generation: the answer is "

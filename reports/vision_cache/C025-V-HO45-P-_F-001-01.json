@@ -1,0 +1,98 @@
+{
+ "excerpt": {
+  "summary": "This drawing illustrates the fuel gas distribution system for a gas generator and a fuel gas metering package. It includes supply lines from an export booster compressor, pressure control loops, relief valve configurations, and connections to a gas calorimeter.",
+  "observations": [
+   {
+    "observation": "Single PSV 4832 installed on the fuel gas generator inlet line without a redundant or secondary pressure relief path.",
+    "deviation": "High pressure",
+    "tags": [
+     {
+      "tag": "45-PSV 4832",
+      "status": "verified"
+     }
+    ]
+   },
+   {
+    "observation": "Potential for blocked discharge paths if the manual block valves downstream of PSV 4832 or 4833 are inadvertently closed during maintenance.",
+    "deviation": "Blocked/Closed",
+    "tags": [
+     {
+      "tag": "45-PSV 4832",
+      "status": "verified"
+     },
+     {
+      "tag": "45-PSV 4833",
+      "status": "verified"
+     }
+    ]
+   },
+   {
+    "observation": "Lack of clear indication of independent high-pressure shutdown (PSH) interlocks on the main fuel gas feed line before the metering package.",
+    "deviation": "No/Less",
+    "tags": [
+     {
+      "tag": "45-XJ50",
+      "status": "verified"
+     }
+    ]
+   },
+   {
+    "observation": "The fuel gas calorimeter supply line (45-XX50) appears to be connected upstream of primary pressure regulation, potentially subjecting downstream components to full line pressure.",
+    "deviation": "High pressure",
+    "tags": [
+     {
+      "tag": "45-PCV 4103",
+      "status": "verified"
+     },
+     {
+      "tag": "45-PCV 4113",
+      "status": "verified"
+     },
+     {
+      "tag": "45-XX50",
+      "status": "verified"
+     }
+    ]
+   }
+  ],
+  "possible_symbol_only": [
+   {
+    "tag": "45-XV 4804",
+    "symbol": "block valve",
+    "status": "verified"
+   },
+   {
+    "tag": "45-XV 4805",
+    "symbol": "block valve",
+    "status": "verified"
+   },
+   {
+    "tag": "45-ZS 4804",
+    "symbol": "limit switch",
+    "status": "verified"
+   },
+   {
+    "tag": "45-ZL 4804",
+    "symbol": "limit switch",
+    "status": "verified"
+   },
+   {
+    "tag": "45-PT 4831",
+    "symbol": "pressure transmitter",
+    "status": "verified"
+   },
+   {
+    "tag": "45-HS 4804",
+    "symbol": "hand switch",
+    "status": "verified"
+   }
+  ],
+  "tag_totals": {
+   "verified": 13,
+   "verified_loose": 0,
+   "new_candidate": 0,
+   "suspect": 0
+  }
+ },
+ "saved_at": "2026-08-03 10:36"
+}
