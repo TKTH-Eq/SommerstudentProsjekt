@@ -1,0 +1,21 @@
+name,class,kind,tag,x,y
+ESD,,CellHeader,,166.4,520.7
+(uten navn),,CellHeader,,856.9,75.5
+GA,,CellHeader,,356.9,452.1
+BA,,CellHeader,82-PG51B,337.8,335.3
+BA,,CellHeader,82-PG51A,337.8,281.9
+BA,,CellHeader,82-PX50A,337.8,226.1
+BA,,CellHeader,82-PX50A,433.1,226.1
+BA,,CellHeader,82-PG51A,433.1,281.9
+BA,,CellHeader,82-PG51B,433.1,335.3
+BA,,CellHeader,,448.3,406.4
+BA,,CellHeader,,642.6,429.3
+(uten navn),,SharedCellDef,,-430.9,185.7
+GAC,,CellHeader,,308.6,205.7
+(uten navn),,SharedCellDef,,-211.8,-38.1
+(uten navn),,SharedCellDef,,285.3,-313.7
+(uten navn),,SharedCellDef,,3.8,0.0
+(uten navn),,SharedCellDef,,-20.1,-92.4
+(uten navn),,SharedCellInst,,14.0,-14.6
+REV,,CellHeader,,482.7,314.9
+REV,,CellHeader,,724.8,701.1

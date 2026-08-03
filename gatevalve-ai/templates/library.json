@@ -1,0 +1,1211 @@
+{
+  "LIN001": {
+    "template": "templates/LIN001.png",
+    "source_pdf": "U999-1-000--PT-109-01.PDF",
+    "size_px": [
+      672,
+      541
+    ],
+    "dpi": 300,
+    "dexpi_class": "Annotation",
+    "subclass": "TieIn",
+    "state": null,
+    "desc": "Tie-in"
+  },
+  "LIN002": {
+    "template": "templates/LIN002.png",
+    "source_pdf": "U999-1-000--PT-109-01.PDF",
+    "size_px": [
+      597,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "Annotation",
+    "subclass": "FlowArrow",
+    "state": null,
+    "desc": "Arrow"
+  },
+  "LIN003": {
+    "template": "templates/LIN003.png",
+    "source_pdf": "U999-1-000--PT-109-01.PDF",
+    "size_px": [
+      711,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "Annotation",
+    "subclass": "ModuleBreak",
+    "state": null,
+    "desc": "Module break"
+  },
+  "LIN004": {
+    "template": "templates/LIN004.png",
+    "source_pdf": "U999-1-000--PT-109-01.PDF",
+    "size_px": [
+      711,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "PipeOffPageConnector",
+    "subclass": null,
+    "state": null,
+    "desc": "Head from 1"
+  },
+  "LIN005": {
+    "template": "templates/LIN005.png",
+    "source_pdf": "U999-1-000--PT-109-01.PDF",
+    "size_px": [
+      665,
+      583
+    ],
+    "dpi": 300,
+    "dexpi_class": "PipeOffPageConnector",
+    "subclass": null,
+    "state": null,
+    "desc": "Head to 1"
+  },
+  "LIN006": {
+    "template": "templates/LIN006.png",
+    "source_pdf": "U999-1-000--PT-109-01.PDF",
+    "size_px": [
+      580,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "PipeOffPageConnector",
+    "subclass": null,
+    "state": null,
+    "desc": "Head from 2"
+  },
+  "LIN007": {
+    "template": "templates/LIN007.png",
+    "source_pdf": "U999-1-000--PT-109-01.PDF",
+    "size_px": [
+      711,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "PipeOffPageConnector",
+    "subclass": null,
+    "state": null,
+    "desc": "Head to 2"
+  },
+  "LIN008": {
+    "template": "templates/LIN008.png",
+    "source_pdf": "U999-1-000--PT-109-01.PDF",
+    "size_px": [
+      711,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "Annotation",
+    "subclass": null,
+    "state": null,
+    "desc": "Line symbol"
+  },
+  "LIN009": {
+    "template": "templates/LIN009.png",
+    "source_pdf": "U999-1-000--PT-109-01.PDF",
+    "size_px": [
+      794,
+      536
+    ],
+    "dpi": 300,
+    "dexpi_class": "Annotation",
+    "subclass": null,
+    "state": null,
+    "desc": "Line symbol"
+  },
+  "LIN010": {
+    "template": "templates/LIN010.png",
+    "source_pdf": "U999-1-000--PT-109-01.PDF",
+    "size_px": [
+      675,
+      587
+    ],
+    "dpi": 300,
+    "dexpi_class": "Annotation",
+    "subclass": null,
+    "state": null,
+    "desc": "Line symbol"
+  },
+  "LIN011": {
+    "template": "templates/LIN011.png",
+    "source_pdf": "U999-1-000--PT-109-01.PDF",
+    "size_px": [
+      633,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "PropertyBreak",
+    "subclass": "SpecChange",
+    "state": null,
+    "desc": "Spec change"
+  },
+  "LIN012": {
+    "template": "templates/LIN012.png",
+    "source_pdf": "U999-1-000--PT-109-01.PDF",
+    "size_px": [
+      681,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "Annotation",
+    "subclass": "FlowArrow",
+    "state": null,
+    "desc": "Flow"
+  },
+  "LIN013": {
+    "template": "templates/LIN013.png",
+    "source_pdf": "U999-1-000--PT-109-01.PDF",
+    "size_px": [
+      697,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "Annotation",
+    "subclass": "VortexBreaker",
+    "state": null,
+    "desc": "Vortex breaker"
+  },
+  "LIN014": {
+    "template": "templates/LIN014.png",
+    "source_pdf": "U999-1-000--PT-109-01.PDF",
+    "size_px": [
+      634,
+      536
+    ],
+    "dpi": 300,
+    "dexpi_class": "Annotation",
+    "subclass": "Temperature",
+    "state": null,
+    "desc": "Temperature"
+  },
+  "LIN015": {
+    "template": "templates/LIN015.png",
+    "source_pdf": "U999-1-000--PT-109-01.PDF",
+    "size_px": [
+      704,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "Annotation",
+    "subclass": "Arc",
+    "state": null,
+    "desc": "Arc"
+  },
+  "LIN016": {
+    "template": "templates/LIN016.png",
+    "source_pdf": "U999-1-000--PT-109-01.PDF",
+    "size_px": [
+      759,
+      370
+    ],
+    "dpi": 300,
+    "dexpi_class": "Annotation",
+    "subclass": null,
+    "state": null,
+    "desc": "Line symbol"
+  },
+  "LIN017": {
+    "template": "templates/LIN017.png",
+    "source_pdf": "U999-1-000--PT-109-01.PDF",
+    "size_px": [
+      626,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "Annotation",
+    "subclass": "Trace",
+    "state": null,
+    "desc": "Trace"
+  },
+  "LIN018": {
+    "template": "templates/LIN018.png",
+    "source_pdf": "U999-1-000--PT-109-01.PDF",
+    "size_px": [
+      793,
+      513
+    ],
+    "dpi": 300,
+    "dexpi_class": "Annotation",
+    "subclass": "ElectricHeatTrace",
+    "state": null,
+    "desc": "Electric heat trace"
+  },
+  "LIN019": {
+    "template": "templates/LIN019.png",
+    "source_pdf": "U999-1-000--PT-109-01.PDF",
+    "size_px": [
+      703,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "Annotation",
+    "subclass": "TieIn",
+    "state": null,
+    "desc": "Tie in"
+  },
+  "LIN020": {
+    "template": "templates/LIN020.png",
+    "source_pdf": "U999-1-000--PT-109-01.PDF",
+    "size_px": [
+      610,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "Annotation",
+    "subclass": "DrawingReference",
+    "state": null,
+    "desc": "Drawing reference"
+  },
+  "LIN021": {
+    "template": "templates/LIN021.png",
+    "source_pdf": "U999-1-000--PT-109-01.PDF",
+    "size_px": [
+      634,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "Annotation",
+    "subclass": "SULI",
+    "state": null,
+    "desc": "SULI"
+  },
+  "LIN022": {
+    "template": "templates/LIN022.png",
+    "source_pdf": "U999-1-000--PT-109-01.PDF",
+    "size_px": [
+      794,
+      584
+    ],
+    "dpi": 300,
+    "dexpi_class": "Annotation",
+    "subclass": "CSS",
+    "state": null,
+    "desc": "CSS"
+  },
+  "LIN023": {
+    "template": "templates/LIN023.png",
+    "source_pdf": "U999-1-000--PT-109-01.PDF",
+    "size_px": [
+      793,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "Annotation",
+    "subclass": "DrawingReference",
+    "state": null,
+    "desc": "Drawing reference"
+  },
+  "LIN024": {
+    "template": "templates/LIN024.png",
+    "source_pdf": "U999-1-000--PT-109-01.PDF",
+    "size_px": [
+      610,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "Annotation",
+    "subclass": "PressureBarg",
+    "state": null,
+    "desc": "Pressure barg"
+  },
+  "LIN025": {
+    "template": "templates/LIN025.png",
+    "source_pdf": "U999-1-000--PT-109-01.PDF",
+    "size_px": [
+      611,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "Annotation",
+    "subclass": "HGO",
+    "state": null,
+    "desc": "HGO"
+  },
+  "LIN026": {
+    "template": "templates/LIN026.png",
+    "source_pdf": "U999-1-000--PT-109-01.PDF",
+    "size_px": [
+      681,
+      559
+    ],
+    "dpi": 300,
+    "dexpi_class": "Annotation",
+    "subclass": "LineSlope",
+    "state": null,
+    "desc": "Line slope"
+  },
+  "LIN027": {
+    "template": "templates/LIN027.png",
+    "source_pdf": "U999-1-000--PT-109-01.PDF",
+    "size_px": [
+      646,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "Annotation",
+    "subclass": "LNP",
+    "state": null,
+    "desc": "LNP"
+  },
+  "LIN028": {
+    "template": "templates/LIN028.png",
+    "source_pdf": "U999-1-000--PT-109-01.PDF",
+    "size_px": [
+      622,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "Annotation",
+    "subclass": "StreamReference",
+    "state": null,
+    "desc": "Stream reference no."
+  },
+  "LIN029": {
+    "template": "templates/LIN029.png",
+    "source_pdf": "U999-1-000--PT-109-01.PDF",
+    "size_px": [
+      560,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "Annotation",
+    "subclass": "Junction",
+    "state": null,
+    "desc": "Junction / two way drawing ref."
+  },
+  "FIT001": {
+    "template": "templates/FIT001.png",
+    "source_pdf": "U999-1-000--PT-110-01.PDF",
+    "size_px": [
+      659,
+      541
+    ],
+    "dpi": 300,
+    "dexpi_class": "FlangedConnection",
+    "subclass": "BlindFlange",
+    "state": null,
+    "desc": "Blind flange"
+  },
+  "FIT002": {
+    "template": "templates/FIT002.png",
+    "source_pdf": "U999-1-000--PT-110-01.PDF",
+    "size_px": [
+      575,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "PipeFitting",
+    "subclass": "Cap",
+    "state": null,
+    "desc": "Cap"
+  },
+  "FIT003": {
+    "template": "templates/FIT003.png",
+    "source_pdf": "U999-1-000--PT-110-01.PDF",
+    "size_px": [
+      640,
+      579
+    ],
+    "dpi": 300,
+    "dexpi_class": "FlangedConnection",
+    "subclass": null,
+    "state": null,
+    "desc": "Flange"
+  },
+  "FIT004": {
+    "template": "templates/FIT004.png",
+    "source_pdf": "U999-1-000--PT-110-01.PDF",
+    "size_px": [
+      562,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "PipeFitting",
+    "subclass": "HoseConnection",
+    "state": null,
+    "desc": "House/hose connection"
+  },
+  "FIT005": {
+    "template": "templates/FIT005.png",
+    "source_pdf": "U999-1-000--PT-110-01.PDF",
+    "size_px": [
+      663,
+      580
+    ],
+    "dpi": 300,
+    "dexpi_class": "PipeReducer",
+    "subclass": null,
+    "state": null,
+    "desc": "Reducer/expander"
+  },
+  "FIT006": {
+    "template": "templates/FIT006.png",
+    "source_pdf": "U999-1-000--PT-110-01.PDF",
+    "size_px": [
+      571,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "FlangedConnection",
+    "subclass": "OrificeFlange",
+    "state": null,
+    "desc": "Flange orifice"
+  },
+  "FIT007": {
+    "template": "templates/FIT007.png",
+    "source_pdf": "U999-1-000--PT-110-01.PDF",
+    "size_px": [
+      638,
+      536
+    ],
+    "dpi": 300,
+    "dexpi_class": "PipeFitting",
+    "subclass": "Pig",
+    "state": null,
+    "desc": "Pig"
+  },
+  "FIT008": {
+    "template": "templates/FIT008.png",
+    "source_pdf": "U999-1-000--PT-110-01.PDF",
+    "size_px": [
+      645,
+      513
+    ],
+    "dpi": 300,
+    "dexpi_class": "BlindedSpectacleBlind",
+    "subclass": null,
+    "state": "open",
+    "desc": "Spectacle blind flange, open"
+  },
+  "FIT009": {
+    "template": "templates/FIT009.png",
+    "source_pdf": "U999-1-000--PT-110-01.PDF",
+    "size_px": [
+      658,
+      580
+    ],
+    "dpi": 300,
+    "dexpi_class": "BlindedSpectacleBlind",
+    "subclass": null,
+    "state": "closed",
+    "desc": "Spectacle blind flange, close"
+  },
+  "FIT010": {
+    "template": "templates/FIT010.png",
+    "source_pdf": "U999-1-000--PT-110-01.PDF",
+    "size_px": [
+      652,
+      559
+    ],
+    "dpi": 300,
+    "dexpi_class": "PipeFitting",
+    "subclass": "Spade",
+    "state": null,
+    "desc": "SPA (spade)"
+  },
+  "VAL001": {
+    "template": "templates/VAL001.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      653,
+      541
+    ],
+    "dpi": 300,
+    "dexpi_class": "GateValve",
+    "subclass": null,
+    "state": "open",
+    "desc": "Gate valve, open"
+  },
+  "VAL002": {
+    "template": "templates/VAL002.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      598,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "OperatedValve",
+    "subclass": "DiaphragmOrPinchValve",
+    "state": "closed",
+    "desc": "Diaphragm or pinch valve, close"
+  },
+  "VAL003": {
+    "template": "templates/VAL003.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      576,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomPipingComponent",
+    "subclass": "YValve",
+    "state": null,
+    "desc": "Y-valve"
+  },
+  "VAL004": {
+    "template": "templates/VAL004.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      588,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "ThreeWayValve",
+    "state": null,
+    "desc": "3-way valve 1"
+  },
+  "VAL005": {
+    "template": "templates/VAL005.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      587,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "ThreeWayValve",
+    "state": null,
+    "desc": "3-way valve 2"
+  },
+  "VAL006": {
+    "template": "templates/VAL006.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      587,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "GateValve",
+    "subclass": null,
+    "state": "closed",
+    "desc": "Gate valve, close"
+  },
+  "VAL007": {
+    "template": "templates/VAL007.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      565,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "PlugValve",
+    "subclass": null,
+    "state": "open",
+    "desc": "Plug valve, open"
+  },
+  "VAL008": {
+    "template": "templates/VAL008.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      586,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "ThreeWayValve",
+    "state": null,
+    "desc": "3-way valve"
+  },
+  "VAL009": {
+    "template": "templates/VAL009.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      576,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "ChokeValve",
+    "state": null,
+    "desc": "Choke valve"
+  },
+  "VAL010": {
+    "template": "templates/VAL010.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      587,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "NeedleValve",
+    "subclass": null,
+    "state": "open",
+    "desc": "Needle valve, open"
+  },
+  "VAL011": {
+    "template": "templates/VAL011.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      552,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "FourWayValve",
+    "state": null,
+    "desc": "4-way valve"
+  },
+  "VAL012": {
+    "template": "templates/VAL012.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      630,
+      489
+    ],
+    "dpi": 300,
+    "dexpi_class": "PlugValve",
+    "subclass": null,
+    "state": "closed",
+    "desc": "Plug valve, closed"
+  },
+  "VAL013": {
+    "template": "templates/VAL013.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      588,
+      449
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "ThreeWayValve",
+    "state": null,
+    "desc": "3-way valve"
+  },
+  "VAL014": {
+    "template": "templates/VAL014.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      576,
+      449
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "ThreeWayValve",
+    "state": null,
+    "desc": "3-way valve"
+  },
+  "VAL015": {
+    "template": "templates/VAL015.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      588,
+      449
+    ],
+    "dpi": 300,
+    "dexpi_class": "NeedleValve",
+    "subclass": null,
+    "state": "closed",
+    "desc": "Needle valve, closed"
+  },
+  "VAL016": {
+    "template": "templates/VAL016.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      588,
+      449
+    ],
+    "dpi": 300,
+    "dexpi_class": "GlobeValve",
+    "subclass": null,
+    "state": "open",
+    "desc": "Globe valve, open"
+  },
+  "VAL017": {
+    "template": "templates/VAL017.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      563,
+      449
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "ThreeWayValve",
+    "state": null,
+    "desc": "3-way valve"
+  },
+  "VAL018": {
+    "template": "templates/VAL018.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      600,
+      449
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "BarstockValve",
+    "state": null,
+    "desc": "Barstock valve"
+  },
+  "VAL019": {
+    "template": "templates/VAL019.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      575,
+      449
+    ],
+    "dpi": 300,
+    "dexpi_class": "GlobeValve",
+    "subclass": null,
+    "state": "closed",
+    "desc": "Globe valve, closed"
+  },
+  "VAL020": {
+    "template": "templates/VAL020.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      622,
+      449
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "DoubleBlockAndBleed",
+    "state": null,
+    "desc": "Double block and bleed"
+  },
+  "VAL021": {
+    "template": "templates/VAL021.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      600,
+      449
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "ARV",
+    "state": null,
+    "desc": "ARV"
+  },
+  "VAL022": {
+    "template": "templates/VAL022.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      575,
+      449
+    ],
+    "dpi": 300,
+    "dexpi_class": "BallValve",
+    "subclass": null,
+    "state": "open",
+    "desc": "Ball valve, open"
+  },
+  "VAL023": {
+    "template": "templates/VAL023.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      601,
+      560
+    ],
+    "dpi": 300,
+    "dexpi_class": "AngleValve",
+    "subclass": null,
+    "state": "closed",
+    "desc": "Angle valve, closed"
+  },
+  "VAL024": {
+    "template": "templates/VAL024.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      547,
+      449
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "PV",
+    "state": null,
+    "desc": "PV"
+  },
+  "VAL025": {
+    "template": "templates/VAL025.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      576,
+      449
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "WCK",
+    "state": null,
+    "desc": "WCK"
+  },
+  "VAL026": {
+    "template": "templates/VAL026.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      576,
+      449
+    ],
+    "dpi": 300,
+    "dexpi_class": "BallValve",
+    "subclass": null,
+    "state": "closed",
+    "desc": "Ball valve, closed"
+  },
+  "VAL027": {
+    "template": "templates/VAL027.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      575,
+      449
+    ],
+    "dpi": 300,
+    "dexpi_class": "ButterflyValve",
+    "subclass": null,
+    "state": null,
+    "desc": "Butterfly valve"
+  },
+  "VAL028": {
+    "template": "templates/VAL028.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      587,
+      449
+    ],
+    "dpi": 300,
+    "dexpi_class": "AngleValve",
+    "subclass": null,
+    "state": "open",
+    "desc": "Angle valve, open"
+  },
+  "VAL029": {
+    "template": "templates/VAL029.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      553,
+      449
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "SCCGL",
+    "state": null,
+    "desc": "SCCGL"
+  },
+  "VAL030": {
+    "template": "templates/VAL030.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      600,
+      449
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "COMDOU",
+    "state": null,
+    "desc": "COMDOU"
+  },
+  "VAL031": {
+    "template": "templates/VAL031.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      619,
+      449
+    ],
+    "dpi": 300,
+    "dexpi_class": "OperatedValve",
+    "subclass": "DiaphragmOrPinchValve",
+    "state": "open",
+    "desc": "Diaphragm or pinch valve, open"
+  },
+  "VAL032": {
+    "template": "templates/VAL032.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      564,
+      449
+    ],
+    "dpi": 300,
+    "dexpi_class": "CheckValve",
+    "subclass": null,
+    "state": null,
+    "desc": "Check valve"
+  },
+  "VAL033": {
+    "template": "templates/VAL033.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      587,
+      449
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "SPAVA",
+    "state": null,
+    "desc": "SPAVA"
+  },
+  "VAL034": {
+    "template": "templates/VAL034.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      613,
+      536
+    ],
+    "dpi": 300,
+    "dexpi_class": "CheckValve",
+    "subclass": "ScrewDownCheckValve",
+    "state": null,
+    "desc": "Screw down check valve"
+  },
+  "VAL035": {
+    "template": "templates/VAL035.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      587,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "BallValve",
+    "subclass": null,
+    "state": "open",
+    "desc": "Ball valve, open"
+  },
+  "VAL037": {
+    "template": "templates/VAL037.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      576,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "CompactValve",
+    "state": null,
+    "desc": "Compact valve"
+  },
+  "VAL038": {
+    "template": "templates/VAL038.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      600,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "ModularValve",
+    "state": "open",
+    "desc": "Modular valve ball-ball-open"
+  },
+  "VAL039": {
+    "template": "templates/VAL039.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      588,
+      436
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "ModularValve",
+    "state": "closed",
+    "desc": "Modular valve ball-ball-closed"
+  },
+  "VAL040": {
+    "template": "templates/VAL040.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      635,
+      370
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "ModularValve",
+    "state": "open",
+    "desc": "Modular valve ball-ball-check-open"
+  },
+  "VAL041": {
+    "template": "templates/VAL041.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      624,
+      370
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "ModularValve",
+    "state": "closed",
+    "desc": "Modular valve ball-ball-check-closed"
+  },
+  "VAL042": {
+    "template": "templates/VAL042.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      600,
+      448
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "ModularValve",
+    "state": "open",
+    "desc": "Modular valve gate-gate-open"
+  },
+  "VAL043": {
+    "template": "templates/VAL043.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      599,
+      437
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "ModularValve",
+    "state": "closed",
+    "desc": "Modular valve gate-gate-closed"
+  },
+  "VAL044": {
+    "template": "templates/VAL044.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      600,
+      370
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "ModularValve",
+    "state": "open",
+    "desc": "Modular valve gate-check-open"
+  },
+  "VAL045": {
+    "template": "templates/VAL045.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      599,
+      437
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "ModularValve",
+    "state": "closed",
+    "desc": "Modular valve gate-check-closed"
+  },
+  "VAL046": {
+    "template": "templates/VAL046.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      601,
+      560
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "ModularValve",
+    "state": "open",
+    "desc": "Modular valve globe-globe-open"
+  },
+  "VAL047": {
+    "template": "templates/VAL047.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      600,
+      437
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "ModularValve",
+    "state": "closed",
+    "desc": "Modular valve globe-globe-closed"
+  },
+  "VAL048": {
+    "template": "templates/VAL048.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      600,
+      449
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "ModularValve",
+    "state": "open",
+    "desc": "Modular valve globe-check-open"
+  },
+  "VAL049": {
+    "template": "templates/VAL049.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      680,
+      537
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "ModularValve",
+    "state": "closed",
+    "desc": "Modular valve globe-check-closed"
+  },
+  "VAL050": {
+    "template": "templates/VAL050.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      712,
+      560
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "ModularValve",
+    "state": "open",
+    "desc": "Modular valve gate-globe-open"
+  },
+  "VAL051": {
+    "template": "templates/VAL051.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      728,
+      537
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "ModularValve",
+    "state": "closed",
+    "desc": "Modular valve gate-globe-closed"
+  },
+  "VAL052": {
+    "template": "templates/VAL052.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      759,
+      548
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "ModularValve",
+    "state": "open",
+    "desc": "Modular valve ball-check-open"
+  },
+  "VAL053": {
+    "template": "templates/VAL053.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      720,
+      548
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "ModularValve",
+    "state": "closed",
+    "desc": "Modular valve ball-check-closed"
+  },
+  "VAL054": {
+    "template": "templates/VAL054.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      724,
+      560
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "ModularValve",
+    "state": "open",
+    "desc": "Modular valve plug-plug-open"
+  },
+  "VAL055": {
+    "template": "templates/VAL055.png",
+    "source_pdf": "U999-1-000--PT-111-01.PDF",
+    "size_px": [
+      723,
+      548
+    ],
+    "dpi": 300,
+    "dexpi_class": "CustomOperatedValve",
+    "subclass": "ModularValve",
+    "state": "closed",
+    "desc": "Modular valve plug-plug-closed"
+  }
+}

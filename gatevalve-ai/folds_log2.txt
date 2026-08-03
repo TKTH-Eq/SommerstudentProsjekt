@@ -1,0 +1,680 @@
+
+====================================================================
+FOLD 1/3 — holdout: 25VHO64PU00101,25VHO71PW00101,25WHO71PW00101
+====================================================================
+
+[fold1:tren] train_cnn.py --real dataset --holdout-list 25VHO64PU00101,25VHO71PW00101,25WHO71PW00101 --epochs 15
+[+] laster data (samme rørledning som HOG+SVM) ...
+    oversampling (ekte): {'other_valve': 3, 'ball_open': 6, 'butterfly_valve': 6, 'check_valve': 3, 'gate_closed': 6, 'globe_valve': 4, 'reducer': 2}
+    trening: 10303  validering: 2000  ekte holdout: 213  klasser: ['background', 'ball_closed', 'ball_open', 'butterfly_valve', 'check_valve', 'gate_closed', 'gate_open', 'globe_valve', 'other_valve', 'reducer']
+    GateValve pseudo-merket: {'gate_open': 184, 'gate_closed': 21}
+    BallValve pseudo-merket: {'ball_closed': 135, 'ball_open': 2}  (kontroller dataset/ball_state_pseudolabels.csv)
+    holdout-tegninger: ['25VHO64PU00101', '25VHO71PW00101', '25WHO71PW00101']
+[+] trener CNN på cpu ...
+    epoke  1: tap 1.778  val-nøyaktighet 0.428
+    epoke  2: tap 1.247  val-nøyaktighet 0.365
+    epoke  3: tap 1.005  val-nøyaktighet 0.446
+    epoke  4: tap 0.900  val-nøyaktighet 0.558
+    epoke  5: tap 0.825  val-nøyaktighet 0.704
+    epoke  6: tap 0.774  val-nøyaktighet 0.581
+    epoke  7: tap 0.733  val-nøyaktighet 0.718
+    epoke  8: tap 0.690  val-nøyaktighet 0.636
+    epoke  9: tap 0.653  val-nøyaktighet 0.758
+    epoke 10: tap 0.633  val-nøyaktighet 0.785
+    epoke 11: tap 0.623  val-nøyaktighet 0.779
+    epoke 12: tap 0.599  val-nøyaktighet 0.798
+    epoke 13: tap 0.586  val-nøyaktighet 0.809
+    epoke 14: tap 0.575  val-nøyaktighet 0.808
+    epoke 15: tap 0.567  val-nøyaktighet 0.812
+
+=== VALIDERING syntetisk holdt-ut (n=2000) ===
+  nøyaktighet: 0.812
+  forveksling (rader=fasit):
+                   backgr  ball_c  ball_o  butter  check_  gate_c  gate_o  globe_  other_  reduce
+  background          104       7       2      10      17      10      15       3      10       0
+  ball_closed           6     164       2       4       3       1       0       1       1       1
+  ball_open            18       5     160       2       8       0       8       1       1       3
+  butterfly_valve      13       1       0     204       9       1       1       1       1       1
+  check_valve          19       1       2       5     180       1       5       0       0       0
+  gate_closed           0       0       0       0       5     159       3       4       9       0
+  gate_open            15       1       2       1      17       9     150       3       3       1
+  globe_valve          10       0       5       1       4       9       2     148       0       3
+  other_valve           9       5       0       4       8      11       4       6     163       3
+  reducer               8       0       3       1       4       0       2       1       0     192
+
+=== EKTE holdout-tegninger (n=213) ===
+  nøyaktighet: 0.831
+  forveksling (rader=fasit):
+                   backgr  ball_c  ball_o  butter  check_  gate_c  gate_o  globe_  other_  reduce
+  background          104       1       0       1       5       0       2       2       0       6
+  ball_closed           0       0       0       0       0       0       0       0       0       0
+  ball_open             0       0       0       0       0       0       0       0       0       0
+  butterfly_valve       3       0       0       3       7       0       1       2       1       0
+  check_valve           0       0       0       0       7       0       0       0       0       0
+  gate_closed           0       0       0       0       0       4       0       0       0       0
+  gate_open             0       0       0       0       0       0      11       0       0       0
+  globe_valve           0       0       0       0       0       0       0       0       0       0
+  other_valve           1       0       0       0       0       0       0       0       2       1
+  reducer               3       0       0       0       0       0       0       0       0      46
+
+  foreslåtte terskler: {'background': 0.41, 'ball_closed': 0.816, 'ball_open': 0.9, 'butterfly_valve': 0.855, 'check_valve': 0.604, 'gate_closed': 0.78, 'gate_open': 0.727, 'globe_valve': 0.9, 'other_valve': 0.74, 'reducer': 0.9}
+[✓] modell lagret -> model_cnn.pt
+[fold1:tren] ferdig på 365s (kode 0)
+
+[fold1:mine] mine_hard_negatives.py --drawings-dir C:\Appl\SommerstudentProsjekt\data\raw --model model_cnn.pt --dpi 200 --exclude 25VHO64PU00101,25VHO71PW00101,25WHO71PW00101
+[+] fasit for 17 tegninger fra dataset/labels.csv
+  [tekstmaske: 479 ord visket ut fra PDF-tekstlaget]
+    C025-V-HA24-P-_E-001-01: ball_valve=12, check_valve=5, gate_valve=2, globe_valve=10, reducer=2
+  [tekstmaske: 1148 ord visket ut fra PDF-tekstlaget]
+    C025-V-HO27-P-_E-001-01: ball_valve=8, check_valve=30, gate_valve=27, globe_valve=4, reducer=5
+  [tekstmaske: 1011 ord visket ut fra PDF-tekstlaget]
+    C025-V-HO27-P-_E-002-01: ball_valve=6, check_valve=30, gate_valve=15, globe_valve=4, reducer=9
+  [tekstmaske: 454 ord visket ut fra PDF-tekstlaget]
+    C025-V-HO27-P-_E-003-01: ball_valve=3, check_valve=30, gate_valve=6, globe_valve=11, reducer=24
+  [tekstmaske: 756 ord visket ut fra PDF-tekstlaget]
+    C025-V-HO45-P-_F-001-01: check_valve=24, gate_valve=13, reducer=6
+  [tekstmaske: 249 ord visket ut fra PDF-tekstlaget]
+    C025-V-HO63-P-_U-001-01: ball_valve=3, check_valve=8, gate_valve=4, reducer=4
+    C025-V-HO64-P-_U-001-01: holdout — hoppet over
+    C025-V-HO71-P-_W-001-01: holdout — hoppet over
+  [tekstmaske: 448 ord visket ut fra PDF-tekstlaget]
+    C025-W-HO11-P-_E-001-01: check_valve=5, reducer=3
+  [tekstmaske: 1614 ord visket ut fra PDF-tekstlaget]
+    C025-W-HO13-P-_E-004-01: ball_valve=10, check_valve=29, gate_valve=17, globe_valve=9, reducer=5
+  [tekstmaske: 686 ord visket ut fra PDF-tekstlaget]
+    C025-W-HO20-P-_E-001-01: ball_valve=1, check_valve=13, gate_valve=15, reducer=7
+  [tekstmaske: 1923 ord visket ut fra PDF-tekstlaget]
+    C025-W-HO20-P-_E-002-01: ball_valve=20, check_valve=30, gate_valve=12, globe_valve=3, reducer=6
+  [tekstmaske: 237 ord visket ut fra PDF-tekstlaget]
+    C025-W-HO63-P-_U-005-01: ball_valve=5, check_valve=28, gate_valve=7, globe_valve=1, reducer=18
+  [tekstmaske: 425 ord visket ut fra PDF-tekstlaget]
+    C025-W-HO64-P-_U-001-01: ball_valve=2, check_valve=30, gate_valve=7, globe_valve=15, reducer=23
+    C025-W-HO71-P-_W-001-01: holdout — hoppet over
+  [tekstmaske: 1190 ord visket ut fra PDF-tekstlaget]
+    C025-W-HO82-P-_U-001-01: ball_valve=9, check_valve=30, gate_valve=7, reducer=3
+
+[✓] klasse-spesifikke harde negativer -> dataset/HardNegativeByClass
+    ball_valve           79
+    butterfly_valve       0
+    check_valve         292
+    gate_valve          132
+    globe_valve          57
+    reducer             115
+    neste: py train_verifiers.py --real dataset --synth synth
+[fold1:mine] ferdig på 757s (kode 0)
+
+[fold1:verifikatorer] train_verifiers.py --real dataset --synth synth --holdout-list 25VHO64PU00101,25VHO71PW00101,25WHO71PW00101 --epochs 10 --max-per-side 4000 --target-precision 0.95
+[+] syntetisk: 10000  ekte (uten holdout): 1697
+    ekte undertyper: {'AngleValve': 41, 'Background': 350, 'BallValve': 137, 'ButterflyValve': 9, 'CheckValve': 61, 'FlangedConnection': 286, 'GateValve': 190, 'GlobeValve': 43, 'HardNegative': 459, 'NeedleValve': 12, 'PipeReducer': 109}
+[+] trener binære verifikatorer på cpu
+
+=== ball_valve ===
+    unike: 2137 positive, 9639 negative; klasse-spesifikke hard negatives: 79
+    balansert: trening 8000, validering 1600
+    epoke  1: train loss 0.482  val loss 0.377  val acc 0.839
+    epoke  2: train loss 0.300  val loss 0.392  val acc 0.798
+    epoke  3: train loss 0.247  val loss 0.285  val acc 0.891
+    epoke  4: train loss 0.205  val loss 0.266  val acc 0.894
+    epoke  5: train loss 0.183  val loss 0.269  val acc 0.855
+    epoke  6: train loss 0.176  val loss 0.248  val acc 0.884
+    epoke  7: train loss 0.156  val loss 0.218  val acc 0.897
+    epoke  8: train loss 0.146  val loss 0.266  val acc 0.876
+    epoke  9: train loss 0.140  val loss 0.199  val acc 0.923
+    epoke 10: train loss 0.128  val loss 0.187  val acc 0.924
+    terskel 0.648: precision 0.951, recall 0.882, FP 36/800
+
+=== globe_valve ===
+    unike: 1043 positive, 10711 negative; klasse-spesifikke hard negatives: 57
+    balansert: trening 8000, validering 1600
+    epoke  1: train loss 0.459  val loss 0.431  val acc 0.791
+    epoke  2: train loss 0.327  val loss 0.704  val acc 0.740
+    epoke  3: train loss 0.264  val loss 0.451  val acc 0.803
+    epoke  4: train loss 0.233  val loss 0.730  val acc 0.759
+    epoke  5: train loss 0.209  val loss 0.351  val acc 0.856
+    epoke  6: train loss 0.191  val loss 0.362  val acc 0.876
+    epoke  7: train loss 0.178  val loss 0.410  val acc 0.858
+    epoke  8: train loss 0.161  val loss 0.416  val acc 0.870
+    epoke  9: train loss 0.154  val loss 0.352  val acc 0.865
+    epoke 10: train loss 0.144  val loss 0.412  val acc 0.874
+    terskel 0.585: precision 0.951, recall 0.754, FP 31/800
+
+=== check_valve ===
+    unike: 1061 positive, 10928 negative; klasse-spesifikke hard negatives: 292
+    balansert: trening 8000, validering 1600
+    epoke  1: train loss 0.464  val loss 0.442  val acc 0.827
+    epoke  2: train loss 0.321  val loss 0.388  val acc 0.863
+    epoke  3: train loss 0.270  val loss 0.551  val acc 0.771
+    epoke  4: train loss 0.242  val loss 1.747  val acc 0.500
+    epoke  5: train loss 0.215  val loss 0.387  val acc 0.851
+    epoke  6: train loss 0.196  val loss 0.423  val acc 0.868
+    epoke  7: train loss 0.173  val loss 0.340  val acc 0.882
+    epoke  8: train loss 0.162  val loss 0.333  val acc 0.877
+    epoke  9: train loss 0.151  val loss 0.320  val acc 0.898
+    epoke 10: train loss 0.146  val loss 0.309  val acc 0.897
+    terskel 0.789: precision 0.951, recall 0.755, FP 31/800
+
+=== butterfly_valve ===
+    unike: 1009 positive, 10688 negative; klasse-spesifikke hard negatives: 0
+    balansert: trening 8000, validering 1600
+    epoke  1: train loss 0.426  val loss 0.361  val acc 0.817
+    epoke  2: train loss 0.249  val loss 0.236  val acc 0.893
+    epoke  3: train loss 0.190  val loss 0.572  val acc 0.756
+    epoke  4: train loss 0.163  val loss 0.153  val acc 0.952
+    epoke  5: train loss 0.156  val loss 0.304  val acc 0.866
+    epoke  6: train loss 0.129  val loss 0.178  val acc 0.951
+    epoke  7: train loss 0.121  val loss 0.188  val acc 0.951
+    epoke  8: train loss 0.107  val loss 0.137  val acc 0.955
+    epoke  9: train loss 0.097  val loss 0.135  val acc 0.957
+    epoke 10: train loss 0.095  val loss 0.133  val acc 0.955
+    terskel 0.457: precision 0.962, recall 0.953, FP 30/800
+
+=== reducer ===
+    unike: 1109 positive, 10703 negative; klasse-spesifikke hard negatives: 115
+    balansert: trening 8000, validering 1600
+    epoke  1: train loss 0.342  val loss 0.330  val acc 0.847
+    epoke  2: train loss 0.233  val loss 0.256  val acc 0.905
+    epoke  3: train loss 0.193  val loss 0.554  val acc 0.762
+    epoke  4: train loss 0.168  val loss 0.263  val acc 0.893
+    epoke  5: train loss 0.159  val loss 0.228  val acc 0.913
+    epoke  6: train loss 0.140  val loss 0.509  val acc 0.767
+    epoke  7: train loss 0.125  val loss 0.260  val acc 0.889
+    epoke  8: train loss 0.118  val loss 0.201  val acc 0.925
+    epoke  9: train loss 0.112  val loss 0.165  val acc 0.935
+    epoke 10: train loss 0.105  val loss 0.154  val acc 0.934
+    terskel 0.575: precision 0.951, recall 0.926, FP 38/800
+
+=== gate_valve ===
+    unike: 2190 positive, 9639 negative; klasse-spesifikke hard negatives: 132
+    balansert: trening 8000, validering 1600
+    epoke  1: train loss 0.513  val loss 0.559  val acc 0.736
+    epoke  2: train loss 0.398  val loss 0.365  val acc 0.834
+    epoke  3: train loss 0.332  val loss 1.685  val acc 0.501
+    epoke  4: train loss 0.286  val loss 0.306  val acc 0.875
+    epoke  5: train loss 0.260  val loss 0.307  val acc 0.866
+    epoke  6: train loss 0.222  val loss 0.416  val acc 0.820
+    epoke  7: train loss 0.209  val loss 0.271  val acc 0.888
+    epoke  8: train loss 0.195  val loss 0.277  val acc 0.892
+    epoke  9: train loss 0.187  val loss 0.248  val acc 0.889
+    epoke 10: train loss 0.176  val loss 0.243  val acc 0.904
+    terskel 0.652: precision 0.957, recall 0.854, FP 31/800
+
+[✓] verifikatorer lagret -> verifiers.pt
+    terskler: {'ball_valve': 0.6484, 'globe_valve': 0.5846, 'check_valve': 0.7885, 'butterfly_valve': 0.457, 'reducer': 0.5746, 'gate_valve': 0.6517}
+    model_cnn.pt er ikke endret; andretrinnet er separat.
+[fold1:verifikatorer] ferdig på 1215s (kode 0)
+
+[fold1:evaluer] make_report.py --drawings-dir C:\Appl\SommerstudentProsjekt\data\raw --model model_cnn.pt --dpi 200 --holdout-only 25VHO64PU00101,25VHO71PW00101,25WHO71PW00101
+[+] fasit for 17 tegninger fra dataset/labels.csv
+    C025-V-HO64-P-_U-001-01  gate:0/0+1fp  reducer:2/5
+    C025-V-HO71-P-_W-001-01  check:0/0+2fp  reducer:12/19+14fp
+    C025-W-HO71-P-_W-001-01  gate:14/15+22fp  ball:0/0  globe:0/0+1fp  check:7/7+19fp  butterfly:2/17  reducer:19/25+5fp  other:2/4+8fp
+
+klasse       fasit     sikre: P / R    m/mulige: P / R
+gate            15     38% /   93%       38% /   93%
+reducer         49     63% /   67%       41% /   73%
+check_valve      7     25% /  100%       24% /  100%
+ball             0      0% /    0%        0% /    0%
+globe_valve      0      0% /    0%        0% /    0%
+butterfly_valve    17    100% /   12%      100% /   18%
+other_valve      4     20% /   50%       18% /   75%
+
+[✓] -> results\evaluation.csv
+[fold1:evaluer] ferdig på 166s (kode 0)
+
+====================================================================
+FOLD 2/3 — holdout: 25VHA24PE00101,25WHO13PE00401,25WHO63PU00501
+====================================================================
+
+[fold2:tren] train_cnn.py --real dataset --holdout-list 25VHA24PE00101,25WHO13PE00401,25WHO63PU00501 --epochs 15
+[+] laster data (samme rørledning som HOG+SVM) ...
+    oversampling (ekte): {'other_valve': 4, 'ball_closed': 2, 'ball_open': 6, 'butterfly_valve': 6, 'check_valve': 4, 'gate_closed': 6, 'globe_valve': 6}
+    trening: 10279  validering: 2000  ekte holdout: 393  klasser: ['background', 'ball_closed', 'ball_open', 'butterfly_valve', 'check_valve', 'gate_closed', 'gate_open', 'globe_valve', 'other_valve', 'reducer']
+    GateValve pseudo-merket: {'gate_open': 184, 'gate_closed': 21}
+    BallValve pseudo-merket: {'ball_closed': 135, 'ball_open': 2}  (kontroller dataset/ball_state_pseudolabels.csv)
+    holdout-tegninger: ['25VHA24PE00101', '25WHO13PE00401', '25WHO63PU00501']
+[+] trener CNN på cpu ...
+    epoke  1: tap 1.773  val-nøyaktighet 0.552
+    epoke  2: tap 1.243  val-nøyaktighet 0.356
+    epoke  3: tap 1.018  val-nøyaktighet 0.632
+    epoke  4: tap 0.904  val-nøyaktighet 0.652
+    epoke  5: tap 0.827  val-nøyaktighet 0.739
+    epoke  6: tap 0.767  val-nøyaktighet 0.764
+    epoke  7: tap 0.722  val-nøyaktighet 0.734
+    epoke  8: tap 0.679  val-nøyaktighet 0.790
+    epoke  9: tap 0.649  val-nøyaktighet 0.780
+    epoke 10: tap 0.630  val-nøyaktighet 0.805
+    epoke 11: tap 0.594  val-nøyaktighet 0.794
+    epoke 12: tap 0.576  val-nøyaktighet 0.803
+    epoke 13: tap 0.575  val-nøyaktighet 0.812
+    epoke 14: tap 0.568  val-nøyaktighet 0.817
+    epoke 15: tap 0.561  val-nøyaktighet 0.816
+
+=== VALIDERING syntetisk holdt-ut (n=2000) ===
+  nøyaktighet: 0.817
+  forveksling (rader=fasit):
+                   backgr  ball_c  ball_o  butter  check_  gate_c  gate_o  globe_  other_  reduce
+  background          113       4       5       5      18       7      16       2       8       0
+  ball_closed           7     159       4       1       5       3       1       0       3       0
+  ball_open            19       3     161       3       7       1       9       1       1       1
+  butterfly_valve      12       1       0     201      12       1       3       1       1       0
+  check_valve          15       0       3       3     184       1       6       0       1       0
+  gate_closed           2       0       0       0       5     159       4       4       5       1
+  gate_open            13       0       2       1      21       8     152       3       1       1
+  globe_valve          11       0       3       1       5      11       6     145       0       0
+  other_valve          11       4       0       0       7      14       6       3     167       1
+  reducer               8       0       0       1       5       0       5       0       0     192
+
+=== EKTE holdout-tegninger (n=393) ===
+  nøyaktighet: 0.796
+  forveksling (rader=fasit):
+                   backgr  ball_c  ball_o  butter  check_  gate_c  gate_o  globe_  other_  reduce
+  background          196      29       2       1       6       1       4       2       3       7
+  ball_closed           1      30       0       0       0       0       0       0       0       0
+  ball_open             0       0       0       0       0       0       0       0       0       0
+  butterfly_valve       0       0       0       0       0       0       0       0       0       0
+  check_valve           2       0       0       1      22       0       0       0       0       0
+  gate_closed           0       0       0       0       0       0       0       0       0       0
+  gate_open             1       0       0       1       0       2      30       3       7       0
+  globe_valve           0       0       0       0       0       2       0       8       2       0
+  other_valve           0       0       0       0       0       0       2       0      12       0
+  reducer               1       0       0       0       0       0       0       0       0      15
+
+  foreslåtte terskler: {'background': 0.432, 'ball_closed': 0.766, 'ball_open': 0.9, 'butterfly_valve': 0.768, 'check_valve': 0.618, 'gate_closed': 0.813, 'gate_open': 0.805, 'globe_valve': 0.893, 'other_valve': 0.763, 'reducer': 0.9}
+[✓] modell lagret -> model_cnn.pt
+[fold2:tren] ferdig på 424s (kode 0)
+
+[fold2:mine] mine_hard_negatives.py --drawings-dir C:\Appl\SommerstudentProsjekt\data\raw --model model_cnn.pt --dpi 200 --exclude 25VHA24PE00101,25WHO13PE00401,25WHO63PU00501
+[+] fasit for 17 tegninger fra dataset/labels.csv
+    C025-V-HA24-P-_E-001-01: holdout — hoppet over
+  [tekstmaske: 1148 ord visket ut fra PDF-tekstlaget]
+    C025-V-HO27-P-_E-001-01: ball_valve=5, check_valve=30, gate_valve=27, globe_valve=2, reducer=5
+  [tekstmaske: 1011 ord visket ut fra PDF-tekstlaget]
+    C025-V-HO27-P-_E-002-01: ball_valve=5, check_valve=29, gate_valve=17, globe_valve=2, reducer=6
+  [tekstmaske: 454 ord visket ut fra PDF-tekstlaget]
+    C025-V-HO27-P-_E-003-01: ball_valve=4, check_valve=30, gate_valve=9, globe_valve=5, reducer=19
+  [tekstmaske: 756 ord visket ut fra PDF-tekstlaget]
+    C025-V-HO45-P-_F-001-01: ball_valve=1, check_valve=26, gate_valve=13, globe_valve=1, reducer=5
+  [tekstmaske: 249 ord visket ut fra PDF-tekstlaget]
+    C025-V-HO63-P-_U-001-01: ball_valve=1, check_valve=15, gate_valve=4, globe_valve=1, reducer=2
+  [tekstmaske: 312 ord visket ut fra PDF-tekstlaget]
+    C025-V-HO64-P-_U-001-01: check_valve=3, gate_valve=2
+  [tekstmaske: 188 ord visket ut fra PDF-tekstlaget]
+    C025-V-HO71-P-_W-001-01: check_valve=8, gate_valve=4, globe_valve=1, reducer=30
+  [tekstmaske: 448 ord visket ut fra PDF-tekstlaget]
+    C025-W-HO11-P-_E-001-01: ball_valve=1
+    C025-W-HO13-P-_E-004-01: holdout — hoppet over
+  [tekstmaske: 686 ord visket ut fra PDF-tekstlaget]
+    C025-W-HO20-P-_E-001-01: ball_valve=3, check_valve=9, gate_valve=14, reducer=6
+  [tekstmaske: 1923 ord visket ut fra PDF-tekstlaget]
+    C025-W-HO20-P-_E-002-01: ball_valve=13, check_valve=30, gate_valve=16, globe_valve=1, reducer=2
+    C025-W-HO63-P-_U-005-01: holdout — hoppet over
+  [tekstmaske: 425 ord visket ut fra PDF-tekstlaget]
+    C025-W-HO64-P-_U-001-01: ball_valve=7, check_valve=30, gate_valve=11, globe_valve=5, reducer=26
+  [tekstmaske: 421 ord visket ut fra PDF-tekstlaget]
+    C025-W-HO71-P-_W-001-01: ball_valve=6, check_valve=30, gate_valve=30, globe_valve=4, reducer=30
+  [tekstmaske: 1190 ord visket ut fra PDF-tekstlaget]
+    C025-W-HO82-P-_U-001-01: ball_valve=5, check_valve=30, gate_valve=8, reducer=1
+
+[✓] klasse-spesifikke harde negativer -> dataset/HardNegativeByClass
+    ball_valve           51
+    butterfly_valve       0
+    check_valve         270
+    gate_valve          155
+    globe_valve          22
+    reducer             132
+    neste: py train_verifiers.py --real dataset --synth synth
+[fold2:mine] ferdig på 513s (kode 0)
+
+[fold2:verifikatorer] train_verifiers.py --real dataset --synth synth --holdout-list 25VHA24PE00101,25WHO13PE00401,25WHO63PU00501 --epochs 10 --max-per-side 4000 --target-precision 0.95
+[+] syntetisk: 10000  ekte (uten holdout): 1517
+    ekte undertyper: {'AngleValve': 37, 'Background': 350, 'BallValve': 106, 'ButterflyValve': 26, 'CheckValve': 43, 'FlangedConnection': 276, 'GateValve': 161, 'GlobeValve': 31, 'HardNegative': 339, 'NeedleValve': 6, 'PipeReducer': 142}
+[+] trener binære verifikatorer på cpu
+
+=== ball_valve ===
+    unike: 2106 positive, 9462 negative; klasse-spesifikke hard negatives: 51
+    balansert: trening 8000, validering 1600
+    epoke  1: train loss 0.439  val loss 0.346  val acc 0.829
+    epoke  2: train loss 0.281  val loss 0.781  val acc 0.691
+    epoke  3: train loss 0.230  val loss 0.976  val acc 0.611
+    epoke  4: train loss 0.196  val loss 0.728  val acc 0.696
+    epoke  5: train loss 0.180  val loss 0.205  val acc 0.907
+    epoke  6: train loss 0.161  val loss 0.217  val acc 0.896
+    epoke  7: train loss 0.149  val loss 0.176  val acc 0.916
+    epoke  8: train loss 0.136  val loss 0.338  val acc 0.871
+    epoke  9: train loss 0.126  val loss 0.198  val acc 0.928
+    epoke 10: train loss 0.125  val loss 0.162  val acc 0.932
+    terskel 0.642: precision 0.954, recall 0.882, FP 34/800
+
+=== globe_valve ===
+    unike: 1031 positive, 10508 negative; klasse-spesifikke hard negatives: 22
+    balansert: trening 8000, validering 1600
+    epoke  1: train loss 0.474  val loss 0.661  val acc 0.640
+    epoke  2: train loss 0.310  val loss 0.336  val acc 0.837
+    epoke  3: train loss 0.259  val loss 0.278  val acc 0.871
+    epoke  4: train loss 0.221  val loss 0.278  val acc 0.874
+    epoke  5: train loss 0.197  val loss 0.485  val acc 0.800
+    epoke  6: train loss 0.176  val loss 0.215  val acc 0.897
+    epoke  7: train loss 0.158  val loss 0.304  val acc 0.858
+    epoke  8: train loss 0.149  val loss 0.425  val acc 0.841
+    epoke  9: train loss 0.134  val loss 0.321  val acc 0.859
+    epoke 10: train loss 0.134  val loss 0.216  val acc 0.901
+    terskel 0.709: precision 0.955, recall 0.843, FP 32/800
+
+=== check_valve ===
+    unike: 1043 positive, 10744 negative; klasse-spesifikke hard negatives: 270
+    balansert: trening 8000, validering 1600
+    epoke  1: train loss 0.489  val loss 0.364  val acc 0.842
+    epoke  2: train loss 0.356  val loss 0.332  val acc 0.867
+    epoke  3: train loss 0.290  val loss 0.840  val acc 0.618
+    epoke  4: train loss 0.262  val loss 0.248  val acc 0.882
+    epoke  5: train loss 0.222  val loss 1.963  val acc 0.524
+    epoke  6: train loss 0.205  val loss 0.253  val acc 0.882
+    epoke  7: train loss 0.184  val loss 0.298  val acc 0.876
+    epoke  8: train loss 0.176  val loss 0.228  val acc 0.902
+    epoke  9: train loss 0.164  val loss 0.225  val acc 0.899
+    epoke 10: train loss 0.160  val loss 0.219  val acc 0.906
+    terskel 0.786: precision 0.952, recall 0.841, FP 34/800
+
+=== butterfly_valve ===
+    unike: 1026 positive, 10491 negative; klasse-spesifikke hard negatives: 0
+    balansert: trening 8000, validering 1600
+    epoke  1: train loss 0.459  val loss 0.685  val acc 0.704
+    epoke  2: train loss 0.258  val loss 0.338  val acc 0.840
+    epoke  3: train loss 0.185  val loss 0.469  val acc 0.822
+    epoke  4: train loss 0.166  val loss 0.374  val acc 0.866
+    epoke  5: train loss 0.139  val loss 0.178  val acc 0.928
+    epoke  6: train loss 0.130  val loss 0.464  val acc 0.813
+    epoke  7: train loss 0.112  val loss 0.149  val acc 0.936
+    epoke  8: train loss 0.104  val loss 0.197  val acc 0.924
+    epoke  9: train loss 0.094  val loss 0.156  val acc 0.921
+    epoke 10: train loss 0.087  val loss 0.168  val acc 0.925
+    terskel 0.570: precision 0.951, recall 0.929, FP 38/800
+
+=== reducer ===
+    unike: 1142 positive, 10507 negative; klasse-spesifikke hard negatives: 132
+    balansert: trening 8000, validering 1600
+    epoke  1: train loss 0.334  val loss 0.270  val acc 0.893
+    epoke  2: train loss 0.219  val loss 1.030  val acc 0.551
+    epoke  3: train loss 0.186  val loss 0.242  val acc 0.907
+    epoke  4: train loss 0.159  val loss 0.335  val acc 0.887
+    epoke  5: train loss 0.144  val loss 0.503  val acc 0.831
+    epoke  6: train loss 0.120  val loss 0.224  val acc 0.931
+    epoke  7: train loss 0.112  val loss 0.250  val acc 0.905
+    epoke  8: train loss 0.099  val loss 0.244  val acc 0.914
+    epoke  9: train loss 0.094  val loss 0.185  val acc 0.930
+    epoke 10: train loss 0.087  val loss 0.191  val acc 0.941
+    terskel 0.582: precision 0.952, recall 0.897, FP 36/800
+
+=== gate_valve ===
+    unike: 2161 positive, 9511 negative; klasse-spesifikke hard negatives: 155
+    balansert: trening 8000, validering 1600
+    epoke  1: train loss 0.508  val loss 0.522  val acc 0.741
+    epoke  2: train loss 0.372  val loss 1.099  val acc 0.529
+    epoke  3: train loss 0.299  val loss 0.775  val acc 0.676
+    epoke  4: train loss 0.281  val loss 0.445  val acc 0.804
+    epoke  5: train loss 0.240  val loss 0.517  val acc 0.783
+    epoke  6: train loss 0.215  val loss 0.881  val acc 0.717
+    epoke  7: train loss 0.198  val loss 0.314  val acc 0.869
+    epoke  8: train loss 0.181  val loss 0.309  val acc 0.876
+    epoke  9: train loss 0.173  val loss 0.245  val acc 0.886
+    epoke 10: train loss 0.164  val loss 0.235  val acc 0.885
+    terskel 0.689: precision 0.951, recall 0.828, FP 34/800
+
+[✓] verifikatorer lagret -> verifiers.pt
+    terskler: {'ball_valve': 0.6418, 'globe_valve': 0.7089, 'check_valve': 0.7861, 'butterfly_valve': 0.5698, 'reducer': 0.5821, 'gate_valve': 0.689}
+    model_cnn.pt er ikke endret; andretrinnet er separat.
+[fold2:verifikatorer] ferdig på 1015s (kode 0)
+
+[fold2:evaluer] make_report.py --drawings-dir C:\Appl\SommerstudentProsjekt\data\raw --model model_cnn.pt --dpi 200 --holdout-only 25VHA24PE00101,25WHO13PE00401,25WHO63PU00501
+[+] fasit for 17 tegninger fra dataset/labels.csv
+    C025-V-HA24-P-_E-001-01  gate:5/12  ball:0/0  globe:3/6+6fp  check:2/2  reducer:4/6  other:0/2+2fp
+    C025-W-HO13-P-_E-004-01  gate:9/28+4fp  ball:4/7  globe:2/6+1fp  check:2/6+5fp  reducer:2/2+1fp  other:1/11+12fp
+    C025-W-HO63-P-_U-005-01  gate:3/4  ball:7/24+1fp  globe:0/0  check:17/17+7fp  reducer:8/8+3fp  other:0/1
+
+klasse       fasit     sikre: P / R    m/mulige: P / R
+gate            44     81% /   39%       79% /   52%
+ball            31     92% /   35%       81% /   42%
+globe_valve     12     42% /   42%       29% /   58%
+check_valve     25     64% /   84%       62% /   84%
+reducer         16     78% /   88%       61% /   88%
+other_valve     14      7% /    7%       11% /   29%
+
+[✓] -> results\evaluation.csv
+[fold2:evaluer] ferdig på 137s (kode 0)
+
+====================================================================
+FOLD 3/3 — holdout: 25WHO11PE00101,25WHO20PE00101,25VHO27PE00101
+====================================================================
+
+[fold3:tren] train_cnn.py --real dataset --holdout-list 25WHO11PE00101,25WHO20PE00101,25VHO27PE00101 --epochs 15
+[+] laster data (samme rørledning som HOG+SVM) ...
+    oversampling (ekte): {'other_valve': 4, 'ball_open': 6, 'butterfly_valve': 6, 'check_valve': 3, 'gate_closed': 6, 'globe_valve': 5}
+    trening: 10220  validering: 2000  ekte holdout: 326  klasser: ['background', 'ball_closed', 'ball_open', 'butterfly_valve', 'check_valve', 'gate_closed', 'gate_open', 'globe_valve', 'other_valve', 'reducer']
+    GateValve pseudo-merket: {'gate_open': 184, 'gate_closed': 21}
+    BallValve pseudo-merket: {'ball_closed': 135, 'ball_open': 2}  (kontroller dataset/ball_state_pseudolabels.csv)
+    holdout-tegninger: ['25VHO27PE00101', '25WHO11PE00101', '25WHO20PE00101']
+[+] trener CNN på cpu ...
+    epoke  1: tap 1.776  val-nøyaktighet 0.460
+    epoke  2: tap 1.243  val-nøyaktighet 0.438
+    epoke  3: tap 1.033  val-nøyaktighet 0.617
+    epoke  4: tap 0.916  val-nøyaktighet 0.438
+    epoke  5: tap 0.836  val-nøyaktighet 0.703
+    epoke  6: tap 0.774  val-nøyaktighet 0.693
+    epoke  7: tap 0.735  val-nøyaktighet 0.715
+    epoke  8: tap 0.696  val-nøyaktighet 0.747
+    epoke  9: tap 0.664  val-nøyaktighet 0.716
+    epoke 10: tap 0.638  val-nøyaktighet 0.772
+    epoke 11: tap 0.620  val-nøyaktighet 0.790
+    epoke 12: tap 0.599  val-nøyaktighet 0.790
+    epoke 13: tap 0.588  val-nøyaktighet 0.811
+    epoke 14: tap 0.570  val-nøyaktighet 0.812
+    epoke 15: tap 0.576  val-nøyaktighet 0.811
+
+=== VALIDERING syntetisk holdt-ut (n=2000) ===
+  nøyaktighet: 0.812
+  forveksling (rader=fasit):
+                   backgr  ball_c  ball_o  butter  check_  gate_c  gate_o  globe_  other_  reduce
+  background          122       5       5       6      13       6      12       1       8       0
+  ball_closed           6     164       3       0       3       0       2       1       2       2
+  ball_open            20       6     166       2       4       0       4       2       1       1
+  butterfly_valve      14       2       0     198      14       0       1       1       2       0
+  check_valve          22       0       3       6     177       1       2       1       0       1
+  gate_closed           2       0       0       0       4     156       3       9       5       1
+  gate_open            17       0       4       0      20      10     146       1       2       2
+  globe_valve          11       1       5       2       3       8       3     147       1       1
+  other_valve          15      10       0       2       4      18       4       4     154       2
+  reducer               8       0       2       0       6       0       0       0       0     195
+
+=== EKTE holdout-tegninger (n=326) ===
+  nøyaktighet: 0.813
+  forveksling (rader=fasit):
+                   backgr  ball_c  ball_o  butter  check_  gate_c  gate_o  globe_  other_  reduce
+  background          185      19       2       1       3       0      10       3       1       3
+  ball_closed           1       9       4       0       0       0       0       0       0       0
+  ball_open             0       0       1       0       0       0       0       0       0       0
+  butterfly_valve       0       0       0       1       0       0       0       0       0       0
+  check_valve           1       0       0       0       3       0       0       0       0       0
+  gate_closed           0       0       0       0       0       0       0       0       0       0
+  gate_open             2       0       0       0       0       0      34       5       0       0
+  globe_valve           2       0       0       0       0       0       0       5       0       0
+  other_valve           1       0       0       0       0       0       1       0      12       0
+  reducer               2       0       0       0       0       0       0       0       0      15
+
+  foreslåtte terskler: {'background': 0.432, 'ball_closed': 0.806, 'ball_open': 0.9, 'butterfly_valve': 0.746, 'check_valve': 0.599, 'gate_closed': 0.767, 'gate_open': 0.816, 'globe_valve': 0.9, 'other_valve': 0.798, 'reducer': 0.9}
+[✓] modell lagret -> model_cnn.pt
+[fold3:tren] ferdig på 424s (kode 0)
+
+[fold3:mine] mine_hard_negatives.py --drawings-dir C:\Appl\SommerstudentProsjekt\data\raw --model model_cnn.pt --dpi 200 --exclude 25WHO11PE00101,25WHO20PE00101,25VHO27PE00101
+[+] fasit for 17 tegninger fra dataset/labels.csv
+  [tekstmaske: 479 ord visket ut fra PDF-tekstlaget]
+    C025-V-HA24-P-_E-001-01: ball_valve=21, check_valve=8, gate_valve=4, globe_valve=11, reducer=1
+    C025-V-HO27-P-_E-001-01: holdout — hoppet over
+  [tekstmaske: 1011 ord visket ut fra PDF-tekstlaget]
+    C025-V-HO27-P-_E-002-01: ball_valve=4, butterfly_valve=1, check_valve=27, gate_valve=15, globe_valve=3, reducer=7
+  [tekstmaske: 454 ord visket ut fra PDF-tekstlaget]
+    C025-V-HO27-P-_E-003-01: ball_valve=5, check_valve=30, gate_valve=4, globe_valve=4, reducer=28
+  [tekstmaske: 756 ord visket ut fra PDF-tekstlaget]
+    C025-V-HO45-P-_F-001-01: ball_valve=3, check_valve=25, gate_valve=12, globe_valve=2, reducer=6
+  [tekstmaske: 249 ord visket ut fra PDF-tekstlaget]
+    C025-V-HO63-P-_U-001-01: ball_valve=2, check_valve=16, gate_valve=4, reducer=3
+  [tekstmaske: 312 ord visket ut fra PDF-tekstlaget]
+    C025-V-HO64-P-_U-001-01: check_valve=2, gate_valve=2
+  [tekstmaske: 188 ord visket ut fra PDF-tekstlaget]
+    C025-V-HO71-P-_W-001-01: ball_valve=1, check_valve=12, gate_valve=1, reducer=30
+    C025-W-HO11-P-_E-001-01: holdout — hoppet over
+  [tekstmaske: 1614 ord visket ut fra PDF-tekstlaget]
+    C025-W-HO13-P-_E-004-01: ball_valve=13, check_valve=30, gate_valve=28, globe_valve=7, reducer=2
+    C025-W-HO20-P-_E-001-01: holdout — hoppet over
+  [tekstmaske: 1923 ord visket ut fra PDF-tekstlaget]
+    C025-W-HO20-P-_E-002-01: ball_valve=23, check_valve=30, gate_valve=12, globe_valve=3, reducer=4
+  [tekstmaske: 237 ord visket ut fra PDF-tekstlaget]
+    C025-W-HO63-P-_U-005-01: ball_valve=2, check_valve=22, gate_valve=6, globe_valve=2, reducer=15
+  [tekstmaske: 425 ord visket ut fra PDF-tekstlaget]
+    C025-W-HO64-P-_U-001-01: ball_valve=4, check_valve=30, gate_valve=13, globe_valve=5, reducer=27
+  [tekstmaske: 421 ord visket ut fra PDF-tekstlaget]
+    C025-W-HO71-P-_W-001-01: ball_valve=11, check_valve=30, gate_valve=30, globe_valve=3, reducer=30
+  [tekstmaske: 1190 ord visket ut fra PDF-tekstlaget]
+    C025-W-HO82-P-_U-001-01: ball_valve=7, check_valve=30, gate_valve=6, globe_valve=2
+
+[✓] klasse-spesifikke harde negativer -> dataset/HardNegativeByClass
+    ball_valve           96
+    butterfly_valve       1
+    check_valve         292
+    gate_valve          137
+    globe_valve          42
+    reducer             153
+    neste: py train_verifiers.py --real dataset --synth synth
+[fold3:mine] ferdig på 809s (kode 0)
+
+[fold3:verifikatorer] train_verifiers.py --real dataset --synth synth --holdout-list 25WHO11PE00101,25WHO20PE00101,25VHO27PE00101 --epochs 10 --max-per-side 4000 --target-precision 0.95
+[+] syntetisk: 10000  ekte (uten holdout): 1584
+    ekte undertyper: {'AngleValve': 37, 'Background': 350, 'BallValve': 122, 'ButterflyValve': 25, 'CheckValve': 64, 'FlangedConnection': 261, 'GateValve': 164, 'GlobeValve': 36, 'HardNegative': 378, 'NeedleValve': 6, 'PipeReducer': 141}
+[+] trener binære verifikatorer på cpu
+
+=== ball_valve ===
+    unike: 2122 positive, 9558 negative; klasse-spesifikke hard negatives: 96
+    balansert: trening 8000, validering 1600
+    epoke  1: train loss 0.459  val loss 0.948  val acc 0.572
+    epoke  2: train loss 0.300  val loss 0.538  val acc 0.744
+    epoke  3: train loss 0.241  val loss 0.292  val acc 0.859
+    epoke  4: train loss 0.211  val loss 0.238  val acc 0.899
+    epoke  5: train loss 0.185  val loss 0.191  val acc 0.914
+    epoke  6: train loss 0.173  val loss 0.183  val acc 0.915
+    epoke  7: train loss 0.152  val loss 0.178  val acc 0.919
+    epoke  8: train loss 0.140  val loss 0.183  val acc 0.915
+    epoke  9: train loss 0.136  val loss 0.274  val acc 0.894
+    epoke 10: train loss 0.130  val loss 0.167  val acc 0.929
+    terskel 0.495: precision 0.952, recall 0.909, FP 37/800
+
+=== globe_valve ===
+    unike: 1036 positive, 10590 negative; klasse-spesifikke hard negatives: 42
+    balansert: trening 8000, validering 1600
+    epoke  1: train loss 0.458  val loss 0.362  val acc 0.814
+    epoke  2: train loss 0.308  val loss 0.330  val acc 0.853
+    epoke  3: train loss 0.254  val loss 0.340  val acc 0.839
+    epoke  4: train loss 0.232  val loss 0.304  val acc 0.838
+    epoke  5: train loss 0.199  val loss 0.426  val acc 0.822
+    epoke  6: train loss 0.182  val loss 0.719  val acc 0.741
+    epoke  7: train loss 0.172  val loss 0.367  val acc 0.851
+    epoke  8: train loss 0.154  val loss 0.253  val acc 0.900
+    epoke  9: train loss 0.148  val loss 0.191  val acc 0.903
+    epoke 10: train loss 0.139  val loss 0.195  val acc 0.905
+    terskel 0.477: precision 0.951, recall 0.881, FP 36/800
+
+=== check_valve ===
+    unike: 1064 positive, 10812 negative; klasse-spesifikke hard negatives: 292
+    balansert: trening 8000, validering 1600
+    epoke  1: train loss 0.501  val loss 0.460  val acc 0.778
+    epoke  2: train loss 0.361  val loss 0.342  val acc 0.848
+    epoke  3: train loss 0.295  val loss 0.292  val acc 0.856
+    epoke  4: train loss 0.245  val loss 0.920  val acc 0.663
+    epoke  5: train loss 0.220  val loss 0.321  val acc 0.851
+    epoke  6: train loss 0.193  val loss 0.419  val acc 0.822
+    epoke  7: train loss 0.187  val loss 0.281  val acc 0.868
+    epoke  8: train loss 0.162  val loss 0.272  val acc 0.871
+    epoke  9: train loss 0.159  val loss 0.210  val acc 0.896
+    epoke 10: train loss 0.147  val loss 0.224  val acc 0.899
+    terskel 0.731: precision 0.951, recall 0.760, FP 31/800
+
+=== butterfly_valve ===
+    unike: 1025 positive, 10560 negative; klasse-spesifikke hard negatives: 1
+    balansert: trening 8000, validering 1600
+    epoke  1: train loss 0.461  val loss 0.304  val acc 0.864
+    epoke  2: train loss 0.267  val loss 0.552  val acc 0.765
+    epoke  3: train loss 0.191  val loss 0.184  val acc 0.922
+    epoke  4: train loss 0.165  val loss 0.177  val acc 0.921
+    epoke  5: train loss 0.150  val loss 0.320  val acc 0.879
+    epoke  6: train loss 0.125  val loss 0.188  val acc 0.920
+    epoke  7: train loss 0.110  val loss 0.189  val acc 0.924
+    epoke  8: train loss 0.101  val loss 0.389  val acc 0.861
+    epoke  9: train loss 0.092  val loss 0.164  val acc 0.935
+    epoke 10: train loss 0.085  val loss 0.146  val acc 0.938
+    terskel 0.582: precision 0.965, recall 0.921, FP 27/800
+
+=== reducer ===
+    unike: 1141 positive, 10596 negative; klasse-spesifikke hard negatives: 153
+    balansert: trening 8000, validering 1600
+    epoke  1: train loss 0.339  val loss 0.311  val acc 0.882
+    epoke  2: train loss 0.216  val loss 0.206  val acc 0.931
+    epoke  3: train loss 0.190  val loss 0.372  val acc 0.832
+    epoke  4: train loss 0.164  val loss 0.268  val acc 0.897
+    epoke  5: train loss 0.141  val loss 0.393  val acc 0.832
+    epoke  6: train loss 0.130  val loss 0.378  val acc 0.858
+    epoke  7: train loss 0.122  val loss 0.238  val acc 0.913
+    epoke  8: train loss 0.112  val loss 0.531  val acc 0.808
+    epoke  9: train loss 0.106  val loss 0.163  val acc 0.932
+    epoke 10: train loss 0.097  val loss 0.144  val acc 0.941
+    terskel 0.469: precision 0.951, recall 0.951, FP 39/800
+
+=== gate_valve ===
+    unike: 2164 positive, 9557 negative; klasse-spesifikke hard negatives: 137
+    balansert: trening 8000, validering 1600
+    epoke  1: train loss 0.517  val loss 0.719  val acc 0.632
+    epoke  2: train loss 0.399  val loss 0.446  val acc 0.796
+    epoke  3: train loss 0.335  val loss 0.335  val acc 0.859
+    epoke  4: train loss 0.290  val loss 0.970  val acc 0.621
+    epoke  5: train loss 0.254  val loss 0.288  val acc 0.872
+    epoke  6: train loss 0.230  val loss 0.283  val acc 0.866
+    epoke  7: train loss 0.212  val loss 0.278  val acc 0.864
+    epoke  8: train loss 0.200  val loss 0.244  val acc 0.882
+    epoke  9: train loss 0.187  val loss 0.251  val acc 0.901
+    epoke 10: train loss 0.182  val loss 0.232  val acc 0.893
+    terskel 0.726: precision 0.951, recall 0.799, FP 33/800
+
+[✓] verifikatorer lagret -> verifiers.pt
+    terskler: {'ball_valve': 0.4946, 'globe_valve': 0.4772, 'check_valve': 0.7313, 'butterfly_valve': 0.5821, 'reducer': 0.4695, 'gate_valve': 0.7264}
+    model_cnn.pt er ikke endret; andretrinnet er separat.
+[fold3:verifikatorer] ferdig på 1080s (kode 0)
+
+[fold3:evaluer] make_report.py --drawings-dir C:\Appl\SommerstudentProsjekt\data\raw --model model_cnn.pt --dpi 200 --holdout-only 25WHO11PE00101,25WHO20PE00101,25VHO27PE00101
+[+] fasit for 17 tegninger fra dataset/labels.csv
+    C025-V-HO27-P-_E-001-01  gate:5/28  ball:6/12+2fp  globe:0/2+1fp  check:0/1+1fp  reducer:7/8+1fp  other:3/8+3fp
+    C025-W-HO11-P-_E-001-01  butterfly:0/1  reducer:1/2
+    C025-W-HO20-P-_E-001-01  gate:1/13  ball:2/3+1fp  globe:5/5  check:0/3+1fp  reducer:0/7+2fp  other:1/6+1fp
+
+klasse       fasit     sikre: P / R    m/mulige: P / R
+gate            41    100% /   15%      100% /   20%
+ball            15     73% /   53%       73% /   73%
+globe_valve      7     83% /   71%       88% /  100%
+check_valve      4      0% /    0%        0% /    0%
+reducer         17     73% /   47%       64% /   53%
+other_valve     14     50% /   29%       37% /   50%
+butterfly_valve     1      0% /    0%        0% /    0%
+
+[✓] -> results\evaluation.csv
+[fold3:evaluer] ferdig på 114s (kode 0)
+
+====================================================================
+AGGREGERT (alle folder — hver tegning målt som usett)
+====================================================================
+klasse           fasit     sikre: P / R    m/mulige: P / R
+ball                46     83% /   41%       75% /   52%
+butterfly_valve     18    100% /   11%      100% /   17%
+check_valve         36     44% /   78%       42% /   78%
+gate               100     58% /   37%       61% /   45%
+globe_valve         19     53% /   53%       40% /   74%
+other_valve         32     21% /   22%       19% /   44%
+reducer             82     68% /   67%       48% /   72%
+
+[✓] per-rad detaljer -> C:\Appl\SommerstudentProsjekt\gatevalve-ai\results\evaluation_folds.csv
+[✓] fold-artefakter   -> C:\Appl\SommerstudentProsjekt\gatevalve-ai\results\folds
