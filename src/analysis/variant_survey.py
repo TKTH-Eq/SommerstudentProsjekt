@@ -153,10 +153,10 @@ def composition_key(profile: dict) -> str:
 def describe_key(key: str) -> str:
     n, _, parts = key.partition("|")
     if not parts:
-        return "tom"
-    human = ", ".join(f"{c} med {p} punkter" for c, _, p in
+        return "empty"
+    human = ", ".join(f"{c} with {p} points" for c, _, p in
                       (x.partition("x") for x in parts.split(",")))
-    return f"{n} primitiver: {human}"
+    return f"{n} primitives: {human}"
 
 
 def geometry_fingerprint(curves: list[Curve]) -> dict:
@@ -332,8 +332,8 @@ def harvest(sources: list[dict], class_to_dexpi: dict[str, str], *,
         if page_primitive_count(pdf) == 0:
             skipped.append({"drawing": pdf.stem,
                             "detections": len(chosen),
-                            "reason": "ingen vektorgeometri på siden — "
-                                      "skannet ark"})
+                            "reason": "no vector geometry on the page — "
+                                      "scanned sheet"})
             continue
 
         try:
@@ -341,7 +341,7 @@ def harvest(sources: list[dict], class_to_dexpi: dict[str, str], *,
                 pdf, [tuple(d["bbox_orig"]) for d in chosen], dpi, **settings)
         except Exception as e:                                  # noqa: BLE001
             failures.extend({"drawing": pdf.stem, "class": d.get("cls"),
-                             "reason": f"siden kunne ikke leses: {str(e)[:60]}"}
+                             "reason": f"the page could not be read: {str(e)[:60]}"}
                             for d in chosen)
             continue
 
@@ -349,7 +349,7 @@ def harvest(sources: list[dict], class_to_dexpi: dict[str, str], *,
             cls = det["cls"]
             if len(curves) < 2:
                 failures.append({"drawing": pdf.stem, "class": cls,
-                                 "reason": f"{len(curves)} primitiv(er) lest ut"})
+                                 "reason": f"{len(curves)} primitive(s) read"})
                 continue
             prof = shape_profile(curves)
             box = det["bbox_orig"]
@@ -372,7 +372,7 @@ def harvest(sources: list[dict], class_to_dexpi: dict[str, str], *,
                 fingerprint=geometry_fingerprint(curves), fill=round(fill, 3)))
 
     if progress:
-        progress(1.0, "ferdig")
+        progress(1.0, "done")
     return instances, failures, skipped
 
 

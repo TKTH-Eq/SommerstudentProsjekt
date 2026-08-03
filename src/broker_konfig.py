@@ -1,27 +1,24 @@
 """
 src/broker_konfig.py
 =====================================================================
-Streamlit page: audit a Model Broker configuration.
+Streamlit page: see what a Model Broker configuration is made of.
 
-What this page is NOT any more: it used to contain a pattern generator. That
-was superseded by the Symbol variants page, which does the same thing with a
-confirmation step in front of it, and keeping a second route with no human
-gate would have been a way to bypass the gate. It was removed rather than
-left disabled.
+The page exists for one image. A configuration is not one pattern per symbol
+— it is a library that grew as new sheets were met, and the Huldra file holds
+fourteen patterns for GateValve alone. Stated as a number that is a curiosity.
+Rendered as fourteen pictures of nearly the same valve, built from wildly
+different primitive counts, it is the argument the Symbol variants page rests
+on, and it needs no explanation.
 
-What remains is the part that turned out to be useful without a model, without
-geometry extraction and without anything that can go quietly wrong:
+Everything else on this page is a check rather than a finding, so it is
+collapsed: coverage against the DEXPI output, structural soundness, near
+duplicates, and a comparison against a second exported file. Run them when
+something looks wrong; ignore them otherwise.
 
-  Variant families  the evidence that a configuration is a library rather than
-                    one pattern per symbol, which is the observation the whole
-                    Symbol variants page rests on
-  Coverage          which DEXPI classes have no pattern, and which patterns
-                    target a class that never appears. Two lists and a set
-                    difference
-  Health            dangling references, near-duplicate patterns, and patterns
-                    that would match almost anything
-  Compare           what changed between two exported configurations, which is
-                    how you check that an import did what you expected
+An earlier version of this page also generated patterns. That moved to Symbol
+variants, where a human confirms each composition first, and was removed here
+rather than left in — two routes to the same output with only one of them
+gated is a way around the gate.
 
 Add to app.py:
 
@@ -45,19 +42,20 @@ from analysis.broker_config import (                            # noqa: E402
     validate_config,
 )
 from analysis.dexpi_properties import class_inventory, load_items  # noqa: E402
+from analysis.symbol_reference import render_svg                # noqa: E402
 from analysis.variant_survey import (                           # noqa: E402
-    describe_key, near_duplicates, pattern_profiles,
+    describe_key, near_duplicates, pattern_curves, pattern_profiles,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
 
-# Paths live in config.py so the project name appears in exactly one place.
 try:
     from config import BROKER_CONFIG, RAW_DIR                    # noqa: E402
 except Exception:                                                # noqa: BLE001
     RAW_DIR = ROOT / "data" / "raw"
     BROKER_CONFIG = (ROOT / "data" / "broker" /
                      "Huldra DEXPI P&ID 2.0_configuration.json")
+BROKER_DIR = Path(BROKER_CONFIG).parent
 
 try:
     from ui import page_header                                   # noqa: E402
@@ -67,210 +65,188 @@ except Exception:                                                # noqa: BLE001
         if sub:
             st.caption(sub)
 
-page_header("Model Broker config",
-            "What the configuration contains, what it misses, and what "
-            "changed since last time")
 
-cfg_path = st.text_input("Configuration (JSON exported from Model Broker)",
-                         str(BROKER_CONFIG))
-if not Path(cfg_path).exists():
-    st.error("Configuration not found. Export it from Model Broker and point "
-             "this field at the file.")
+@st.cache_data(show_spinner=False)
+def _load(path: str, mtime: float):
+    return load_config(path)
+
+
+page_header("Model Broker config",
+            "One symbol, many patterns — what the configuration is made of")
+
+# ------------------------------------------------------------------- source
+choices = sorted(p for p in BROKER_DIR.glob("*.json")) \
+    if BROKER_DIR.exists() else []
+if not choices:
+    st.error(f"Found no JSON configurations under {BROKER_DIR}.")
     st.stop()
+default = next((i for i, p in enumerate(choices)
+                if p.name == Path(BROKER_CONFIG).name), 0)
+cfg_path = st.selectbox("Configuration", choices, index=default,
+                        format_func=lambda p: p.name)
 try:
-    config = load_config(cfg_path)
+    config = _load(str(cfg_path), cfg_path.stat().st_mtime)
 except json.JSONDecodeError as e:
     st.error(f"Could not read the configuration: {e}")
     st.stop()
 
 catalogue = pattern_catalogue(config)
-by_type = Counter(r["type"] for r in catalogue)
+symbols = [r for r in catalogue if r["type"] == "Symbol"]
 
-c = st.columns(5)
+families: dict[str, list] = {}
+for r in symbols:
+    for cls in (x.strip() for x in (r["dexpi"] or "—").split(",")):
+        families.setdefault(cls, []).append(r)
+multi = {k: v for k, v in families.items() if len(v) > 1}
+
+c = st.columns(4)
 c[0].metric("Patterns", len(catalogue))
-for i, t in enumerate(["Symbol", "Letter", "ConnectionSegment",
-                       "SheetComponent"]):
-    c[i + 1].metric(t, by_type.get(t, 0))
-st.caption("Only the symbol patterns are within reach of a symbol detector. "
-           "Letter, ConnectionSegment and SheetComponent handle text, lines "
-           "and sheet furniture — roughly half the configuration is out of "
-           "scope for any automated contribution from the outset.")
+c[1].metric("Symbols", len(symbols))
+c[2].metric("Classes with variants", len(multi))
+c[3].metric("Largest family",
+            max((len(v) for v in families.values()), default=0))
 
-tab_fam, tab_cov, tab_health, tab_diff = st.tabs(
-    ["Variant families", "Coverage", "Health", "Compare"])
+st.caption("Only the symbol patterns are within reach of a symbol detector — "
+           "the rest handle text, lines and sheet furniture. Of those, most "
+           "classes carry more than one pattern, because the same symbol is "
+           "drawn from different primitives on different sheets.")
 
-# ------------------------------------------------------------ variant families
-with tab_fam:
-    st.caption("A Model Broker configuration is not one pattern per symbol "
-               "type. It is a library that grew as new sheets were met — so "
-               "when a valve is not recognised on a new drawing, the tool's "
-               "own answer is an added variant, not a repaired one. This tab "
-               "is the evidence for that claim.")
+st.divider()
 
-    families: dict[str, list] = {}
-    for r in catalogue:
-        if r["type"] != "Symbol":
-            continue
-        for cls in (x.strip() for x in (r["dexpi"] or "(no target)").split(",")):
-            families.setdefault(cls, []).append(r)
+# ------------------------------------------------------------- the gallery
+st.subheader("The same symbol, drawn differently")
 
-    multi = {k: v for k, v in families.items() if len(v) > 1}
-    st.markdown(f"**{len(multi)} classes have more than one pattern.** "
-                f"The largest families are where the drawing set varies most.")
-    st.dataframe(pd.DataFrame(
-        [{"DEXPI class": k, "patterns": len(v),
-          "primitives": f"{min(r['primitives'] for r in v)}–"
-                        f"{max(r['primitives'] for r in v)}",
-          "names": ", ".join(sorted({r["name"] for r in v}))}
-         for k, v in sorted(multi.items(), key=lambda x: -len(x[1]))]),
-        use_container_width=True, hide_index=True)
+order = sorted(families, key=lambda k: (-len(families[k]), k))
+pick = st.selectbox("DEXPI class", order,
+                    format_func=lambda k: f"{k}  ({len(families[k])})")
 
-    pick = st.selectbox("Inspect a family", sorted(families),
-                        index=sorted(families).index("GateValve")
-                        if "GateValve" in families else 0)
-    profs = pattern_profiles(config, {pick})
-    if profs:
-        st.dataframe(pd.DataFrame(
-            [{"name": p["name"], "enabled": p["enabled"],
-              "composition": describe_key(p["key"]),
-              "aspect": p["fingerprint"]["aspect"],
-              "curves": p["curves"], "text matchers": p["text_matchers"],
-              "terminals": p["terminals"]} for p in profs]),
-            use_container_width=True, hide_index=True)
-        st.caption("Composition is what a matcher keys on: the same valve "
-                   "drawn as 17 separate strokes and as 2 polylines are the "
-                   "same picture and different patterns.")
+profs = pattern_profiles(config, {pick})
+defs = {k.split("/", 1)[1]: v for k, v in config.items()
+        if k.startswith("patternDefinitions/")}
 
-# ------------------------------------------------------------------- coverage
-with tab_cov:
-    st.caption("Two lists and a set difference. No model, no geometry, "
-               "nothing that can fail quietly — run this first on any new "
-               "configuration.")
-    dexpi_src = st.text_input("DEXPI folder", str(RAW_DIR), key="cov_src")
-    if not Path(dexpi_src).exists():
-        st.info("Point this at the folder holding the DEXPI XML files.")
-    else:
-        items = load_items(dexpi_src)
-        if not items:
-            st.info("No DEXPI objects found under that folder.")
-        else:
+if not profs:
+    st.info("No symbol patterns target this class.")
+else:
+    st.caption(f"{len(profs)} patterns target `{pick}`. They render as nearly "
+               f"the same valve and are built from very different primitive "
+               f"counts — which is exactly why a pattern that works on one "
+               f"sheet can find nothing on another.")
+
+    per_row = 4
+    for start in range(0, len(profs), per_row):
+        row = profs[start:start + per_row]
+        cols = st.columns(per_row)
+        for col, p in zip(cols, row):
+            with col:
+                curves = pattern_curves(defs.get(p["id"], {}))
+                st.markdown(render_svg(curves, size=150),
+                            unsafe_allow_html=True)
+                dot = "🟢" if p["enabled"] else "⚪"
+                st.markdown(f"{dot} **{p['name']}**")
+                st.caption(f"{p['curves']} primitives"
+                           + (f" · {p['text_matchers']} text"
+                              if p["text_matchers"] else "")
+                           + f" · {p['terminals']} terminals")
+                st.caption(describe_key(p["key"]))
+
+    st.caption("A pattern matches on the primitive vocabulary, not on the "
+               "picture. Two of these can look identical and still be "
+               "separate patterns.")
+
+st.divider()
+
+# ---------------------------------------------------------------- the checks
+st.subheader("Checks")
+st.caption("Run these when something looks wrong. None of them needs a model "
+           "or geometry extraction.")
+
+problems = validate_config(config)
+errors = [p for p in problems if p["severity"] == "error"]
+profs_all = pattern_profiles(config, set(families))
+dupes = near_duplicates(profs_all)
+
+k = st.columns(3)
+k[0].metric("Structural errors", len(errors),
+            help="Broken internal references. The delivered configuration has "
+                 "zero, so the bar is exact rather than a judgement call.")
+k[1].metric("Near-duplicates", len(dupes),
+            help="Pairs of patterns that are geometrically all but identical.")
+k[2].metric("Disabled patterns", sum(1 for r in catalogue if not r["enabled"]))
+
+if errors:
+    st.error("Broken internal references — this file will be rejected on "
+             "import, usually with an unhelpful message.")
+    st.dataframe(pd.DataFrame(errors), use_container_width=True,
+                 hide_index=True)
+else:
+    st.success("No dangling references: every `order` entry points at the "
+               "pattern's own matchers, and every folder reference resolves.")
+
+with st.expander(f"Near-duplicate patterns ({len(dupes)})"):
+    st.caption("A library maintained by hand accumulates redundancy. Two "
+               "patterns competing for the same geometry is worth knowing "
+               "about before a third is added.")
+    st.dataframe(pd.DataFrame(dupes, columns=["pattern A", "pattern B",
+                                              "distance"]),
+                 use_container_width=True, hide_index=True)
+
+with st.expander("Coverage against the DEXPI output"):
+    st.caption("Two lists and a set difference: which classes the export "
+               "produces with no pattern targeting them, and which patterns "
+               "target a class that never appears.")
+    src = st.text_input("DEXPI folder", str(RAW_DIR), key="cov_src")
+    if Path(src).exists():
+        items = load_items(src)
+        if items:
             counts = {r["class"]: r["count"] for r in class_inventory(items)}
             gap = coverage_gap(config, counts)
             g = st.columns(3)
-            g[0].metric("Covered and present", len(gap["both"]))
-            g[1].metric("Present, no pattern", len(gap["missing"]))
-            g[2].metric("Pattern, never present", len(gap["unused"]))
-
-            st.markdown("**Classes in the output with no pattern targeting them**")
-            st.caption("Not automatically an error — several come from "
-                       "connection and sheet handling rather than from a "
-                       "symbol pattern. The ones worth a look are equipment "
-                       "and component classes with a high count.")
+            g[0].metric("Covered", len(gap["both"]))
+            g[1].metric("No pattern", len(gap["missing"]))
+            g[2].metric("Never seen", len(gap["unused"]))
             st.dataframe(pd.DataFrame(
                 [{"class": c, "occurrences": counts.get(c, 0)}
                  for c in gap["missing"]]),
                 use_container_width=True, hide_index=True)
+            st.caption("Not all of these are errors — several come from "
+                       "connection and sheet handling rather than from a "
+                       "symbol pattern.")
+        else:
+            st.info("No DEXPI objects found there.")
 
-            with st.expander("Patterns whose class never appears"):
-                st.caption("Either dead weight, or symbols that only occur on "
-                           "drawings you have not converted yet. Check before "
-                           "deleting anything.")
-                st.write(", ".join(gap["unused"]) or "(none)")
-
-# --------------------------------------------------------------------- health
-with tab_health:
-    problems = validate_config(config)
-    errors = [p for p in problems if p["severity"] == "feil"]
-    warnings = [p for p in problems if p["severity"] == "advarsel"]
-
-    h = st.columns(2)
-    h[0].metric("Structural errors", len(errors))
-    h[1].metric("Warnings", len(warnings))
-
-    if errors:
-        st.error("Broken internal references. A configuration with these will "
-                 "be rejected on import, usually with an unhelpful message.")
-        st.dataframe(pd.DataFrame(errors), use_container_width=True,
-                     hide_index=True)
+with st.expander("Compare against another configuration"):
+    st.caption("After importing generated variants and exporting again: is "
+               "what came back what went in?")
+    others = [p for p in choices if p != cfg_path]
+    if not others:
+        st.info("Only one configuration in the folder.")
     else:
-        st.success("No dangling references. Every `order` entry points at the "
-                   "pattern's own matchers, every pattern has its metadata, "
-                   "and every folder reference resolves.")
-        st.caption("This check exists because a generated configuration was "
-                   "once rejected with a server error, and the cause — an "
-                   "`order` list inherited from another pattern, pointing at "
-                   "seven matchers that did not exist — was five lines of "
-                   "checking away.")
-
-    profs = pattern_profiles(config, {r["dexpi"].split(",")[0].strip()
-                                      for r in catalogue if r["dexpi"]})
-    dupes = near_duplicates(profs)
-    with st.expander(f"Near-duplicate patterns ({len(dupes)})"):
-        st.caption("A library maintained by hand across projects accumulates "
-                   "redundancy. Two patterns competing for the same geometry "
-                   "is worth knowing about before a third is added.")
-        st.dataframe(pd.DataFrame(dupes,
-                                  columns=["pattern A", "pattern B", "distance"]),
-                     use_container_width=True, hide_index=True)
-
-    with st.expander(f"Warnings ({len(warnings)})"):
-        st.caption("Legal but worth a look. Most are single-primitive symbol "
-                   "patterns — a Flange defined as one vertical stroke will "
-                   "match a great many things, which is deliberate in a "
-                   "hand-made pattern and suspicious in a generated one.")
-        st.dataframe(pd.DataFrame(warnings), use_container_width=True,
-                     hide_index=True)
-
-# -------------------------------------------------------------------- compare
-with tab_diff:
-    st.caption("After importing generated variants and exporting again, this "
-               "answers whether what came back is what went in — and whether "
-               "anything else moved.")
-    other_path = st.text_input("Compare against", str(BROKER_CONFIG),
-                               key="diff_path")
-    if not Path(other_path).exists():
-        st.info("Point this at a second exported configuration.")
-    elif Path(other_path).resolve() == Path(cfg_path).resolve():
-        st.info("Same file. Choose a different one to compare.")
-    else:
+        other = st.selectbox("Compare against", others,
+                             format_func=lambda p: p.name, key="diff_pick")
         try:
-            other = load_config(other_path)
+            d = compare_configs(config,
+                                _load(str(other), other.stat().st_mtime))
         except json.JSONDecodeError as e:
             st.error(f"Could not read it: {e}")
-            st.stop()
-        d = compare_configs(config, other)
+            d = None
+        if d:
+            m = st.columns(4)
+            m[0].metric("Added", len(d["added"]))
+            m[1].metric("Removed", len(d["removed"]))
+            m[2].metric("Changed", len(d["changed"]))
+            m[3].metric("Untouched", d["untouched"])
+            if d["new_folders"]:
+                st.info("New folders: " + ", ".join(d["new_folders"]))
+            if d["removed"]:
+                st.error("Patterns are missing from the second file. An "
+                         "addition should never remove anything.")
+                st.dataframe(pd.DataFrame(d["removed"]),
+                             use_container_width=True, hide_index=True)
+            if d["added"]:
+                st.dataframe(pd.DataFrame(d["added"]),
+                             use_container_width=True, hide_index=True)
+            if not (d["added"] or d["removed"] or d["changed"]):
+                st.success("Identical in their patterns.")
 
-        m = st.columns(4)
-        m[0].metric("Added", len(d["added"]))
-        m[1].metric("Removed", len(d["removed"]))
-        m[2].metric("Changed", len(d["changed"]))
-        m[3].metric("Untouched", d["untouched"])
-
-        if d["version_before"] != d["version_after"]:
-            st.warning(f"Configuration version differs: "
-                       f"{d['version_before']} → {d['version_after']}.")
-        if d["new_folders"]:
-            st.info("New folders: " + ", ".join(d["new_folders"]))
-        if d["lost_folders"]:
-            st.warning("Folders no longer present: "
-                       + ", ".join(d["lost_folders"]))
-
-        if d["added"]:
-            st.markdown("**Added**")
-            st.dataframe(pd.DataFrame(d["added"]), use_container_width=True,
-                         hide_index=True)
-        if d["removed"]:
-            st.error("Patterns are missing from the second file. An addition "
-                     "should never remove anything.")
-            st.dataframe(pd.DataFrame(d["removed"]), use_container_width=True,
-                         hide_index=True)
-        if d["changed"]:
-            st.markdown("**Changed**")
-            st.dataframe(pd.DataFrame(d["changed"]), use_container_width=True,
-                         hide_index=True)
-        if not (d["added"] or d["removed"] or d["changed"]):
-            st.success("The two configurations are identical in their patterns.")
-
-st.caption("Read-only. This page never writes a configuration — generating "
-           "patterns lives on the Symbol variants page, behind a confirmation "
-           "step.")
+st.caption("Read-only. Generating patterns lives on the Symbol variants page, "
+           "behind a confirmation step.")
