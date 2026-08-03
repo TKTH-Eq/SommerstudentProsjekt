@@ -1,0 +1,938 @@
+{
+  "labels": [
+    {
+      "raw": "2\"-PL-242204-ED200-4",
+      "size_in": 2.0,
+      "fluid": "PL",
+      "fluid_desc": "prosessvæske (antatt)",
+      "line_no": "242204",
+      "system": "24",
+      "spec": "ED200",
+      "suffix": "4",
+      "cx": 8247.18728911111,
+      "cy": 1987.433361111111
+    },
+    {
+      "raw": "4\"-PL-242001-ED200-4",
+      "size_in": 4.0,
+      "fluid": "PL",
+      "fluid_desc": "prosessvæske (antatt)",
+      "line_no": "242001",
+      "system": "24",
+      "spec": "ED200",
+      "suffix": "4",
+      "cx": 8267.167764416667,
+      "cy": 3311.611138888889
+    },
+    {
+      "raw": "2\"-PL-242203-ED200-4",
+      "size_in": 2.0,
+      "fluid": "PL",
+      "fluid_desc": "prosessvæske (antatt)",
+      "line_no": "242203",
+      "system": "24",
+      "spec": "ED200",
+      "suffix": "4",
+      "cx": 3243.7656230277776,
+      "cy": 3420.3228055555555
+    },
+    {
+      "raw": "4\"-PL-242202-ED200-4",
+      "size_in": 4.0,
+      "fluid": "PL",
+      "fluid_desc": "prosessvæske (antatt)",
+      "line_no": "242202",
+      "system": "24",
+      "spec": "ED200",
+      "suffix": "4",
+      "cx": 894.6864557777776,
+      "cy": 3604.768638888889
+    },
+    {
+      "raw": "4\"-PL-242002-ED200-4",
+      "size_in": 4.0,
+      "fluid": "PL",
+      "fluid_desc": "prosessvæske (antatt)",
+      "line_no": "242002",
+      "system": "24",
+      "spec": "ED200",
+      "suffix": "4",
+      "cx": 4979.129233555555,
+      "cy": 4312.434472222222
+    }
+  ],
+  "sizes": [
+    {
+      "raw": "4\"",
+      "size_in": 4.0,
+      "size2_in": null,
+      "cx": 6890.940401155555,
+      "cy": 3244.4466944444443
+    },
+    {
+      "raw": "2\"",
+      "size_in": 2.0,
+      "size2_in": null,
+      "cx": 5286.941427288889,
+      "cy": 3298.915583333333
+    },
+    {
+      "raw": "2\"x4\"",
+      "size_in": 2.0,
+      "size2_in": 4.0,
+      "cx": 4247.400872627778,
+      "cy": 3325.0178055555552
+    },
+    {
+      "raw": "4\"x3\"",
+      "size_in": 4.0,
+      "size2_in": 3.0,
+      "cx": 1313.6030948500002,
+      "cy": 3454.498916666667
+    },
+    {
+      "raw": "2\"",
+      "size_in": 2.0,
+      "size2_in": null,
+      "cx": 5647.931705066666,
+      "cy": 4249.517805555556
+    },
+    {
+      "raw": "4\"",
+      "size_in": 4.0,
+      "size2_in": null,
+      "cx": 6890.940401155555,
+      "cy": 4249.647527777777
+    },
+    {
+      "raw": "4\"x2\"",
+      "size_in": 4.0,
+      "size2_in": 2.0,
+      "cx": 4908.706705961112,
+      "cy": 3325.0178055555552
+    },
+    {
+      "raw": "2\"x4\"",
+      "size_in": 2.0,
+      "size2_in": 4.0,
+      "cx": 5491.465039294444,
+      "cy": 3422.6289166666675
+    },
+    {
+      "raw": "4\"x2\"",
+      "size_in": 4.0,
+      "size2_in": 2.0,
+      "cx": 5357.089483738889,
+      "cy": 4427.830027777778
+    },
+    {
+      "raw": "2\"x4\"",
+      "size_in": 2.0,
+      "size2_in": 4.0,
+      "cx": 5774.772261516667,
+      "cy": 4427.830027777778
+    }
+  ],
+  "attached": [
+    {
+      "cls": "check_valve",
+      "conf": 0.903,
+      "tier": "sikker",
+      "bbox_orig": [
+        3613,
+        3343,
+        3683,
+        3378
+      ],
+      "verifier_conf": 0.96,
+      "verifier_threshold": 0.729,
+      "line": {
+        "raw": "2\"-PL-242203-ED200-4",
+        "size_in": 2.0,
+        "fluid": "PL",
+        "fluid_desc": "prosessvæske (antatt)",
+        "line_no": "242203",
+        "system": "24",
+        "spec": "ED200",
+        "suffix": "4",
+        "cx": 3243.7656230277776,
+        "cy": 3420.3228055555555
+      },
+      "line_dist_px": 409,
+      "size_marker": {
+        "raw": "2\"x4\"",
+        "size_in": 2.0,
+        "size2_in": 4.0,
+        "cx": 4247.400872627778,
+        "cy": 3325.0178055555552
+      },
+      "size_dist_px": 600
+    },
+    {
+      "cls": "check_valve",
+      "conf": 0.773,
+      "tier": "sikker",
+      "bbox_orig": [
+        6195,
+        2025,
+        6250,
+        2056
+      ],
+      "verifier_conf": 0.866,
+      "verifier_threshold": 0.729,
+      "line": null,
+      "line_dist_px": null,
+      "size_marker": null,
+      "size_dist_px": null
+    },
+    {
+      "cls": "gate_closed",
+      "conf": 0.998,
+      "tier": "sikker",
+      "bbox_orig": [
+        2649,
+        3554,
+        2719,
+        3593
+      ],
+      "line": {
+        "raw": "2\"-PL-242203-ED200-4",
+        "size_in": 2.0,
+        "fluid": "PL",
+        "fluid_desc": "prosessvæske (antatt)",
+        "line_no": "242203",
+        "system": "24",
+        "spec": "ED200",
+        "suffix": "4",
+        "cx": 3243.7656230277776,
+        "cy": 3420.3228055555555
+      },
+      "line_dist_px": 580,
+      "size_marker": null,
+      "size_dist_px": null
+    },
+    {
+      "cls": "gate_closed",
+      "conf": 0.976,
+      "tier": "sikker",
+      "bbox_orig": [
+        2641,
+        3796,
+        2727,
+        3843
+      ],
+      "line": {
+        "raw": "2\"-PL-242203-ED200-4",
+        "size_in": 2.0,
+        "fluid": "PL",
+        "fluid_desc": "prosessvæske (antatt)",
+        "line_no": "242203",
+        "system": "24",
+        "spec": "ED200",
+        "suffix": "4",
+        "cx": 3243.7656230277776,
+        "cy": 3420.3228055555555
+      },
+      "line_dist_px": 688,
+      "size_marker": null,
+      "size_dist_px": null
+    },
+    {
+      "cls": "gate_closed",
+      "conf": 0.643,
+      "tier": "mulig",
+      "bbox_orig": [
+        6773,
+        4342,
+        6858,
+        4389
+      ],
+      "line": null,
+      "line_dist_px": null,
+      "size_marker": {
+        "raw": "4\"",
+        "size_in": 4.0,
+        "size2_in": null,
+        "cx": 6890.940401155555,
+        "cy": 4249.647527777777
+      },
+      "size_dist_px": 138
+    },
+    {
+      "cls": "gate_open",
+      "conf": 0.971,
+      "tier": "sikker",
+      "bbox_orig": [
+        6761,
+        3336,
+        6815,
+        3367
+      ],
+      "line": null,
+      "line_dist_px": null,
+      "size_marker": {
+        "raw": "4\"",
+        "size_in": 4.0,
+        "size2_in": null,
+        "cx": 6890.940401155555,
+        "cy": 3244.4466944444443
+      },
+      "size_dist_px": 149
+    },
+    {
+      "cls": "gate_open",
+      "conf": 0.916,
+      "tier": "sikker",
+      "bbox_orig": [
+        4440,
+        3339,
+        4525,
+        3386
+      ],
+      "line": null,
+      "line_dist_px": null,
+      "size_marker": {
+        "raw": "2\"x4\"",
+        "size_in": 2.0,
+        "size2_in": 4.0,
+        "cx": 4247.400872627778,
+        "cy": 3325.0178055555552
+      },
+      "size_dist_px": 238
+    },
+    {
+      "cls": "gate_open",
+      "conf": 0.892,
+      "tier": "sikker",
+      "bbox_orig": [
+        6788,
+        3031,
+        6815,
+        3086
+      ],
+      "line": null,
+      "line_dist_px": null,
+      "size_marker": {
+        "raw": "4\"",
+        "size_in": 4.0,
+        "size2_in": null,
+        "cx": 6890.940401155555,
+        "cy": 3244.4466944444443
+      },
+      "size_dist_px": 206
+    },
+    {
+      "cls": "gate_open",
+      "conf": 0.859,
+      "tier": "sikker",
+      "bbox_orig": [
+        6788,
+        4046,
+        6815,
+        4100
+      ],
+      "line": null,
+      "line_dist_px": null,
+      "size_marker": {
+        "raw": "4\"",
+        "size_in": 4.0,
+        "size2_in": null,
+        "cx": 6890.940401155555,
+        "cy": 4249.647527777777
+      },
+      "size_dist_px": 198
+    },
+    {
+      "cls": "gate_open",
+      "conf": 0.859,
+      "tier": "sikker",
+      "bbox_orig": [
+        1471,
+        3472,
+        1557,
+        3519
+      ],
+      "line": {
+        "raw": "4\"-PL-242202-ED200-4",
+        "size_in": 4.0,
+        "fluid": "PL",
+        "fluid_desc": "prosessvæske (antatt)",
+        "line_no": "242202",
+        "system": "24",
+        "spec": "ED200",
+        "suffix": "4",
+        "cx": 894.6864557777776,
+        "cy": 3604.768638888889
+      },
+      "line_dist_px": 629,
+      "size_marker": {
+        "raw": "4\"x3\"",
+        "size_in": 4.0,
+        "size2_in": 3.0,
+        "cx": 1313.6030948500002,
+        "cy": 3454.498916666667
+      },
+      "size_dist_px": 205
+    },
+    {
+      "cls": "gate_open",
+      "conf": 0.806,
+      "tier": "sikker",
+      "bbox_orig": [
+        6784,
+        2017,
+        6870,
+        2064
+      ],
+      "line": null,
+      "line_dist_px": null,
+      "size_marker": null,
+      "size_dist_px": null
+    },
+    {
+      "cls": "gate_open",
+      "conf": 0.771,
+      "tier": "sikker",
+      "bbox_orig": [
+        3893,
+        3343,
+        3964,
+        3382
+      ],
+      "line": {
+        "raw": "2\"-PL-242203-ED200-4",
+        "size_in": 2.0,
+        "fluid": "PL",
+        "fluid_desc": "prosessvæske (antatt)",
+        "line_no": "242203",
+        "system": "24",
+        "spec": "ED200",
+        "suffix": "4",
+        "cx": 3243.7656230277776,
+        "cy": 3420.3228055555555
+      },
+      "line_dist_px": 687,
+      "size_marker": {
+        "raw": "2\"x4\"",
+        "size_in": 2.0,
+        "size2_in": 4.0,
+        "cx": 4247.400872627778,
+        "cy": 3325.0178055555552
+      },
+      "size_dist_px": 321
+    },
+    {
+      "cls": "gate_open",
+      "conf": 0.766,
+      "tier": "sikker",
+      "bbox_orig": [
+        4436,
+        4342,
+        4522,
+        4389
+      ],
+      "line": {
+        "raw": "4\"-PL-242002-ED200-4",
+        "size_in": 4.0,
+        "fluid": "PL",
+        "fluid_desc": "prosessvæske (antatt)",
+        "line_no": "242002",
+        "system": "24",
+        "spec": "ED200",
+        "suffix": "4",
+        "cx": 4979.129233555555,
+        "cy": 4312.434472222222
+      },
+      "line_dist_px": 503,
+      "size_marker": null,
+      "size_dist_px": null
+    },
+    {
+      "cls": "gate_open",
+      "conf": 0.731,
+      "tier": "mulig",
+      "bbox_orig": [
+        6499,
+        2844,
+        6531,
+        2899
+      ],
+      "line": null,
+      "line_dist_px": null,
+      "size_marker": {
+        "raw": "4\"",
+        "size_in": 4.0,
+        "size2_in": null,
+        "cx": 6890.940401155555,
+        "cy": 3244.4466944444443
+      },
+      "size_dist_px": 530
+    },
+    {
+      "cls": "gate_open",
+      "conf": 0.671,
+      "tier": "mulig",
+      "bbox_orig": [
+        2114,
+        2848,
+        2146,
+        2903
+      ],
+      "line": null,
+      "line_dist_px": null,
+      "size_marker": null,
+      "size_dist_px": null
+    },
+    {
+      "cls": "globe_valve",
+      "conf": 0.993,
+      "tier": "sikker",
+      "bbox_orig": [
+        3733,
+        3453,
+        3780,
+        3538
+      ],
+      "verifier_conf": 0.995,
+      "verifier_threshold": 0.699,
+      "line": {
+        "raw": "2\"-PL-242203-ED200-4",
+        "size_in": 2.0,
+        "fluid": "PL",
+        "fluid_desc": "prosessvæske (antatt)",
+        "line_no": "242203",
+        "system": "24",
+        "spec": "ED200",
+        "suffix": "4",
+        "cx": 3243.7656230277776,
+        "cy": 3420.3228055555555
+      },
+      "line_dist_px": 518,
+      "size_marker": {
+        "raw": "2\"x4\"",
+        "size_in": 2.0,
+        "size2_in": 4.0,
+        "cx": 4247.400872627778,
+        "cy": 3325.0178055555552
+      },
+      "size_dist_px": 520
+    },
+    {
+      "cls": "globe_valve",
+      "conf": 0.961,
+      "tier": "sikker",
+      "bbox_orig": [
+        4682,
+        3449,
+        4728,
+        3535
+      ],
+      "verifier_conf": 0.807,
+      "verifier_threshold": 0.699,
+      "line": null,
+      "line_dist_px": null,
+      "size_marker": {
+        "raw": "4\"x2\"",
+        "size_in": 4.0,
+        "size2_in": 2.0,
+        "cx": 4908.706705961112,
+        "cy": 3325.0178055555552
+      },
+      "size_dist_px": 263
+    },
+    {
+      "cls": "globe_valve",
+      "conf": 0.873,
+      "tier": "mulig",
+      "bbox_orig": [
+        1775,
+        5399,
+        1845,
+        5438
+      ],
+      "verifier_conf": 0.866,
+      "verifier_threshold": 0.699,
+      "line": null,
+      "line_dist_px": null,
+      "size_marker": null,
+      "size_dist_px": null
+    },
+    {
+      "cls": "globe_valve",
+      "conf": 0.857,
+      "tier": "mulig",
+      "bbox_orig": [
+        1022,
+        5407,
+        1077,
+        5438
+      ],
+      "verifier_conf": 0.837,
+      "verifier_threshold": 0.699,
+      "line": null,
+      "line_dist_px": null,
+      "size_marker": null,
+      "size_dist_px": null
+    },
+    {
+      "cls": "globe_valve",
+      "conf": 0.777,
+      "tier": "mulig",
+      "bbox_orig": [
+        4034,
+        3183,
+        4081,
+        3269
+      ],
+      "verifier_conf": 0.999,
+      "verifier_threshold": 0.699,
+      "line": null,
+      "line_dist_px": null,
+      "size_marker": {
+        "raw": "2\"x4\"",
+        "size_in": 2.0,
+        "size2_in": 4.0,
+        "cx": 4247.400872627778,
+        "cy": 3325.0178055555552
+      },
+      "size_dist_px": 214
+    },
+    {
+      "cls": "other_valve",
+      "conf": 0.912,
+      "tier": "sikker",
+      "bbox_orig": [
+        6765,
+        3012,
+        6819,
+        3039
+      ],
+      "line": null,
+      "line_dist_px": null,
+      "size_marker": {
+        "raw": "4\"",
+        "size_in": 4.0,
+        "size2_in": null,
+        "cx": 6890.940401155555,
+        "cy": 3244.4466944444443
+      },
+      "size_dist_px": 240
+    },
+    {
+      "cls": "other_valve",
+      "conf": 0.741,
+      "tier": "mulig",
+      "bbox_orig": [
+        1951,
+        2852,
+        1982,
+        2906
+      ],
+      "line": null,
+      "line_dist_px": null,
+      "size_marker": null,
+      "size_dist_px": null
+    },
+    {
+      "cls": "other_valve",
+      "conf": 0.705,
+      "tier": "mulig",
+      "bbox_orig": [
+        1822,
+        2879,
+        1853,
+        2934
+      ],
+      "line": null,
+      "line_dist_px": null,
+      "size_marker": {
+        "raw": "4\"x3\"",
+        "size_in": 4.0,
+        "size2_in": 3.0,
+        "cx": 1313.6030948500002,
+        "cy": 3454.498916666667
+      },
+      "size_dist_px": 758
+    },
+    {
+      "cls": "other_valve",
+      "conf": 0.69,
+      "tier": "mulig",
+      "bbox_orig": [
+        1373,
+        5497,
+        1404,
+        5551
+      ],
+      "line": null,
+      "line_dist_px": null,
+      "size_marker": null,
+      "size_dist_px": null
+    },
+    {
+      "cls": "other_valve",
+      "conf": 0.639,
+      "tier": "mulig",
+      "bbox_orig": [
+        2825,
+        2750,
+        2895,
+        2789
+      ],
+      "line": {
+        "raw": "2\"-PL-242203-ED200-4",
+        "size_in": 2.0,
+        "fluid": "PL",
+        "fluid_desc": "prosessvæske (antatt)",
+        "line_no": "242203",
+        "system": "24",
+        "spec": "ED200",
+        "suffix": "4",
+        "cx": 3243.7656230277776,
+        "cy": 3420.3228055555555
+      },
+      "line_dist_px": 756,
+      "size_marker": null,
+      "size_dist_px": null
+    },
+    {
+      "cls": "other_valve",
+      "conf": 0.611,
+      "tier": "mulig",
+      "bbox_orig": [
+        2914,
+        2797,
+        2945,
+        2852
+      ],
+      "line": {
+        "raw": "2\"-PL-242203-ED200-4",
+        "size_in": 2.0,
+        "fluid": "PL",
+        "fluid_desc": "prosessvæske (antatt)",
+        "line_no": "242203",
+        "system": "24",
+        "spec": "ED200",
+        "suffix": "4",
+        "cx": 3243.7656230277776,
+        "cy": 3420.3228055555555
+      },
+      "line_dist_px": 674,
+      "size_marker": null,
+      "size_dist_px": null
+    },
+    {
+      "cls": "other_valve",
+      "conf": 0.564,
+      "tier": "mulig",
+      "bbox_orig": [
+        1810,
+        3909,
+        1865,
+        3936
+      ],
+      "line": null,
+      "line_dist_px": null,
+      "size_marker": {
+        "raw": "4\"x3\"",
+        "size_in": 4.0,
+        "size2_in": 3.0,
+        "cx": 1313.6030948500002,
+        "cy": 3454.498916666667
+      },
+      "size_dist_px": 702
+    },
+    {
+      "cls": "other_valve",
+      "conf": 0.554,
+      "tier": "mulig",
+      "bbox_orig": [
+        7221,
+        2579,
+        7276,
+        2606
+      ],
+      "line": null,
+      "line_dist_px": null,
+      "size_marker": {
+        "raw": "4\"",
+        "size_in": 4.0,
+        "size2_in": null,
+        "cx": 6890.940401155555,
+        "cy": 3244.4466944444443
+      },
+      "size_dist_px": 744
+    },
+    {
+      "cls": "reducer",
+      "conf": 0.996,
+      "tier": "sikker",
+      "bbox_orig": [
+        5450,
+        3336,
+        5505,
+        3382
+      ],
+      "verifier_conf": 0.999,
+      "verifier_threshold": 0.445,
+      "line": null,
+      "line_dist_px": null,
+      "size_marker": {
+        "raw": "2\"x4\"",
+        "size_in": 2.0,
+        "size2_in": 4.0,
+        "cx": 5491.465039294444,
+        "cy": 3422.6289166666675
+      },
+      "size_dist_px": 65
+    },
+    {
+      "cls": "reducer",
+      "conf": 0.996,
+      "tier": "sikker",
+      "bbox_orig": [
+        5735,
+        4342,
+        5789,
+        4389
+      ],
+      "verifier_conf": 0.999,
+      "verifier_threshold": 0.445,
+      "line": {
+        "raw": "4\"-PL-242002-ED200-4",
+        "size_in": 4.0,
+        "fluid": "PL",
+        "fluid_desc": "prosessvæske (antatt)",
+        "line_no": "242002",
+        "system": "24",
+        "spec": "ED200",
+        "suffix": "4",
+        "cx": 4979.129233555555,
+        "cy": 4312.434472222222
+      },
+      "line_dist_px": 785,
+      "size_marker": {
+        "raw": "2\"x4\"",
+        "size_in": 2.0,
+        "size2_in": 4.0,
+        "cx": 5774.772261516667,
+        "cy": 4427.830027777778
+      },
+      "size_dist_px": 64
+    },
+    {
+      "cls": "reducer",
+      "conf": 0.996,
+      "tier": "sikker",
+      "bbox_orig": [
+        4206,
+        3339,
+        4260,
+        3386
+      ],
+      "verifier_conf": 0.999,
+      "verifier_threshold": 0.445,
+      "line": null,
+      "line_dist_px": null,
+      "size_marker": {
+        "raw": "2\"x4\"",
+        "size_in": 2.0,
+        "size2_in": 4.0,
+        "cx": 4247.400872627778,
+        "cy": 3325.0178055555552
+      },
+      "size_dist_px": 40
+    },
+    {
+      "cls": "reducer",
+      "conf": 0.986,
+      "tier": "sikker",
+      "bbox_orig": [
+        1276,
+        3472,
+        1330,
+        3519
+      ],
+      "verifier_conf": 0.912,
+      "verifier_threshold": 0.445,
+      "line": {
+        "raw": "4\"-PL-242202-ED200-4",
+        "size_in": 4.0,
+        "fluid": "PL",
+        "fluid_desc": "prosessvæske (antatt)",
+        "line_no": "242202",
+        "system": "24",
+        "spec": "ED200",
+        "suffix": "4",
+        "cx": 894.6864557777776,
+        "cy": 3604.768638888889
+      },
+      "line_dist_px": 423,
+      "size_marker": {
+        "raw": "4\"x3\"",
+        "size_in": 4.0,
+        "size2_in": 3.0,
+        "cx": 1313.6030948500002,
+        "cy": 3454.498916666667
+      },
+      "size_dist_px": 42
+    },
+    {
+      "cls": "reducer",
+      "conf": 0.972,
+      "tier": "sikker",
+      "bbox_orig": [
+        4869,
+        3336,
+        4923,
+        3382
+      ],
+      "verifier_conf": 0.896,
+      "verifier_threshold": 0.445,
+      "line": null,
+      "line_dist_px": null,
+      "size_marker": {
+        "raw": "4\"x2\"",
+        "size_in": 4.0,
+        "size2_in": 2.0,
+        "cx": 4908.706705961112,
+        "cy": 3325.0178055555552
+      },
+      "size_dist_px": 36
+    },
+    {
+      "cls": "reducer",
+      "conf": 0.918,
+      "tier": "sikker",
+      "bbox_orig": [
+        5317,
+        4342,
+        5372,
+        4389
+      ],
+      "verifier_conf": 0.692,
+      "verifier_threshold": 0.445,
+      "line": {
+        "raw": "4\"-PL-242002-ED200-4",
+        "size_in": 4.0,
+        "fluid": "PL",
+        "fluid_desc": "prosessvæske (antatt)",
+        "line_no": "242002",
+        "system": "24",
+        "spec": "ED200",
+        "suffix": "4",
+        "cx": 4979.129233555555,
+        "cy": 4312.434472222222
+      },
+      "line_dist_px": 369,
+      "size_marker": {
+        "raw": "4\"x2\"",
+        "size_in": 4.0,
+        "size2_in": 2.0,
+        "cx": 5357.089483738889,
+        "cy": 4427.830027777778
+      },
+      "size_dist_px": 64
+    }
+  ]
+}
